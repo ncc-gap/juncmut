@@ -29,7 +29,7 @@ def create_parser():
     parser.add_argument("--read_num_thres", type = int, default = 3,
                         help = "Remove splicing junctions whose supporting numbers are below this value (default: %(default)s)")
     
-    parser.add_argument("--freq_thres", type = int, default = 0.05,
+    parser.add_argument("--freq_thres", type = float, default = 0.05,
                         help = "Remove splicing junctions whose frequency is below this value (default: %(default)s)")
     
     parser.add_argument("--rbam_chr_prefix", choices = ["chr", "none"], default = "none",
