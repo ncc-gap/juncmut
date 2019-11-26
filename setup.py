@@ -5,8 +5,8 @@ from setuptools import setup, find_packages
     
 setup(
     name = 'junc_mut',
-    version = '0.1',
-    description='Python programs for prediction of mutation from splicing junctions',
+    version = '0.2',
+    description='Python programs for the prediction of genomic mutation from RNA-seq splicing junctions data',
     url = 'https://github.com/ni6o6/',
     author = 'Naoko Iida',
     author_email = 'iida.nao08@gamil.com',

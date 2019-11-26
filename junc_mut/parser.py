@@ -1,15 +1,24 @@
-#! /usr/bin/env python
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Nov 26 10:30:39 2019
 
-from .run import run_juncm
+@author: genome
+"""
+
+from .run import run_juncmut
 import argparse
 #　
 
 def create_parser():
     
-    parser = argparse.ArgumentParser(prog = "juncm") #make a parser
+    parser = argparse.ArgumentParser(prog = "juncmut") #make a parser
 
-    parser.add_argument("input_file", metavar = "./junction/sample.SJ.out.tab", default = None, type = str,
-                        help = "Path to input file") 
+    parser.add_argument("input", metavar = "./sampleFolder/sample.SJ.out.tab", default = None, type = str,
+                        help = "Prefix of input file") 
+    
+    parser.add_argument("folder", metavar = "./sampleFolder/sample.SJ.out.tab", default = None, type = str,
+                        help = "Folder to input file") 
     
     parser.add_argument('--control_file', nargs='*', type = str,
                         help = "Path to control data created by merge_control (default: %(default)s)")
@@ -23,9 +32,14 @@ def create_parser():
     parser.add_argument("--freq_thres", type = int, default = 0.05,
                         help = "Remove splicing junctions whose frequency is below this value (default: %(default)s)")
     
-    parser.set_defaults(func = run_juncm) #which def do you use?
+    parser.add_argument("--rbam_chr_prefix", choices = ["chr", "none"], default = "none",
+                              help = "chr prefix used in your bam (default: %(default)s)")
+    
+    parser.add_argument("--rbam", metavar = "RNAseq_bam_list", default = None, type = str,
+                            help = "A file:list of Path to RNAseq bam folder.") 
+    
+    parser.set_defaults(func = run_juncmut) #which def do you use?
+    
     
     
     return parser
-
-
