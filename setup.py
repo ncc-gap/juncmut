@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
  
     
 setup(
-    name = 'junc_mut',
+    name = 'juncmut',
     version = '0.2',
     description='Python programs for the prediction of genomic mutation from RNA-seq splicing junctions data',
     url = 'https://github.com/ni6o6/',
