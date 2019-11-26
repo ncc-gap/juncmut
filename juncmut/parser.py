@@ -6,7 +6,7 @@ Created on Tue Nov 26 10:30:39 2019
 @author: genome
 """
 
-from .run import run_juncmut
+from .run_juncmut import run_juncmut
 import argparse
 #　
 
