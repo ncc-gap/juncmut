@@ -41,7 +41,7 @@ chr<tab>start postion<tab>end position(<tab>any..)
 
 ## Commands
 
-sh run_asj_mutation --control_file1 control1.bed.gz --control_file2 control2.bed.gz
+juncmut --control_file control1.bed.gz control2.bed.gz
 
 format of control files.
 chr<tab>start postion<tab>end position(<tab>any..)
@@ -71,23 +71,7 @@ junc_utils annotate input output --genome_id hg19
 					output(./alterativeSJ_filtered_annot/sample.SJ.filx2.annot.txt)
 ```
 
-### extraction by annotation
-
-extract alterative 5'SS and 3'SS splicing junctions.
-ajustment of intron start and end.
-```
-asj_ass_adj_bed input output
-					input (./alterativeSJ_filtered_annot/*.SJ.filtered.annot.txt)
-					output (./alterativeSJ_adjustment/%s.SJ.filtered.annot.ass.adj.bed)
-
 ```
 
-python SJ_Freq.py
-
-python SJ_tabix_hg19.py
-
-python SJ_extract_canonicalMut.py
-		
-#after mpileup
-#python SJ_annot_mpileup.py
+python juncmut_freq.py
 
