@@ -25,6 +25,6 @@ setup(
     
     install_requires = [],
 
-    entry_points = {'console_scripts': ['junc_mut = junc_mut:main']}
+    entry_points = {'console_scripts': ['juncmut = junc_mut:main']}
 
 )
