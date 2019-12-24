@@ -36,7 +36,7 @@ chr\<tab>intron_start_position\<tab>intron_end_position\<tab>0\<tab>0\<tab>0\<ta
 1	12722	13220	1	1	1	0	3	50
 
 ## Preparation of control files.
-format:\n
+format:<br>
 chr<tab>start postion<tab>end position(<tab>any..)
 
 ## Commands
