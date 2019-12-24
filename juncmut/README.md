@@ -31,7 +31,7 @@ the folder: ./junction/
 file: sample.SJ.out.tab from STAR.
 
 format:
-chr<tab>intron start position<tab>intron end position<tab>0<tab>0<tab>0<tab>reads<tab>reads<tab>score
+chr\<tab>intron_start_position\<tab>intron_end_position\<tab>0\<tab>0\<tab>0\<tab>reads\<tab>reads\<tab>score
 1	11845	12009	1	1	0	0	2	47
 1	12722	13220	1	1	1	0	3	50
 
