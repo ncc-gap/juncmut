@@ -67,24 +67,24 @@ juncmut_env.py {dir_name}
 ```
 juncmut_juncutils.py {prefix_of_query_file} {dir_name} --control_file ./reference/SJ_control_2_4.bed.gz ./reference/gtex_sj2r2s.bed.gz
 ```
-            output(./alterativeSJ_fil_annot/prefix.SJ.fil.txt, prefix.SJ.fil.annot.txt )
+output(./alterativeSJ_fil_annot/prefix.SJ.fil.txt, prefix.SJ.fil.annot.txt )
                  
 ```
 juncmut_assadj.py  {prefix_of_query_file} {dir_name}
 ```
-            output(./alterativeSJ_assadjfreq/prefix.SJ.fil.annot.assadj.txt
+output(./alterativeSJ_assadjfreq/prefix.SJ.fil.annot.assadj.txt
             ,prefix.SJ.fil.annot.assadj.txt
             
 ```
 juncmut_freq.py  {prefix_of_query_file} {dir_name} --read_num_thres 3 --freq_thres 0.05
 ```
-           output(./alterativeSJ_assadjfreq/prefix.SJ.fil.annot.assadjunifreq.txt
+output(./alterativeSJ_assadjfreq/prefix.SJ.fil.annot.assadjunifreq.txt
            ,prefix.SJ.fil.annot.assadjunifreqT.txt
 
 ```
 juncmut_mutpre.py {prefix_of_query_file} {dir_name} --genome_id hg19
 ```
-            output(./alterativeSJ_mutprediction/prefix.SJ.fil.annot.assadjunifreqT.pmut.txt)
+output(./alterativeSJ_mutprediction/prefix.SJ.fil.annot.assadjunifreqT.pmut.txt)
 
 ```
 juncmut prefix_of_query_file dir_name --control_file path_to_control1.bed.gz path_to_control2.bed.gz  --genome_id hg19/hg38 --read_num_thres N --freq_thres N --rbam_chr_prefix none/chr --rbam rna_bam_list.txt
