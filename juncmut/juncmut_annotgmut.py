@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 """
 Naoko Iida
-python ./juncagg_codes/juncmut_annotgmut.py folder_name input_file (folder and file under juncmut_agg folder)
+python juncmut_annotgmut.py "prefix" "folder" "--genome_id hg19 --gbam_chr_prefix none --gbam list.txt
 """
 #import pandas as pd
 import subprocess

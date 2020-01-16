@@ -13,15 +13,15 @@ def juncmut_annotrnamut(pr, folder, genome_id, rbamchr, rbam):
     import os
     import pathlib
     import csv
-    
+
     def tidy_bases(bases, qualities):  #remove indel and edeage
         
         import re
-    
+
         proc1 = ""
         proc2 = ""
         
-        #del end position in a read.   $ is the last position of read, following the base. ^ is the start position of read, following the quality and the base.           
+        #del end position in a read.   $ is the last position of read, following the base. But some reads finish with "$". ^ is the start position of read, following the quality and the base. Eregular case $^~.          
         while len(bases) > 0:
             match = re.search(r'[$\^]', bases)
             if match is None:
@@ -35,12 +35,23 @@ def juncmut_annotrnamut(pr, folder, genome_id, rbamchr, rbam):
                 bases = bases[(pos + 3):len(bases)]
                 proc2 = proc2 + qualities[0:pos]
                 qualities = qualities[(pos + 1): len(qualities)] #delete 1 char
-            else:
+            else:  #match == "$"
                 pos = match.start()
-                proc1 = proc1 + bases[0:pos]
-                bases = bases[(pos + 2):len(bases)]
-                proc2 = proc2 + qualities[0:pos]
-                qualities = qualities[(pos + 1): len(qualities)] #delete 1 char
+                if pos+1 == len(bases): #$ is the last character.
+                    proc1 = proc1 + bases[0:pos]
+                    bases = ""
+                    proc2 = proc2 + qualities[0:pos]
+                    qualities = ""
+                elif bases[pos+1] == "^":
+                    proc1 = proc1 + bases[0:pos]
+                    bases = bases[(pos + 4):len(bases)]
+                    proc2 = proc2 + qualities[0:pos]
+                    qualities = qualities[(pos + 1): len(qualities)]
+                else:
+                    proc1 = proc1 + bases[0:pos]
+                    bases = bases[(pos + 2):len(bases)]
+                    proc2 = proc2 + qualities[0:pos]
+                    qualities = qualities[(pos + 1): len(qualities)] #delete 1 char
         #del indel. +/- +[0-9]+[bases]. * means the deletion(?).
         bases = proc1
         proc1 = ""
@@ -98,37 +109,36 @@ def juncmut_annotrnamut(pr, folder, genome_id, rbamchr, rbam):
                 proc2 = proc2 + qualities[i]
         
         return proc1
-    
+        
     cdir = './data/%s/' %(folder)
     os.chdir(cdir)
-    ##mpileup
+    print(os.getcwd())
+##mpileup
     Q = 15
-    fo1 = "./alterativeSJ_mutprediction/" %(folder)
-    fo2 = "./alterativeSJ_mutprediction/" %(folder)
-    #input_f0 = fo1 + pr + ".SJ.fil.annot.assadjunifreqT.pmut.SJinSJ.snp.txt" #original
+    #fo1 = "./data/%s/alterativeSJ_mutprediction/" %(folder)
+    #fo2 = "./data/%s/alterativeSJ_mutprediction/" %(folder)
+    fo1 = "./alterativeSJ_mutprediction/" 
+    fo2 = "./alterativeSJ_mutprediction/"
     input_f0 = fo1 + pr + ".SJ.fil.annot.assadjunifreqT.pmut.SJinSJ.snp.txt"
     input_file = fo2 + pr + "_r_position.txt"
     
     if genome_id == "hg19" and rbamchr == "none":
-        reference = "./reference/GRCh37.fa"
-        #reference = "/Volumes/NaIIDA_2018aug/genome/hg19_0chr.fa"
+        reference = "../../reference/GRCh37.fa"
     elif genome_id == "hg19" and rbamchr == "chr":
-        reference = "./reference/GRCh37_chr.fa"
+        reference = "../../reference/GRCh37_chr.fa"
     elif genome_id == "hg38" and rbamchr == "none": #chr prefix is none.
-        reference = "./reference/GRCh38.d1.vd1.fa"
-        #reference = "/Volumes/NaIIDA_2018aug/genome/hg38_chr.fa"
+        reference = "../../reference/GRCh38.d1.vd1.fa"
     elif genome_id == "hg38" and rbamchr == "chr": #chr prefix is chr.
-        reference = "./reference/GRCh38_chr.fa"
-    
+        reference = "../../reference/GRCh38_chr.fa"
     
     tmp = fo2 + pr + "_r_mpileuped.txt"
-    
+
     if_path = pathlib.Path(input_f0)
     
     m_file = fo2 + if_path.stem + ".rna_mpileup_ori.txt" #sample position pileup info
     m2_file = fo2 + if_path.stem + ".rna_mpileup_tidy{}Q.txt".format(Q)
     out_file = fo2 + if_path.stem + ".rmut.txt"
-    
+
     if os.path.exists(rbam):    
         data = []
         with open(rbam,"r") as fi: #<sample name of junction file>,<sample name of bam> 
@@ -169,15 +179,15 @@ def juncmut_annotrnamut(pr, folder, genome_id, rbamchr, rbam):
                     continue
                 else:
                     mout.write(F[0] + "\t" + str(col))
-    
+
     #arrange of mpileup file            
     with open(m_file, 'r') as in3, open(m2_file, 'w') as m2out:
         for line in in3:  #sample, chr, pos, ,ref, depth, bases, Q, readsposition
     
             col = line.rstrip('\n').split('\t')
-            print(col)
-            base = tidy_bases(col[5], col[6]) 
             
+            base = tidy_bases(col[5], col[6]) 
+
             depth = 0
             base2num = {'A': 0, 'C': 0, 'G': 0, 'T': 0, 'N': 0, 'a': 0, 'c': 0, 'g': 0, 't': 0, 'n': 0}
             #base2pos = {'A': [], 'C': [], 'G': [], 'T': [], 'N': [], 'a': [], 'c': [], 'g': [], 't': [], 'n': []}
@@ -195,6 +205,7 @@ def juncmut_annotrnamut(pr, folder, genome_id, rbamchr, rbam):
                     base2num[col[3].lower()] = base2num[col[3].lower()] + 1 
                     #base2pos[F[3].lower()].append(pos_vector[i])
                 else:
+                    print(base)
                     base2num[base[i]] = base2num[base[i]] + 1
                     #base2pos[F5[i]].append(pos_vector[i])
     
@@ -300,3 +311,4 @@ if __name__== "__main__":
     
     juncmut_annotrnamut(pr, folder, genome_id, rbamchr, rbam)
     
+

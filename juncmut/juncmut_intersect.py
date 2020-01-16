@@ -18,8 +18,8 @@ def juncmut_intersect(pr, folder):
     input_file = './data/%s/alterativeSJ_mutprediction/%s' %(folder,fname)  #file = './alterativeSJ_cmut/%s/%s.SJ.fil.annot.assadjunifreqT.AI.5mut.txt'
     output_file = './data/%s/alterativeSJ_mutprediction/%s.SJinSJ.txt' %(folder,fstem)
     
-    tmp1 = './data/%s/alterativeSJ_mutprediction/' + pr + '_tmp.bed'
-    tmp2 = './data/%s/alterativeSJ_mutprediction/' + pr + '_tmp_intersect.bed'
+    tmp1 = './data/%s/alterativeSJ_mutprediction/%s_tmp.bed' %(folder, pr)
+    tmp2 = './data/%s/alterativeSJ_mutprediction/%s_tmp_intersect.bed' %(folder, pr)
     
     with open(input_file, 'r') as fin:
         with open(output_file, 'w') as fout:

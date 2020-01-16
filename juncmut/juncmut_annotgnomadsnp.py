@@ -8,9 +8,9 @@ Created on Thu Jul 18 15:30:10 2019
 def juncmut_annotgnomadsnp(pr, folder, genome_id):
     import pysam
       
-    file = '.data/%s/alterativeSJ_mutprediction/%s.SJ.fil.annot.assadjunifreqT.pmut.SJinSJ.txt' %(folder,pr) 
+    file = './data/%s/alterativeSJ_mutprediction/%s.SJ.fil.annot.assadjunifreqT.pmut.SJinSJ.txt' %(folder,pr) 
     
-    out_file = '.data/%s/alterativeSJ_mutprediction/%s.SJ.fil.annot.assadjunifreqT.pmut.SJinSJ.snp.txt' %(folder,pr)
+    out_file = './data/%s/alterativeSJ_mutprediction/%s.SJ.fil.annot.assadjunifreqT.pmut.SJinSJ.snp.txt' %(folder,pr)
     
     
     if genome_id == "hg19":
