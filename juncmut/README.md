@@ -28,13 +28,7 @@ python setup.py install
 ```
 
 ## Preparation of input files
-HEAD
-./data/
-    |- dir_name/
-            |- junction/               <------ The directory to put query files.
-            |       |- query files
-            |
-            |-
+
 =======
 ./data/<br>
 <span>    |- dir_name/<br>
@@ -42,7 +36,7 @@ HEAD
           |       |- query files<br>
             |<br>
             |-<br>
->>>>>>> 
+========
 
 filename extension of query files: .SJ.out.tab
 
