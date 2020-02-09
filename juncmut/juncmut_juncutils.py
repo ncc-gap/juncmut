@@ -6,13 +6,13 @@ Created on Wed Jul 31 2019
 @author: naokoIida
 """
 
-def juncmut_juncutils(input_SJ, output_dir, cont_list, genome_id, rbamchr):
+def juncmut_juncutils(input_SJ, output_dir, cont_list, genome_id, rbamchr, read_num_thres):
     import subprocess
     import shutil
     import pandas as pd
     import os
     import glob
-    from junc_utils import utils
+    from junc_utils.utils import proc_star_junction
     #autochom
     # infile = './data/%s/%s.SJ.out.tab' %(folder,pr)
     # f = './data/%s/alterativeSJ_fil_annot/tmp_%s.SJ.out.tab' %(folder,pr)
@@ -41,8 +41,9 @@ def juncmut_juncutils(input_SJ, output_dir, cont_list, genome_id, rbamchr):
     t2 = "%s/alterativeSJ_fil_annot/tmp_in_%s" %(output_dir, sample)
     
     if not cont_list:
-        shutil.copy(f, file1)
-    
+        # shutil.copy(f, file1)
+        proc_star_junction(f, file1, None, read_num_thres, 10, False, False)
+
     else:
         #f = './junction/%s/%s.SJ.out.tab' %(args.folder,pr)
         #cont_list : list of cotrol files arg.control_file
@@ -50,7 +51,7 @@ def juncmut_juncutils(input_SJ, output_dir, cont_list, genome_id, rbamchr):
         for cont in cont_list:
             out = t1+str(n)+'.txt'
             #junc_utils filter --pooled_control_file *.bed.gz input(./junction/A427.SJ.out.tab) output
-            utils.proc_star_junction(f, out, cont, 1, 10, False, False) #<--reads>=1 adapt 2pass
+            utils.proc_star_junction(f, out, cont, read_num_thres, 10, False, False) #<--reads>=1 adapt 2pass
             f = t2+str(n)+'.txt'
             shutil.copy(out, f)
             n=n+1 

@@ -6,13 +6,17 @@ Date:10152019
 
 """
 
-def juncmut_freq(pr, folder, read_num_thres, freq_thres):
+def juncmut_freq(input_SJ, output_dir, read_num_thres, freq_thres):
     import pandas as pd
+    import os
+
+    sample = os.path.basename(input_SJ).replace(".SJ.out.tab", '')
     
-    file3='./data/%s/alterativeSJ_assadjfreq/%s.SJ.fil.annot.assadj.txt' %(folder,pr)
-    jfile= './data/%s/%s.SJ.out.tab' %(folder,pr)
-    file4 ='./data/%s/alterativeSJ_assadjfreq/%s.SJ.fil.annot.assadjunifreq.txt' %(folder,pr) 
-    file44 ='./data/%s/alterativeSJ_assadjfreq/%s.SJ.fil.annot.assadjunifreqT.txt' %(folder,pr) 
+    file3= "%s/alterativeSJ_assadjfreq/%s.SJ.fil.annot.assadj.txt" %(output_dir, sample)
+    # jfile= "%s/%s.SJ.out.tab" %(output_dir, sample)
+    jfile = input_SJ
+    file4 = "%s/alterativeSJ_assadjfreq/%s.SJ.fil.annot.assadjunifreq.txt" %(output_dir, sample) 
+    file44 = "%s/alterativeSJ_assadjfreq/%s.SJ.fil.annot.assadjunifreqT.txt" %(output_dir, sample) 
       
     data = pd.read_csv(file3, sep='\t', header=None,  dtype={0:'str',1:'int',2:'int',3:'int',4:'int'})
     data.columns = ['chr','s','e','s_ori','e_ori', 'sample', 'class','strand', 'reads']
@@ -63,6 +67,8 @@ def juncmut_freq(pr, folder, read_num_thres, freq_thres):
                 for i in range(0,len(end_ls)):
                     v=e_dict.get((str(c), int(end_ls[i])), '0')
                     total = total + int(v) 
+                if total == 0:
+                    import pdb; pdb.set_trace()
                 freq = int(row[9])/total
                 rec = c + "\t" + str(''.join(map(str, s))) + "\t" + str(''.join(map(str, e))) + "\t"  + str(';'.join(map(str, start_ls))) + "\t" +  str(';'.join(map(str, end_ls)))  + "\t" + \
                 str(''.join(map(str, row[6]))) + "\t" +  str(''.join(map(str, row[7]))) + "\t" + str(''.join(map(str, row[8]))) + "\t" + str(row[9]) + "\t" + str(total)+ "\t" + str(freq) + '\n' #depth

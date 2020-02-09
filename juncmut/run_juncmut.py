@@ -16,7 +16,7 @@ from .juncmut_annotrnamut import juncmut_annotrnamut
 
 def run_juncmut(args):
     
-    #from . import juncmut_env, juncmut_juncutils, juncmut_assadj, juncmut_freq, juncmut_mutpre, juncmut_intersect, juncmut_annotgnomadsnp, juncmut_annotrnamut
+    # from . import juncmut_env, juncmut_juncutils, juncmut_assadj, juncmut_freq, juncmut_mutpre, juncmut_intersect, juncmut_annotgnomadsnp, juncmut_annotrnamut
     
     # pr = args.input
     
@@ -33,17 +33,17 @@ def run_juncmut(args):
     rbamchr = args.rbam_chr_prefix
     
     rbam = args.rbam
+
      
-    
     juncmut_env(args.output_dir)
    
-    juncmut_juncutils(args.input_SJ, args.output_dir, cont_list, genome_id, rbamchr)
+    juncmut_juncutils(args.input_SJ, args.output_dir, cont_list, genome_id, rbamchr, args.read_num_thres)
    
-    """ 
-    juncmut_assadj(pr, folder)
+    juncmut_assadj(args.input_SJ, args.output_dir)
     
-    juncmut_freq(pr, folder ,read_num_thres, freq_thres)
+    juncmut_freq(args.input_SJ, args.output_dir, read_num_thres, freq_thres)
 
+    """
     juncmut_mutpre(pr, folder, genome_id)
 
     juncmut_intersect(pr, folder)
