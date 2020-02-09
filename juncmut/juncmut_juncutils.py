@@ -6,7 +6,7 @@ Created on Wed Jul 31 2019
 @author: naokoIida
 """
 
-def juncmut_juncutils(pr, folder, cont_list, genome_id, rbamchr):
+def juncmut_juncutils(input_SJ, output_dir, cont_list, genome_id, rbamchr):
     import subprocess
     import shutil
     import pandas as pd
@@ -14,9 +14,15 @@ def juncmut_juncutils(pr, folder, cont_list, genome_id, rbamchr):
     import glob
     from junc_utils import utils
     #autochom
-    infile = './data/%s/%s.SJ.out.tab' %(folder,pr)
-    f = './data/%s/alterativeSJ_fil_annot/tmp_%s.SJ.out.tab' %(folder,pr)
-    
+    # infile = './data/%s/%s.SJ.out.tab' %(folder,pr)
+    # f = './data/%s/alterativeSJ_fil_annot/tmp_%s.SJ.out.tab' %(folder,pr)
+
+    sample = os.path.basename(input_SJ).replace(".SJ.out.tab", '')
+    infile = input_SJ
+    f = "%s/alterativeSJ_fil_annot/tmp_%s.SJ.out.tab" %(output_dir, sample)
+
+    ##########
+    # is this necessary? (YS)    
     indf1 = pd.read_csv(infile, sep='\t', header=None, dtype=str)
     
     if rbamchr == 'chr':
@@ -25,12 +31,14 @@ def juncmut_juncutils(pr, folder, cont_list, genome_id, rbamchr):
     else:
         indf2 = indf1[(indf1.iloc[:,0]=='1')|(indf1.iloc[:,0]=='2')|(indf1.iloc[:,0]=='3')|(indf1.iloc[:,0]=='4')|(indf1.iloc[:,0]=='5')|(indf1.iloc[:,0]=='6')|(indf1.iloc[:,0]=='7')|(indf1.iloc[:,0]=='8')|(indf1.iloc[:,0]=='9')|(indf1.iloc[:,0]=='10')|(indf1.iloc[:,0]=='11')|(indf1.iloc[:,0]=='12')|(indf1.iloc[:,0]=='13')|(indf1.iloc[:,0]=='14')|(indf1.iloc[:,0]=='15')|(indf1.iloc[:,0]=='16')|(indf1.iloc[:,0]=='17')|(indf1.iloc[:,0]=='18')|(indf1.iloc[:,0]=='19')|(indf1.iloc[:,0]=='20')|(indf1.iloc[:,0]=='21')|(indf1.iloc[:,0]=='22')|(indf1.iloc[:,0]=='X')]
         indf2.to_csv(f, sep='\t', header=False, index=False)
-    
-    file1 = './data/%s/alterativeSJ_fil_annot/%s.SJ.fil.txt' %(folder,pr)
-    file2 = './data/%s/alterativeSJ_fil_annot/%s.SJ.fil.annot.txt' %(folder,pr)
+    #########
+
+
+    file1 = "%s/alterativeSJ_fil_annot/%s.SJ.fil.txt" %(output_dir, sample)
+    file2 = '%s/alterativeSJ_fil_annot/%s.SJ.fil.annot.txt' %(output_dir, sample)
         
-    t1 = './data/%s/alterativeSJ_fil_annot/tmp_out_%s' %(folder, pr)
-    t2 = './data/%s/alterativeSJ_fil_annot/tmp_in_%s' %(folder, pr)
+    t1 = "%s/alterativeSJ_fil_annot/tmp_out_%s" %(output_dir, sample)
+    t2 = "%s/alterativeSJ_fil_annot/tmp_in_%s" %(output_dir, sample)
     
     if not cont_list:
         shutil.copy(f, file1)
@@ -51,7 +59,7 @@ def juncmut_juncutils(pr, folder, cont_list, genome_id, rbamchr):
     annotate_commands = ["junc_utils", "annotate", file1, file2, "--genome_id", genome_id, '--gene_model=gencode']
     subprocess.call(annotate_commands)
     
-    file_list = glob.glob("./data/%s/alterativeSJ_fil_annot/tmp*" %(folder))
+    file_list = glob.glob("%s/alterativeSJ_fil_annot/tmp*" %(output_dir))
     for file in file_list:
         os.remove(file)
     

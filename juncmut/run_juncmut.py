@@ -37,9 +37,9 @@ def run_juncmut(args):
     
     juncmut_env(args.output_dir)
    
+    juncmut_juncutils(args.input_SJ, args.output_dir, cont_list, genome_id, rbamchr)
+   
     """ 
-    juncmut_juncutils(pr, folder, cont_list, genome_id, rbamchr)
-    
     juncmut_assadj(pr, folder)
     
     juncmut_freq(pr, folder ,read_num_thres, freq_thres)
