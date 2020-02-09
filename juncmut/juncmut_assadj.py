@@ -8,10 +8,13 @@ Created on Wed Jul 31 13:01:49 2019
 """
 
 
-def juncmut_assadj(pr, folder):
+def juncmut_assadj(input_SJ, output_dir):
 
-    file2 = './data/%s/alterativeSJ_fil_annot/%s.SJ.fil.annot.txt' %(folder,pr)
-    file3='./data/%s/alterativeSJ_assadjfreq/%s.SJ.fil.annot.assadj.txt' %(folder,pr)
+    import os
+
+    sample = os.path.basename(input_SJ).replace(".SJ.out.tab", '')
+    file2 = "%s/alterativeSJ_fil_annot/%s.SJ.fil.annot.txt" %(output_dir, sample)
+    file3= "%s/alterativeSJ_assadjfreq/%s.SJ.fil.annot.assadj.txt" %(output_dir, sample)
         
     with open(file2, 'r') as in1:
             with open(file3, 'w') as out1:
@@ -29,12 +32,12 @@ def juncmut_assadj(pr, folder):
                                 c=F[0]
                                 si=int(F[1])-1*int(b[0])
                                 ei=int(F[2])-1*int(b[0])
-                                out1.write(str(c)+'\t'+str(si)+'\t'+str(ei)+'\t'+str(F[1])+'\t'+str(F[2])+'\t'+str(pr)+'\t'+str(F[9])+'\t+\t'+str(r)+'\n')
+                                out1.write(str(c)+'\t'+str(si)+'\t'+str(ei)+'\t'+str(F[1])+'\t'+str(F[2])+'\t'+str(sample)+'\t'+str(F[9])+'\t+\t'+str(r)+'\n')
                             else:
                                 c=F[0]
                                 si=int(F[1])-1*int(b[0])
                                 ei=int(F[2])-1*int(b[0])
-                                out1.write(str(c)+'\t'+str(si)+'\t'+str(ei)+'\t'+str(F[1])+'\t'+str(F[2])+'\t'+str(pr)+'\t'+str(F[9])+'\t+\t'+str(r)+'\n')
+                                out1.write(str(c)+'\t'+str(si)+'\t'+str(ei)+'\t'+str(F[1])+'\t'+str(F[2])+'\t'+str(sample)+'\t'+str(F[9])+'\t+\t'+str(r)+'\n')
                         elif "s" in F[13]: #strand=- 5'SS
                             a =str(F[14])
                             b = a.split(';',2)
@@ -43,12 +46,12 @@ def juncmut_assadj(pr, folder):
                                 c=F[0]
                                 si=int(F[1])-1*int(b[0])
                                 ei=int(F[2])-1*int(b[0])
-                                out1.write(str(c)+'\t'+str(si)+'\t'+str(ei)+'\t'+str(F[1])+'\t'+str(F[2])+'\t'+str(pr)+'\t'+str(F[9])+'\t-\t'+str(r)+'\n')
+                                out1.write(str(c)+'\t'+str(si)+'\t'+str(ei)+'\t'+str(F[1])+'\t'+str(F[2])+'\t'+str(sample)+'\t'+str(F[9])+'\t-\t'+str(r)+'\n')
                             else:
                                 c=F[0]
                                 si=int(F[1])-1*int(b[0])
                                 ei=int(F[2])-1*int(b[0])
-                                out1.write(str(c)+'\t'+str(si)+'\t'+str(ei)+'\t'+str(F[1])+'\t'+str(F[2])+'\t'+str(pr)+'\t'+str(F[9])+'\t-\t'+str(r)+'\n')
+                                out1.write(str(c)+'\t'+str(si)+'\t'+str(ei)+'\t'+str(F[1])+'\t'+str(F[2])+'\t'+str(sample)+'\t'+str(F[9])+'\t-\t'+str(r)+'\n')
                         elif "s" in F[17]: #strand=+ 5'SS
                             a =str(F[18])
                             b = a.split(';',2)
@@ -57,12 +60,12 @@ def juncmut_assadj(pr, folder):
                                 c=F[0]
                                 si=int(F[1])-1*int(b[0])
                                 ei=int(F[2])-1*int(b[0])
-                                out1.write(str(c)+'\t'+str(si)+'\t'+str(ei)+'\t'+str(F[1])+'\t'+str(F[2])+'\t'+str(pr)+'\t'+str(F[9])+'\t-\t'+str(r)+'\n')
+                                out1.write(str(c)+'\t'+str(si)+'\t'+str(ei)+'\t'+str(F[1])+'\t'+str(F[2])+'\t'+str(sample)+'\t'+str(F[9])+'\t-\t'+str(r)+'\n')
                             else:
                                 c=F[0]
                                 si=int(F[1])-1*int(b[0])
                                 ei=int(F[2])-1*int(b[0])
-                                out1.write(str(c)+'\t'+str(si)+'\t'+str(ei)+'\t'+str(F[1])+'\t'+str(F[2])+'\t'+str(pr)+'\t'+str(F[9])+'\t+\t'+str(r)+'\n')
+                                out1.write(str(c)+'\t'+str(si)+'\t'+str(ei)+'\t'+str(F[1])+'\t'+str(F[2])+'\t'+str(sample)+'\t'+str(F[9])+'\t+\t'+str(r)+'\n')
                         elif "e" in F[17]: #strand=- 3'SS
                             a =str(F[18])
                             b = a.split(';',2)
@@ -71,12 +74,12 @@ def juncmut_assadj(pr, folder):
                                 c=F[0]
                                 si=int(F[1])-1*int(b[0])
                                 ei=int(F[2])-1*int(b[0])
-                                out1.write(str(c)+'\t'+str(si)+'\t'+str(ei)+'\t'+str(F[1])+'\t'+str(F[2])+'\t'+str(pr)+'\t'+str(F[9])+'\t-\t'+str(r)+'\n')
+                                out1.write(str(c)+'\t'+str(si)+'\t'+str(ei)+'\t'+str(F[1])+'\t'+str(F[2])+'\t'+str(sample)+'\t'+str(F[9])+'\t-\t'+str(r)+'\n')
                             else:
                                 c=F[0]
                                 si=int(F[1])-1*int(b[0])
                                 ei=int(F[2])-1*int(b[0])
-                                out1.write(str(c)+'\t'+str(si)+'\t'+str(ei)+'\t'+str(F[1])+'\t'+str(F[2])+'\t'+str(pr)+'\t'+str(F[9])+'\t-\t'+str(r)+'\n')
+                                out1.write(str(c)+'\t'+str(si)+'\t'+str(ei)+'\t'+str(F[1])+'\t'+str(F[2])+'\t'+str(sample)+'\t'+str(F[9])+'\t-\t'+str(r)+'\n')
 
 if __name__== "__main__":
     import argparse
