@@ -18,9 +18,9 @@ def run_juncmut(args):
     
     #from . import juncmut_env, juncmut_juncutils, juncmut_assadj, juncmut_freq, juncmut_mutpre, juncmut_intersect, juncmut_annotgnomadsnp, juncmut_annotrnamut
     
-    pr = args.input
+    # pr = args.input
     
-    folder = args.folder
+    # otuput_dir = args.output_dir
     
     cont_list = args.control_file
     
@@ -35,8 +35,9 @@ def run_juncmut(args):
     rbam = args.rbam
      
     
-    juncmut_env(folder)
-    
+    juncmut_env(args.output_dir)
+   
+    """ 
     juncmut_juncutils(pr, folder, cont_list, genome_id, rbamchr)
     
     juncmut_assadj(pr, folder)
@@ -50,3 +51,5 @@ def run_juncmut(args):
     juncmut_annotgnomadsnp(pr, folder, genome_id)
     
     juncmut_annotrnamut(pr, folder, genome_id, rbamchr, rbam)
+    """
+
