@@ -9,11 +9,13 @@ Created on Wed Jul 31 2019
 
 """
 
-def juncmut_mutpre(pr, folder, genome_id):
+def juncmut_mutpre(input_SJ, output_dir, genome_id):
+    import os
     import pysam
  
-    file44 ='./data/%s/alterativeSJ_assadjfreq/%s.SJ.fil.annot.assadjunifreqT.txt' %(folder,pr)
-    file5 = './data/%s/alterativeSJ_mutprediction/%s.SJ.fil.annot.assadjunifreqT.pmut.txt' %(folder,pr)
+    sample = os.path.basename(input_SJ).replace(".SJ.out.tab", '')
+    file44 = "%s/alterativeSJ_assadjfreq/%s.SJ.fil.annot.assadjunifreqT.txt" %(output_dir, sample)
+    file5 = "%s/alterativeSJ_mutprediction/%s.SJ.fil.annot.assadjunifreqT.pmut.txt" %(output_dir, sample)
     
     if genome_id == "hg19":
         #reference = "/Volumes/NaIIDA_2018aug/genome/genomon/GRCh37.fa"
