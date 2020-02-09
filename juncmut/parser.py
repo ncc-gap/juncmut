@@ -17,8 +17,8 @@ def create_parser():
     parser.add_argument("input", metavar = "./sampleFolder/sample.SJ.out.tab", default = None, type = str,
                         help = "Prefix of input file") 
     
-    parser.add_argument("folder", metavar = "./sampleFolder/sample.SJ.out.tab", default = None, type = str,
-                        help = "Folder to input file") 
+    parser.add_argument("output_dir", metavar = "output_dir", default = None, type = str,
+                        help = "Path to output directory") 
     
     parser.add_argument('--control_file', nargs='*', type = str,
                         help = "Path to control data created by merge_control (default: %(default)s)")
