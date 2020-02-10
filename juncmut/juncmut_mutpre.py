@@ -9,20 +9,17 @@ Created on Wed Jul 31 2019
 
 """
 
-def juncmut_mutpre(input_SJ, output_dir, genome_id):
-    import os
+def juncmut_mutpre(input_file, output_file, reference):
+    # import os
     import pysam
  
-    sample = os.path.basename(input_SJ).replace(".SJ.out.tab", '')
-    file44 = "%s/alterativeSJ_assadjfreq/%s.SJ.fil.annot.assadjunifreqT.txt" %(output_dir, sample)
-    file5 = "%s/alterativeSJ_mutprediction/%s.SJ.fil.annot.assadjunifreqT.pmut.txt" %(output_dir, sample)
-    
+    """
     if genome_id == "hg19":
         #reference = "/Volumes/NaIIDA_2018aug/genome/genomon/GRCh37.fa"
         reference = "./reference/GRCh37.fa"  #no chr prefix
     elif genome_id == "hg38":
         reference = "./reference/GRCh38.d1.vd1.fa" #no chr prefix
-        
+    """ 
         
     ref = pysam.FastaFile(reference) # 0-coordinate
     
@@ -34,8 +31,8 @@ def juncmut_mutpre(input_SJ, output_dir, genome_id):
     dict3m = {0: 'CT', 1: 'C', 2: 'T', 3: 'AG', 4: 'TCGA', 5: 'AG', 6: 'AG'}
     
     
-    with open(file44, 'r') as in1:
-        with open(file5, 'w') as out1:
+    with open(input_file, 'r') as in1:
+        with open(output_file, 'w') as out1:
             for line in in1:
                 F = line.rstrip('\n').split('\t')
                 ln = line.rstrip('\n')

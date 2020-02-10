@@ -40,15 +40,17 @@ def run_juncmut(args):
                  args.output_file + ".tmp.SJ.fil.annot.assadjunifreqT.txt",
                  args.input_SJ, 
                  args.read_num_thres, args.freq_thres)
-    """
 
     juncmut_mutpre(args.output_file + ".tmp.SJ.fil.annot.assadjunifreqT.txt",
                    args.output_file + ".tmp.SJ.fil.annot.assadjunifreqT.pmut.txt", 
                    args.reference)
-
     """
-    juncmut_intersect(pr, folder)
-    
+
+    juncmut_intersect(args.output_file + ".tmp.SJ.fil.annot.assadjunifreqT.pmut.txt", 
+                      args.output_file + ".tmp.SJinSJ.txt",
+                      args.input_SJ)
+   
+    """ 
     juncmut_annotgnomadsnp(pr, folder, genome_id)
     
     juncmut_annotrnamut(pr, folder, genome_id, rbamchr, rbam)
