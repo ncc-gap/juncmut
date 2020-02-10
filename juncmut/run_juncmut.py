@@ -28,9 +28,8 @@ def run_juncmut(args):
     
     rbamchr = args.rbam_chr_prefix
     
-    rbam = args.rbam
+    # rbam = args.rbam
 
-    """
     juncmut_juncutils(args.input_SJ, args.output_file + ".tmp.SJ.fil.annot.txt", args.control_file, genome_id, rbamchr, args.read_num_thres)
    
     juncmut_assadj(args.output_file + ".tmp.SJ.fil.annot.txt", 
@@ -44,15 +43,16 @@ def run_juncmut(args):
     juncmut_mutpre(args.output_file + ".tmp.SJ.fil.annot.assadjunifreqT.txt",
                    args.output_file + ".tmp.SJ.fil.annot.assadjunifreqT.pmut.txt", 
                    args.reference)
-    """
 
     juncmut_intersect(args.output_file + ".tmp.SJ.fil.annot.assadjunifreqT.pmut.txt", 
-                      args.output_file + ".tmp.SJinSJ.txt",
+                      args.output_file + ".tmp.SJ.fil.annot.assadjunifreqT.pmut.SJinSJ.txt",
                       args.input_SJ)
    
-    """ 
-    juncmut_annotgnomadsnp(pr, folder, genome_id)
-    
-    juncmut_annotrnamut(pr, folder, genome_id, rbamchr, rbam)
-    """
+    juncmut_annotgnomadsnp(args.output_file + ".tmp.SJ.fil.annot.assadjunifreqT.pmut.SJinSJ.txt",
+                           args.output_file + ".tmp.SJ.fil.annot.assadjunifreqT.pmut.SJinSJ.snp.txt",
+                           args.gnomad_path, genome_id)
+
+    juncmut_annotrnamut(args.output_file + ".tmp.SJ.fil.annot.assadjunifreqT.pmut.SJinSJ.snp.txt",
+                        args.output_file, args.rna_bam, args.reference)
+
 

@@ -6,7 +6,9 @@ Naoko Iida
 #sample name list is "rna_bam_list.txt".
 """
 
-def juncmut_annotrnamut(pr, folder, genome_id, rbamchr, rbam):
+# def juncmut_annotrnamut(pr, folder, genome_id, rbamchr, rbam):
+def juncmut_annotrnamut(input_file, output_file, rna_bam, reference):
+
 
     import subprocess
     import pandas as pd
@@ -110,18 +112,22 @@ def juncmut_annotrnamut(pr, folder, genome_id, rbamchr, rbam):
         
         return proc1
         
-    cdir = './data/%s/' %(folder)
-    os.chdir(cdir)
-    print(os.getcwd())
+    # cdir = './data/%s/' %(folder)
+    # os.chdir(cdir)
+    # print(os.getcwd())
+
 ##mpileup
+
     Q = 15
     #fo1 = "./data/%s/alterativeSJ_mutprediction/" %(folder)
     #fo2 = "./data/%s/alterativeSJ_mutprediction/" %(folder)
-    fo1 = "./alterativeSJ_mutprediction/" 
-    fo2 = "./alterativeSJ_mutprediction/"
-    input_f0 = fo1 + pr + ".SJ.fil.annot.assadjunifreqT.pmut.SJinSJ.snp.txt"
-    input_file = fo2 + pr + "_r_position.txt"
-    
+
+    # fo1 = "./alterativeSJ_mutprediction/" 
+    # fo2 = "./alterativeSJ_mutprediction/"
+    # input_f0 = fo1 + pr + ".SJ.fil.annot.assadjunifreqT.pmut.SJinSJ.snp.txt"
+    # input_file = fo2 + pr + "_r_position.txt"
+
+    """    
     if genome_id == "hg19" and rbamchr == "none":
         reference = "../../reference/GRCh37.fa"
     elif genome_id == "hg19" and rbamchr == "chr":
@@ -130,18 +136,20 @@ def juncmut_annotrnamut(pr, folder, genome_id, rbamchr, rbam):
         reference = "../../reference/GRCh38.d1.vd1.fa"
     elif genome_id == "hg38" and rbamchr == "chr": #chr prefix is chr.
         reference = "../../reference/GRCh38_chr.fa"
-    
-    tmp = fo2 + pr + "_r_mpileuped.txt"
+    """
 
-    if_path = pathlib.Path(input_f0)
-    
-    m_file = fo2 + if_path.stem + ".rna_mpileup_ori.txt" #sample position pileup info
-    m2_file = fo2 + if_path.stem + ".rna_mpileup_tidy{}Q.txt".format(Q)
-    out_file = fo2 + if_path.stem + ".rmut.txt"
+    # tmp = fo2 + pr + "_r_mpileuped.txt"
 
+    # if_path = pathlib.Path(input_f0)
+    
+    # m_file = fo2 + if_path.stem + ".rna_mpileup_ori.txt" #sample position pileup info
+    # m2_file = fo2 + if_path.stem + ".rna_mpileup_tidy{}Q.txt".format(Q)
+    # out_file = fo2 + if_path.stem + ".rmut.txt"
+
+    """
     if os.path.exists(rbam):    
         data = []
-        with open(rbam,"r") as fi: #<sample name of junction file>,<sample name of bam> 
+        with open(rbam, "r") as fi: #<sample name of junction file>,<sample name of bam> 
             reader = csv.reader(fi)
             for row in reader:
                 
@@ -151,17 +159,18 @@ def juncmut_annotrnamut(pr, folder, genome_id, rbamchr, rbam):
     
     else:
         print("no rna_bam_list.txt")
-    
+    """
+
     #make position file
-    qf = pd.read_csv(input_f0, sep='\t', header=None, index_col=None, dtype = 'object',usecols=[0,5,16,18])
+    qf = pd.read_csv(input_file, sep='\t', header=None, index_col=None, dtype = 'object',usecols=[0,5,16,18])
     qf.columns = ['CHR','sample', 'POS','MUT']
     qf =qf.loc[:,['sample','CHR', 'POS','MUT']]
     qf1 = qf.drop_duplicates()
     qf2 = qf1.query('POS != "-"')
-    qf2.to_csv(input_file, index=False, sep='\t', header=False)
+    qf2.to_csv(output_file + ".tmp1", index=False, sep='\t', header=False)
     
     
-    with open(input_file, 'r') as in1, open(m_file, 'w') as mout:
+    with open(output_file + ".tmp1", 'r') as in1, open(output_file + ".tmp2", 'w') as mout:
         for line in in1:
             #l = line.rstrip('\n')
             F = line.rstrip('\n').split('\t')
@@ -169,19 +178,21 @@ def juncmut_annotrnamut(pr, folder, genome_id, rbamchr, rbam):
             position = F[1] + ':' + F[2] +'-'+ F[2]
             print(position)
             #samtools mpileup -r "12:123873242-123873242" -f s3://niida-tokyo/lung_wg/hg19_0chr.fa "s3://niida-tokyo/lung_wg/A549.markdup.bam" > mpileup.txt
-            mpileup_commands = ["samtools", "mpileup", "-r", position, "-f", reference, bam, "-O", "-o", tmp]
+            mpileup_commands = ["samtools", "mpileup", "-r", position, "-f", reference, rna_bam, "-O", "-o", output_file + ".tmp2.tmp"]
             #mpileup_commands = ["/usr/local/bin/samtools", "mpileup", "-r", "5:148630908-148630908", "-f", reference, bam_folder +"H1648.Aligned.sortedByCoord.out.bam", "-O", "-o", tmp]
             subprocess.run(mpileup_commands) 
             
-            with open(tmp, 'r') as in2:
+            with open(output_file + ".tmp2.tmp", 'r') as in2:
                 col = in2.read()
                 if col == "":
                     continue
                 else:
                     mout.write(F[0] + "\t" + str(col))
 
+    os.remove(output_file + ".tmp2.tmp")
+
     #arrange of mpileup file            
-    with open(m_file, 'r') as in3, open(m2_file, 'w') as m2out:
+    with open(output_file + ".tmp2", 'r') as in3, open(output_file + ".tmp3", 'w') as m2out:
         for line in in3:  #sample, chr, pos, ,ref, depth, bases, Q, readsposition
     
             col = line.rstrip('\n').split('\t')
@@ -249,25 +260,25 @@ def juncmut_annotrnamut(pr, folder, genome_id, rbamchr, rbam):
             val = "False"
         return val
     
-    size = os.path.getsize(m2_file)
+    size = os.path.getsize(output_file + ".tmp3")
     
     if size != 0:
         
-        df1 = pd.read_csv(m2_file, sep='\t', header=None, index_col=None, dtype = 'object')
+        df1 = pd.read_csv(output_file + ".tmp3", sep='\t', header=None, index_col=None, dtype = 'object')
         df1.columns = ['sample','CHR', 'POS', 'MUT', 'rna_bases', 'rna_alt_reads', 'rna_alt_ratio']
         #df1['CHR'] = df1['CHR'].str.split('chr', expand=True)[1]
-        df2 = pd.read_csv(input_f0, sep='\t', header=None, index_col=None, dtype = 'object')
+        df2 = pd.read_csv(input_file, sep='\t', header=None, index_col=None, dtype = 'object')
         df2.columns = ['CHR','start','end','start_ori','end_ori','sample','class','strand','reads', 'total', 'freq', 'ref_bases','mut_prediction_seq','info', 'type', 'SJinSJ','POS','REF','MUT','snp_allele','snp_freq']
         res = pd.merge(df2, df1, on=['sample','CHR', 'POS','MUT'],how='left').drop_duplicates()
         res=res.fillna({'rna_bases': '-', 'rna_alt_reads': 0, 'rna_alt_ratio': 0})
         
         res['rna_mut'] = res.apply(f, axis=1)
         
-        res.to_csv(out_file, index=False, sep='\t', header=True)
+        res.to_csv(output_file, index=False, sep='\t', header=True)
     
     else:
         
-        df2 = pd.read_csv(input_f0, sep='\t', header=None, index_col=None, dtype = 'object')
+        df2 = pd.read_csv(input_file, sep='\t', header=None, index_col=None, dtype = 'object')
         df2.columns = ['CHR','start','end','start_ori','end_ori','sample','class','strand','reads', 'total', 'freq', 'ref_bases','mut_prediction_seq','info', 'type', 'SJinSJ','POS','REF','MUT','snp_allele','snp_freq']
         df2['rna_bases'] = '-'
         df2['rna_alt_reads'] = '0'
@@ -276,10 +287,14 @@ def juncmut_annotrnamut(pr, folder, genome_id, rbamchr, rbam):
         
         res['rna_mut'] = 'na'
         
-        res.to_csv(out_file, index=False, sep='\t', header=True)
+        res.to_csv(output_file, index=False, sep='\t', header=True)
         
-    os.remove(input_file)
-    os.remove(tmp)
+    # os.remove(input_file)
+    os.remove(output_file + ".tmp1")
+    os.remove(output_file + ".tmp2")
+    os.remove(output_file + ".tmp3")
+    # os.remove(tmp)
+    
 
 if __name__== "__main__":
     import argparse

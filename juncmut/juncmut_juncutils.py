@@ -33,26 +33,25 @@ def juncmut_juncutils(input_file, output_file, cont_list, genome_id, rbamchr, re
     #########
 
     tmpfile2 = output_file + ".tmp2"
-    tmpfile_list.append(tmpfile2)
     
     if not cont_list:
         proc_star_junction(tmpfile1, tmpfile2, None, read_num_thres, 10, False, False)
-
+        tmpfile_list.append(tmpfile2)
     else:
         n = 1
         cur_infile, cur_outfile = tmpfile1, tmpfile2 + "_" + str(n)
-        tmpfile_list.append(cur_outfile)
         for cont in cont_list:
-            utils.proc_star_junction(cur_infile, cur_outfile, cont, read_num_thres, 10, False, False) #<--reads>=1 adapt 2pass
-            n = n + 1
-            cur_infile = cur_outfile, tmpfile2 + "_" + str(n)
+            proc_star_junction(cur_infile, cur_outfile, cont, read_num_thres, 10, False, False) #<--reads>=1 adapt 2pass
             tmpfile_list.append(cur_outfile)
+            n = n + 1
+            cur_infile, cur_outfile = cur_outfile, tmpfile2 + "_" + str(n)
 
         shutil.copy(cur_infile, tmpfile2)
+        tmpfile_list.append(tmpfile2)
         
     annotate_commands = ["junc_utils", "annotate", tmpfile2, output_file, "--genome_id", genome_id, '--gene_model=gencode']
     subprocess.call(annotate_commands)
-    
+
     for tfile in tmpfile_list:
         os.remove(tfile)
    

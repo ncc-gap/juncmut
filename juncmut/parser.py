@@ -23,8 +23,14 @@ def create_parser():
     parser.add_argument("output_file", metavar = "output_file", default = None, type = str,
                         help = "Path to output directory") 
 
+    parser.add_argument("rna_bam", metavar = "rna.bam", default = None, type = str,
+                        help = "Path to RNA bam file")
+
     parser.add_argument("reference", metavar = "reference.fa", default = None, type = str,
                         help = "Path to human reference genome")
+
+    parser.add_argument("gnomad_path", metavar = "gnomad.vcf.gz", default = None, type = str,
+                        help = "Path to gnomad vcf file")
     
     parser.add_argument('--control_file', nargs='*', type = str,
                         help = "Path to control data created by merge_control (default: %(default)s)")
@@ -41,8 +47,8 @@ def create_parser():
     parser.add_argument("--rbam_chr_prefix", choices = ["chr", "none"], default = "none",
                               help = "chr prefix used in your bam (default: %(default)s)")
     
-    parser.add_argument("--rbam", metavar = "RNAseq_bam_list", default = None, type = str,
-                            help = "A file:list of Path to RNAseq bam folder.") 
+    # parser.add_argument("--rbam", metavar = "RNAseq_bam_list", default = None, type = str,
+    #                         help = "A file:list of Path to RNAseq bam folder.") 
     
     parser.set_defaults(func = run_juncmut) #which def do you use?
     
