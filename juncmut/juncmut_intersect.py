@@ -6,11 +6,12 @@ Created on Fri Sep  6 09:23:51 2019
 python juncmut_intersect.py <folder of query file> <file prefix>
 """
 
-def juncmut_intersect(pr, folder):
+def juncmut_intersect(input_SJ, output_dir):
     import subprocess
     import pathlib
     import os
-    
+
+    sample = os.path.basename(input_SJ).replace(".SJ.out.tab", '')    
     fname = pr + '.SJ.fil.annot.assadjunifreqT.pmut.txt' 
     f = pathlib.Path(fname)
     fstem = f.stem

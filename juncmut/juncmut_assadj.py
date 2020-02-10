@@ -8,16 +8,17 @@ Created on Wed Jul 31 13:01:49 2019
 """
 
 
-def juncmut_assadj(input_SJ, output_dir):
+def juncmut_assadj(input_file, output_file):
 
-    import os
+    # import os
+    sample = "dummy"
 
-    sample = os.path.basename(input_SJ).replace(".SJ.out.tab", '')
-    file2 = "%s/alterativeSJ_fil_annot/%s.SJ.fil.annot.txt" %(output_dir, sample)
-    file3= "%s/alterativeSJ_assadjfreq/%s.SJ.fil.annot.assadj.txt" %(output_dir, sample)
+    # sample = os.path.basename(input_SJ).replace(".SJ.out.tab", '')
+    # file2 = "%s/alterativeSJ_fil_annot/%s.SJ.fil.annot.txt" %(output_dir, sample)
+    # file3= "%s/alterativeSJ_assadjfreq/%s.SJ.fil.annot.assadj.txt" %(output_dir, sample)
         
-    with open(file2, 'r') as in1:
-            with open(file3, 'w') as out1:
+    with open(input_file, 'r') as in1:
+            with open(output_file, 'w') as out1:
     
                 for line in in1:
                     F = line.rstrip('\n').split('\t')

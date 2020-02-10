@@ -6,7 +6,7 @@ Created on Wed Jul 31 2019
 @author: naokoIida
 """
 
-def juncmut_juncutils(input_SJ, output_dir, cont_list, genome_id, rbamchr, read_num_thres):
+def juncmut_juncutils(input_file, output_file, cont_list, genome_id, rbamchr, read_num_thres):
     import subprocess
     import shutil
     import pandas as pd
@@ -14,12 +14,11 @@ def juncmut_juncutils(input_SJ, output_dir, cont_list, genome_id, rbamchr, read_
     import glob
     from junc_utils.utils import proc_star_junction
     #autochom
-    # infile = './data/%s/%s.SJ.out.tab' %(folder,pr)
-    # f = './data/%s/alterativeSJ_fil_annot/tmp_%s.SJ.out.tab' %(folder,pr)
 
-    sample = os.path.basename(input_SJ).replace(".SJ.out.tab", '')
-    infile = input_SJ
-    f = "%s/alterativeSJ_fil_annot/tmp_%s.SJ.out.tab" %(output_dir, sample)
+    infile = input_file
+    tmpfile_list = []
+    tmpfile1 = output_file + ".tmp1"
+    tmpfile_list.append(tmpfile1)
 
     ##########
     # is this necessary? (YS)    
@@ -27,43 +26,37 @@ def juncmut_juncutils(input_SJ, output_dir, cont_list, genome_id, rbamchr, read_
     
     if rbamchr == 'chr':
         indf2 = indf1[(indf1.iloc[:,0]=='chr1')|(indf1.iloc[:,0]=='chr2')|(indf1.iloc[:,0]=='chr3')|(indf1.iloc[:,0]=='chr4')|(indf1.iloc[:,0]=='chr5')|(indf1.iloc[:,0]=='chr6')|(indf1.iloc[:,0]=='chr7')|(indf1.iloc[:,0]=='chr8')|(indf1.iloc[:,0]=='chr9')|(indf1.iloc[:,0]=='chr10')|(indf1.iloc[:,0]=='chr11')|(indf1.iloc[:,0]=='chr12')|(indf1.iloc[:,0]=='chr13')|(indf1.iloc[:,0]=='chr14')|(indf1.iloc[:,0]=='chr15')|(indf1.iloc[:,0]=='chr16')|(indf1.iloc[:,0]=='chr17')|(indf1.iloc[:,0]=='chr18')|(indf1.iloc[:,0]=='chr19')|(indf1.iloc[:,0]=='chr20')|(indf1.iloc[:,0]=='chr21')|(indf1.iloc[:,0]=='chr22')|(indf1.iloc[:,0]=='chrX')]
-        indf2.to_csv(f, sep='\t', header=False, index=False)
+        indf2.to_csv(tmpfile1, sep='\t', header=False, index=False)
     else:
         indf2 = indf1[(indf1.iloc[:,0]=='1')|(indf1.iloc[:,0]=='2')|(indf1.iloc[:,0]=='3')|(indf1.iloc[:,0]=='4')|(indf1.iloc[:,0]=='5')|(indf1.iloc[:,0]=='6')|(indf1.iloc[:,0]=='7')|(indf1.iloc[:,0]=='8')|(indf1.iloc[:,0]=='9')|(indf1.iloc[:,0]=='10')|(indf1.iloc[:,0]=='11')|(indf1.iloc[:,0]=='12')|(indf1.iloc[:,0]=='13')|(indf1.iloc[:,0]=='14')|(indf1.iloc[:,0]=='15')|(indf1.iloc[:,0]=='16')|(indf1.iloc[:,0]=='17')|(indf1.iloc[:,0]=='18')|(indf1.iloc[:,0]=='19')|(indf1.iloc[:,0]=='20')|(indf1.iloc[:,0]=='21')|(indf1.iloc[:,0]=='22')|(indf1.iloc[:,0]=='X')]
-        indf2.to_csv(f, sep='\t', header=False, index=False)
+        indf2.to_csv(tmpfile1, sep='\t', header=False, index=False)
     #########
 
-
-    file1 = "%s/alterativeSJ_fil_annot/%s.SJ.fil.txt" %(output_dir, sample)
-    file2 = '%s/alterativeSJ_fil_annot/%s.SJ.fil.annot.txt' %(output_dir, sample)
-        
-    t1 = "%s/alterativeSJ_fil_annot/tmp_out_%s" %(output_dir, sample)
-    t2 = "%s/alterativeSJ_fil_annot/tmp_in_%s" %(output_dir, sample)
+    tmpfile2 = output_file + ".tmp2"
+    tmpfile_list.append(tmpfile2)
     
     if not cont_list:
-        # shutil.copy(f, file1)
-        proc_star_junction(f, file1, None, read_num_thres, 10, False, False)
+        proc_star_junction(tmpfile1, tmpfile2, None, read_num_thres, 10, False, False)
 
     else:
-        #f = './junction/%s/%s.SJ.out.tab' %(args.folder,pr)
-        #cont_list : list of cotrol files arg.control_file
-        n=1
+        n = 1
+        cur_infile, cur_outfile = tmpfile1, tmpfile2 + "_" + str(n)
+        tmpfile_list.append(cur_outfile)
         for cont in cont_list:
-            out = t1+str(n)+'.txt'
-            #junc_utils filter --pooled_control_file *.bed.gz input(./junction/A427.SJ.out.tab) output
-            utils.proc_star_junction(f, out, cont, read_num_thres, 10, False, False) #<--reads>=1 adapt 2pass
-            f = t2+str(n)+'.txt'
-            shutil.copy(out, f)
-            n=n+1 
-        shutil.copy(out, file1)
+            utils.proc_star_junction(cur_infile, cur_outfile, cont, read_num_thres, 10, False, False) #<--reads>=1 adapt 2pass
+            n = n + 1
+            cur_infile = cur_outfile, tmpfile2 + "_" + str(n)
+            tmpfile_list.append(cur_outfile)
+
+        shutil.copy(cur_infile, tmpfile2)
         
-    annotate_commands = ["junc_utils", "annotate", file1, file2, "--genome_id", genome_id, '--gene_model=gencode']
+    annotate_commands = ["junc_utils", "annotate", tmpfile2, output_file, "--genome_id", genome_id, '--gene_model=gencode']
     subprocess.call(annotate_commands)
     
-    file_list = glob.glob("%s/alterativeSJ_fil_annot/tmp*" %(output_dir))
-    for file in file_list:
-        os.remove(file)
-    
+    for tfile in tmpfile_list:
+        os.remove(tfile)
+   
+ 
 if __name__== "__main__":
     import argparse
 
