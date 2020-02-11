@@ -112,54 +112,9 @@ def juncmut_annotrnamut(input_file, output_file, rna_bam, reference):
         
         return proc1
         
-    # cdir = './data/%s/' %(folder)
-    # os.chdir(cdir)
-    # print(os.getcwd())
-
 ##mpileup
 
     Q = 15
-    #fo1 = "./data/%s/alterativeSJ_mutprediction/" %(folder)
-    #fo2 = "./data/%s/alterativeSJ_mutprediction/" %(folder)
-
-    # fo1 = "./alterativeSJ_mutprediction/" 
-    # fo2 = "./alterativeSJ_mutprediction/"
-    # input_f0 = fo1 + pr + ".SJ.fil.annot.assadjunifreqT.pmut.SJinSJ.snp.txt"
-    # input_file = fo2 + pr + "_r_position.txt"
-
-    """    
-    if genome_id == "hg19" and rbamchr == "none":
-        reference = "../../reference/GRCh37.fa"
-    elif genome_id == "hg19" and rbamchr == "chr":
-        reference = "../../reference/GRCh37_chr.fa"
-    elif genome_id == "hg38" and rbamchr == "none": #chr prefix is none.
-        reference = "../../reference/GRCh38.d1.vd1.fa"
-    elif genome_id == "hg38" and rbamchr == "chr": #chr prefix is chr.
-        reference = "../../reference/GRCh38_chr.fa"
-    """
-
-    # tmp = fo2 + pr + "_r_mpileuped.txt"
-
-    # if_path = pathlib.Path(input_f0)
-    
-    # m_file = fo2 + if_path.stem + ".rna_mpileup_ori.txt" #sample position pileup info
-    # m2_file = fo2 + if_path.stem + ".rna_mpileup_tidy{}Q.txt".format(Q)
-    # out_file = fo2 + if_path.stem + ".rmut.txt"
-
-    """
-    if os.path.exists(rbam):    
-        data = []
-        with open(rbam, "r") as fi: #<sample name of junction file>,<sample name of bam> 
-            reader = csv.reader(fi)
-            for row in reader:
-                
-                data.append(row)
-        datadict = dict(data)
-        bam = datadict.get(pr)
-    
-    else:
-        print("no rna_bam_list.txt")
-    """
 
     #make position file
     qf = pd.read_csv(input_file, sep='\t', header=None, index_col=None, dtype = 'object',usecols=[0,5,16,18])
@@ -172,14 +127,11 @@ def juncmut_annotrnamut(input_file, output_file, rna_bam, reference):
     
     with open(output_file + ".tmp1", 'r') as in1, open(output_file + ".tmp2", 'w') as mout:
         for line in in1:
-            #l = line.rstrip('\n')
             F = line.rstrip('\n').split('\t')
     
             position = F[1] + ':' + F[2] +'-'+ F[2]
             print(position)
-            #samtools mpileup -r "12:123873242-123873242" -f s3://niida-tokyo/lung_wg/hg19_0chr.fa "s3://niida-tokyo/lung_wg/A549.markdup.bam" > mpileup.txt
             mpileup_commands = ["samtools", "mpileup", "-r", position, "-f", reference, rna_bam, "-O", "-o", output_file + ".tmp2.tmp"]
-            #mpileup_commands = ["/usr/local/bin/samtools", "mpileup", "-r", "5:148630908-148630908", "-f", reference, bam_folder +"H1648.Aligned.sortedByCoord.out.bam", "-O", "-o", tmp]
             subprocess.run(mpileup_commands) 
             
             with open(output_file + ".tmp2.tmp", 'r') as in2:
@@ -234,12 +186,6 @@ def juncmut_annotrnamut(input_file, output_file, rna_bam, reference):
                 G_reads = base2num['G'] + base2num['g']
                 C_rate = float(base2num['C'] + base2num['c'])/(depth_p + depth_n)
                 C_reads = base2num['C'] + base2num['c']
-                    
-                    #var_p = base2num[alt.upper()]
-                    #var_n = base2num[alt.lower()]
-                    #strand_ratio =  str(base2num[nuc]) + ":" + str(base2num[nuc.lower()])
-                    #rec = '\t'.join(F) + '\t' + str(depth_p + depth_n) + '\t' + \
-                    #str(var_p + var_n) + '\t' + str(round(alt_rate, 4)) + '\t' + str(strand_ratio)+'\n'
                     
                 rec1 = col[0] +"\t"+ col[1] +"\t"+ col[2] + "\tA\t" + base + "\t" + str(A_reads) + "\t" + str(A_rate) + "\n"
                 rec2 = col[0] +"\t"+ col[1] +"\t"+ col[2] + "\tT\t" + base + "\t" + str(T_reads) + "\t" + str(T_rate) + "\n"

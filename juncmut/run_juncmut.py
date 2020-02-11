@@ -26,36 +26,33 @@ def run_juncmut(args):
     genome_id, is_grc = check_reference(args.reference)
     Path(args.output_file).parent.mkdir(parents = True, exist_ok = True)
 
-    
-    rbamchr = args.rbam_chr_prefix
-    
-    """
-    juncmut_juncutils(args.input_SJ, args.output_file + ".tmp.SJ.fil.annot.txt", args.control_file, genome_id, rbamchr, args.read_num_thres)
+    juncmut_juncutils(args.input_SJ, args.output_file + ".tmp.fil.annot.txt", args.control_file, genome_id, args.read_num_thres)
    
-    juncmut_assadj(args.output_file + ".tmp.SJ.fil.annot.txt", 
-                   args.output_file + ".tmp.SJ.fil.annot.assadj.txt")
+    juncmut_assadj(args.output_file + ".tmp.fil.annot.txt", 
+                   args.output_file + ".tmp.fil.annot.assadj.txt")
 
-    juncmut_freq(args.output_file + ".tmp.SJ.fil.annot.assadj.txt", 
-                 args.output_file + ".tmp.SJ.fil.annot.assadjunifreqT.txt",
+    juncmut_freq(args.output_file + ".tmp.fil.annot.assadj.txt", 
+                 args.output_file + ".tmp.fil.annot.assadjunifreqT.txt",
                  args.input_SJ, 
                  args.read_num_thres, args.freq_thres)
 
-    juncmut_mutpre(args.output_file + ".tmp.SJ.fil.annot.assadjunifreqT.txt",
-                   args.output_file + ".tmp.SJ.fil.annot.assadjunifreqT.pmut.txt", 
+    juncmut_mutpre(args.output_file + ".tmp.fil.annot.assadjunifreqT.txt",
+                   args.output_file + ".tmp.fil.annot.assadjunifreqT.pmut.txt", 
                    args.reference)
 
-    juncmut_intersect(args.output_file + ".tmp.SJ.fil.annot.assadjunifreqT.pmut.txt", 
-                      args.output_file + ".tmp.SJ.fil.annot.assadjunifreqT.pmut.SJinSJ.txt",
+    juncmut_intersect(args.output_file + ".tmp.fil.annot.assadjunifreqT.pmut.txt", 
+                      args.output_file + ".tmp.fil.annot.assadjunifreqT.pmut.SJinSJ.txt",
                       args.input_SJ)
    
-    juncmut_annotgnomadsnp(args.output_file + ".tmp.SJ.fil.annot.assadjunifreqT.pmut.SJinSJ.txt",
-                           args.output_file + ".tmp.SJ.fil.annot.assadjunifreqT.pmut.SJinSJ.snp.txt",
+    juncmut_annotgnomadsnp(args.output_file + ".tmp.fil.annot.assadjunifreqT.pmut.SJinSJ.txt",
+                           args.output_file + ".tmp.fil.annot.assadjunifreqT.pmut.SJinSJ.snp.txt",
                            args.gnomad_path, genome_id)
 
-    juncmut_annotrnamut(args.output_file + ".tmp.SJ.fil.annot.assadjunifreqT.pmut.SJinSJ.snp.txt",
-                        args.output_file, args.rna_bam, args.reference)
-    """
+    juncmut_annotrnamut(args.output_file + ".tmp.fil.annot.assadjunifreqT.pmut.SJinSJ.snp.txt",
+                        args.output_file + ".tmp.fil.annot.assadjunifreqT.pmut.SJinSJ.snp.rmut.txt", 
+                        args.rna_bam, args.reference)
 
-    juncmut_realign(args.output_file, args.output_file + ".ext", 
+    juncmut_realign(args.output_file + ".tmp.fil.annot.assadjunifreqT.pmut.SJinSJ.snp.rmut.txt", 
+                    args.output_file, 
                     args.rna_bam, args.reference, genome_id, is_grc, template_size = 10)
 

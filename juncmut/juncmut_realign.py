@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 
 import sys, random
+from pathlib import Path
 import pysam
 import annot_utils
 from .pyssw import realign_main
@@ -135,6 +136,14 @@ def juncmut_realign(input_file, output_file, bam_file, reference, genome_id, is_
     annot_utils.junction.make_junc_info(output_file + ".gencode.junc.bed.gz", "gencode", genome_id, is_grc, False)
     junc_tb = pysam.TabixFile(output_file + ".gencode.junc.bed.gz")
 
+    hout = open(output_file, 'w') 
+    header = ["Chr", "SJ_Start", "SJ_End", "SJ_Type", "SJ_Strand", "SJ_Read_Count", "SJ_Depth", "SJ_Freq",
+              "Ref_Motif", "Possivle_Alt_Motif", "Is_Canonical", "SJ_Overlap_Count", 
+              "Mut_Pos", "Mut_Ref", "Mut_Alt", "Mut_Count", "Mut_Depth", "Mut_Freq", "AF_Gnomad",
+              "Realign_No_SJ_Neg", "Realign_No_SJ_Pos", "Realign_Target_SJ_Neg", "Reaglin_Target_SJ_Pos",
+              "Realign_Normal_SJ_Neg", "Realign_Normal_SJ_Pos"]
+    print('\t'.join(header), file = hout)
+    
     with open(input_file, 'r') as hin:
         for line in hin:
             F = line.rstrip('\n').split('\t')
@@ -155,10 +164,23 @@ def juncmut_realign(input_file, output_file, bam_file, reference, genome_id, is_
 
             type2count, ir_pos_sreads, target_pos_sreads = realign_main(output_file + ".tmp.read_seq.fa",
                 output_file + ".tmp.template.fa", 4 * template_size - score_margin)
- 
-            print(mut_chr, mut_pos, mut_ref, mut_alt, junc_start, junc_end)
-            print(type2count)
-            import pdb; pdb.set_trace()
+
+            print('\t'.join([F[0], F[1], F[2], F[6], F[7], F[8], F[9], F[10], F[11], F[12], F[14], F[15],
+                             F[16], F[17], F[18], F[22], str(len(F[21])), F[23], F[20],
+                             str(type2count["no_splicing_negative"]), str(type2count["no_splicing_positive"]), 
+                             str(type2count["target_splicing_negative"]), str(type2count["target_splicing_positive"]),
+                             str(type2count["normal_splicing_negative"]), str(type2count["normal_splicing_positive"])]), file = hout)
+
+            Path(output_file + ".tmp.template.fa").unlink()
+            Path(output_file + ".tmp.read_seq.fa").unlink()
+
+    ref_tb.close()
+    junc_tb.close()
+    
+    Path(output_file + ".gencode.junc.bed.gz").unlink()
+    Path(output_file + ".gencode.junc.bed.gz.tbi").unlink()
+
+    hout.close()
 
 
 if __name__ == "__main__":
