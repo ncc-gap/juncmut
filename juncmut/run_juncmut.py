@@ -16,6 +16,7 @@ from .juncmut_mutpre import juncmut_mutpre
 from .juncmut_intersect import juncmut_intersect
 from .juncmut_annotgnomadsnp import juncmut_annotgnomadsnp
 from .juncmut_annotrnamut import juncmut_annotrnamut
+from .juncmut_realign import juncmut_realign
 from .utils import check_reference
 
 def run_juncmut(args):
@@ -28,8 +29,7 @@ def run_juncmut(args):
     
     rbamchr = args.rbam_chr_prefix
     
-    # rbam = args.rbam
-
+    """
     juncmut_juncutils(args.input_SJ, args.output_file + ".tmp.SJ.fil.annot.txt", args.control_file, genome_id, rbamchr, args.read_num_thres)
    
     juncmut_assadj(args.output_file + ".tmp.SJ.fil.annot.txt", 
@@ -54,5 +54,8 @@ def run_juncmut(args):
 
     juncmut_annotrnamut(args.output_file + ".tmp.SJ.fil.annot.assadjunifreqT.pmut.SJinSJ.snp.txt",
                         args.output_file, args.rna_bam, args.reference)
+    """
 
+    juncmut_realign(args.output_file, args.output_file + ".ext", 
+                    args.rna_bam, args.reference, genome_id, is_grc, template_size = 10)
 
