@@ -45,40 +45,34 @@ def juncmut_annotgnomadsnp(input_file, output_file, gnomad_path, genome_id):
                             #         hout.write(out_record)
     
                             # for a in pb[2]:
-                            out_record = ""
-                            if genome_id == "hg19":
-                                chr = str(c)
-                            else:
-                                chr = "chr" + str(c)
-                            # chr = str(c) #
-                            rows = tb.fetch(chr, int(pb[0])-1, int(pb[0]))
+                            for var in pb[2]:
+                                out_record = ""
+                                if genome_id == "hg19":
+                                    chr = str(c)
+                                else:
+                                    chr = "chr" + str(c)
+                                # chr = str(c) #
+                                rows = tb.fetch(chr, int(pb[0])-1, int(pb[0]))
 
-                            cur_AF = 0.0
-                            cur_allele = "-"
-                            if rows is not None:
-                                for row in rows:
-                                    srow=str(row)
-                                    record = srow.split('\t')
+                                cur_AF = 0.0
+                                cur_allele = "-"
+                                if rows is not None:
+                                    for row in rows:
+                                        srow=str(row)
+                                        record = srow.split('\t')
                                     
-                                    if pb[1] == record[3] and pb[2] == record[4]:
-                                        allele = record[3]+">"+record[4]
-                                        infos = record[7].split(';')
-                                        for info in infos:
-                                            if info.startswith("AF="):
-                                                # freq = float(info.replace("AF=", ''))
-                                                cur_AF = float(info.replace("AF=", ''))
-                                                cur_allele = allele
+                                        if pb[1] == record[3] and var == record[4]:
+                                            allele = record[3]+">"+record[4]
+                                            infos = record[7].split(';')
+                                            for info in infos:
+                                                if info.startswith("AF="):
+                                                    cur_AF = float(info.replace("AF=", ''))
+                                                    cur_allele = allele
 
-                                        # out_record = junc_record + "\t" + str(pb[0]) + "\t" + str(pb[1]) + "\t" + str(pb[2]) + "\t" + allele + "\t" + str(freq) +"\n" 
-                                        # print(freq)
-                                        break                                        
+                                            break                                        
            
-                                    # out_record = junc_record + "\t" + str(pb[0]) + "\t" + str(pb[1]) + "\t" + str(pb[2]) + "\t" + "-" + "\t0.0\n"
-                            # else:
-                                # out_record = junc_record + "\t" + str(pb[0]) + "\t" + str(pb[1]) + "\t" + str(pb[2]) + "\t" + "-" + "\t0.0\n" 
-
-                            out_record = junc_record + "\t" + str(pb[0]) + "\t" + str(pb[1]) + "\t" + str(pb[2]) + "\t" + cur_allele + "\t" + str(cur_AF) +"\n" 
-                            hout.write(out_record)
+                                out_record = junc_record + "\t" + str(pb[0]) + "\t" + str(pb[1]) + "\t" + str(var) + "\t" + cur_allele + "\t" + str(cur_AF) +"\n" 
+                                hout.write(out_record)
     
                                     
                 elif c in ["Y"]:
