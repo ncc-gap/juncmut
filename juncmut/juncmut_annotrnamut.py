@@ -13,7 +13,7 @@ def juncmut_annotrnamut(input_file, output_file, rna_bam, reference):
     import subprocess
     import pandas as pd
     import os
-    import pathlib
+    from pathlib import Path
     import csv
 
     def tidy_bases(bases, qualities):  #remove indel and edeage
@@ -114,34 +114,21 @@ def juncmut_annotrnamut(input_file, output_file, rna_bam, reference):
         
 ##mpileup
 
-    Q = 15
-
-    #make position file
-    qf = pd.read_csv(input_file, sep='\t', header=None, index_col=None, dtype = 'object',usecols=[0,5,16,18])
-    qf.columns = ['CHR','sample', 'POS','MUT']
-    qf =qf.loc[:,['sample','CHR', 'POS','MUT']]
-    qf1 = qf.drop_duplicates()
-    qf2 = qf1.query('POS != "-"')
-    qf2.to_csv(output_file + ".tmp1", index=False, sep='\t', header=False)
-    
-    
-    with open(output_file + ".tmp1", 'r') as in1, open(output_file + ".tmp2", 'w') as mout:
-        for line in in1:
+    # separate records for each variant and create position list
+    with open(input_file, 'r') as hin, open(output_file + ".tmp1", 'w') as hout1, open(output_file + ".tmp1.pos.bed", 'w') as hout2:
+        for line in hin:
             F = line.rstrip('\n').split('\t')
-    
-            position = F[1] + ':' + F[2] +'-'+ F[2]
-            print(position)
-            mpileup_commands = ["samtools", "mpileup", "-r", position, "-f", reference, rna_bam, "-O", "-o", output_file + ".tmp2.tmp"]
-            subprocess.run(mpileup_commands) 
-            
-            with open(output_file + ".tmp2.tmp", 'r') as in2:
-                col = in2.read()
-                if col == "":
-                    continue
-                else:
-                    mout.write(F[0] + "\t" + str(col))
+            if F[13] == '-': continue
+            pmuts = F[13].split(',')
+            for pmut in pmuts:
+                pmut_elm = pmut.split(':')
+                for var in pmut_elm[2]:
+                    print('\t'.join(F + [pmut_elm[0], pmut_elm[1], var]), file = hout1)
+                    print('\t'.join([F[0], str(int(pmut_elm[0]) - 1), pmut_elm[0], var]), file = hout2)
 
-    os.remove(output_file + ".tmp2.tmp")
+    with open(output_file + ".tmp2", 'w') as hout:
+        mpileup_commands = ["samtools", "mpileup", "-l", output_file + ".tmp1.pos.bed", "-f", reference, rna_bam]
+        subprocess.check_call(mpileup_commands, stdout = hout)
 
     #arrange of mpileup file            
     with open(output_file + ".tmp2", 'r') as in3, open(output_file + ".tmp3", 'w') as m2out:
@@ -149,7 +136,7 @@ def juncmut_annotrnamut(input_file, output_file, rna_bam, reference):
     
             col = line.rstrip('\n').split('\t')
             
-            base = tidy_bases(col[5], col[6]) 
+            base = tidy_bases(col[4], col[5]) 
 
             depth = 0
             base2num = {'A': 0, 'C': 0, 'G': 0, 'T': 0, 'N': 0, 'a': 0, 'c': 0, 'g': 0, 't': 0, 'n': 0}
@@ -162,19 +149,19 @@ def juncmut_annotrnamut(input_file, output_file, rna_bam, reference):
             for i in range(len(base)):
                 depth = depth + 1
                 if base[i] == '.':
-                    base2num[col[3].upper()] = base2num[col[3].upper()] + 1 #col[3]=REF
+                    base2num[col[2].upper()] = base2num[col[2].upper()] + 1 #col[3]=REF
                     #base2pos[F[3].upper()].append(pos_vector[i])
                 elif base[i] == ',':
-                    base2num[col[3].lower()] = base2num[col[3].lower()] + 1 
+                    base2num[col[2].lower()] = base2num[col[2].lower()] + 1 
                     #base2pos[F[3].lower()].append(pos_vector[i])
                 else:
-                    print(base)
+                    # print(base)
                     base2num[base[i]] = base2num[base[i]] + 1
                     #base2pos[F5[i]].append(pos_vector[i])
     
                 if depth == 0: continue
                     
-                nuc = col[3].upper() #REF
+                nuc = col[2].upper() #REF
                 depth_p = base2num['A'] + base2num['C'] + base2num['G'] + base2num['T']
                 depth_n = base2num['a'] + base2num['c'] + base2num['g'] + base2num['t']
                     
@@ -197,6 +184,7 @@ def juncmut_annotrnamut(input_file, output_file, rna_bam, reference):
             m2out.write(rec3)
             m2out.write(rec4)
                 
+
     def f(row):
         if (str(row['rna_bases']) != '-') & (int(row['rna_alt_reads'])>1) & (float(row['rna_alt_ratio'])>0.05):
             val = "True"
@@ -206,26 +194,29 @@ def juncmut_annotrnamut(input_file, output_file, rna_bam, reference):
             val = "False"
         return val
     
-    size = os.path.getsize(output_file + ".tmp3")
-    
-    if size != 0:
-        
+
+    # size = os.path.getsize(output_file + ".tmp3")
+    fsize = Path(output_file + ".tmp3").stat().st_size
+
+    if fsize != 0:
+
+                
         df1 = pd.read_csv(output_file + ".tmp3", sep='\t', header=None, index_col=None, dtype = 'object')
-        df1.columns = ['sample','CHR', 'POS', 'MUT', 'rna_bases', 'rna_alt_reads', 'rna_alt_ratio']
+        df1.columns = ['CHR', 'POS', 'REF', 'MUT', 'rna_bases', 'rna_alt_reads', 'rna_alt_ratio']
         #df1['CHR'] = df1['CHR'].str.split('chr', expand=True)[1]
-        df2 = pd.read_csv(input_file, sep='\t', header=None, index_col=None, dtype = 'object')
-        df2.columns = ['CHR','start','end','start_ori','end_ori','sample','class','strand','reads', 'total', 'freq', 'ref_bases','mut_prediction_seq','info', 'type', 'SJinSJ','POS','REF','MUT','snp_allele','snp_freq']
-        res = pd.merge(df2, df1, on=['sample','CHR', 'POS','MUT'],how='left').drop_duplicates()
+        df2 = pd.read_csv(output_file + ".tmp1", sep='\t', header=None, index_col=None, dtype = 'object')
+        df2.columns = ['CHR','start','end','start_ori','end_ori','sample','class','strand','reads', 'total', 'freq', 'ref_bases','mut_prediction_seq','info', 'type', 'SJinSJ','POS','REF','MUT']
+        res = pd.merge(df2, df1, on=['CHR', 'POS','MUT'],how='left').drop_duplicates()
         res=res.fillna({'rna_bases': '-', 'rna_alt_reads': 0, 'rna_alt_ratio': 0})
         
         res['rna_mut'] = res.apply(f, axis=1)
         
-        res.to_csv(output_file, index=False, sep='\t', header=True)
+        res.to_csv(output_file, index=False, sep='\t')
     
     else:
         
-        df2 = pd.read_csv(input_file, sep='\t', header=None, index_col=None, dtype = 'object')
-        df2.columns = ['CHR','start','end','start_ori','end_ori','sample','class','strand','reads', 'total', 'freq', 'ref_bases','mut_prediction_seq','info', 'type', 'SJinSJ','POS','REF','MUT','snp_allele','snp_freq']
+        df2 = pd.read_csv(output_file + ".tmp1", sep='\t', header=None, index_col=None, dtype = 'object')
+        df2.columns = ['CHR','start','end','start_ori','end_ori','sample','class','strand','reads', 'total', 'freq', 'ref_bases','mut_prediction_seq','info', 'type', 'SJinSJ','POS','REF','MUT']
         df2['rna_bases'] = '-'
         df2['rna_alt_reads'] = '0'
         df2['rna_alt_ratio'] = '0'
@@ -233,14 +224,13 @@ def juncmut_annotrnamut(input_file, output_file, rna_bam, reference):
         
         res['rna_mut'] = 'na'
         
-        res.to_csv(output_file, index=False, sep='\t', header=True)
+        res.to_csv(output_file, index=False, sep='\t', header=False)
         
-    # os.remove(input_file)
-    os.remove(output_file + ".tmp1")
-    os.remove(output_file + ".tmp2")
-    os.remove(output_file + ".tmp3")
-    # os.remove(tmp)
+    Path(output_file + ".tmp1").unlink()
+    Path(output_file + ".tmp2").unlink()
+    Path(output_file + ".tmp3").unlink()
     
+
 
 if __name__== "__main__":
     import argparse

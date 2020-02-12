@@ -147,7 +147,7 @@ def juncmut_realign(input_file, output_file, bam_file, reference, genome_id, is_
     with open(input_file, 'r') as hin:
         for line in hin:
             F = line.rstrip('\n').split('\t')
-            if F[24] != "True": continue
+            if F[23] != "True": continue
             F = line.rstrip('\n').split('\t')
             mut_chr, junc_start, junc_end = F[0], int(F[1]), int(F[2])
             mut_pos, mut_ref, mut_alt = int(F[16]), F[17], F[18]
@@ -155,7 +155,6 @@ def juncmut_realign(input_file, output_file, bam_file, reference, genome_id, is_
                 junc_annotated = junc_end
             else:
                 junc_annotated = junc_start
-
 
             generate_template_seq(output_file + ".tmp.template.fa", ref_tb, junc_tb, mut_chr, mut_pos, mut_ref, mut_alt,
                 junc_start, junc_end, junc_annotated, template_size, genome_id, is_grc)
@@ -166,7 +165,7 @@ def juncmut_realign(input_file, output_file, bam_file, reference, genome_id, is_
                 output_file + ".tmp.template.fa", 4 * template_size - score_margin)
 
             print('\t'.join([F[0], F[1], F[2], F[6], F[7], F[8], F[9], F[10], F[11], F[12], F[14], F[15],
-                             F[16], F[17], F[18], F[22], str(len(F[21])), F[23], F[20],
+                             F[16], F[17], F[18], F[21], str(len(F[20])), F[22], F[25],
                              str(type2count["no_splicing_negative"]), str(type2count["no_splicing_positive"]), 
                              str(type2count["target_splicing_negative"]), str(type2count["target_splicing_positive"]),
                              str(type2count["normal_splicing_negative"]), str(type2count["normal_splicing_positive"])]), file = hout)

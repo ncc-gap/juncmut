@@ -8,14 +8,6 @@ Created on Thu Jul 18 15:30:10 2019
 def juncmut_annotgnomadsnp(input_file, output_file, gnomad_path, genome_id):
     import pysam
       
-    # file = './data/%s/alterativeSJ_mutprediction/%s.SJ.fil.annot.assadjunifreqT.pmut.SJinSJ.txt' %(folder,pr) 
-    
-    # out_file = './data/%s/alterativeSJ_mutprediction/%s.SJ.fil.annot.assadjunifreqT.pmut.SJinSJ.snp.txt' %(folder,pr)
-    
-        
-    # if genome_id == "hg19":
-  
-        # db = "./reference/gnomad.genomes.r2.1.1.sites.vcf.bgz" #chr_prefix is "none".
     db = gnomad_path
     tb = pysam.TabixFile(db)
        
@@ -25,126 +17,49 @@ def juncmut_annotgnomadsnp(input_file, output_file, gnomad_path, genome_id):
                 line = line.rstrip('\n')
                 junc_record = line
                 F = line.split('\t')
+                if F[23] != "True": continue
+
                 c = (F[0].replace('chr', '')) 
-    
-                if c in ["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","X"]:
+   
+                if c != "Y": 
+                # if c in ["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","X"]:
                     if F[13] == "-":
                         out_record = line + "\t-\t-\t-\t-\t0.0\n" 
                         hout.write(out_record)
                     else:
-                        P = F[13].split(',') # multiple position per SJ.
-                        for i in P:
-                            pb = i.split(':')
+                        out_record = ""
+                        if genome_id == "hg19":
+                            chr = str(c)
+                        else:
+                            chr = "chr" + str(c)
 
-                            # for a in pb[2]:
-                            #     #chr = "chr" + str(c)
-                            #     chr = str(c) #
-                            #     rows =tb.fetch(chr, int(pb[0])-1, int(pb[0]))
-                            #     if not list(rows):
-                            #         out_record = junc_record + "\t" + str(pb[0]) + "\t" + str(pb[1]) + "\t" + str(a) + "\t" + "-" + "\t0.0\n" 
-                            #         hout.write(out_record)
-    
-                            # for a in pb[2]:
-                            for var in pb[2]:
-                                out_record = ""
-                                if genome_id == "hg19":
-                                    chr = str(c)
-                                else:
-                                    chr = "chr" + str(c)
-                                # chr = str(c) #
-                                rows = tb.fetch(chr, int(pb[0])-1, int(pb[0]))
+                        rows = tb.fetch(chr, int(F[16]) - 1, int(F[16]))
 
-                                cur_AF = 0.0
-                                cur_allele = "-"
-                                if rows is not None:
-                                    for row in rows:
-                                        srow=str(row)
-                                        record = srow.split('\t')
-                                    
-                                        if pb[1] == record[3] and var == record[4]:
-                                            allele = record[3]+">"+record[4]
-                                            infos = record[7].split(';')
-                                            for info in infos:
-                                                if info.startswith("AF="):
-                                                    cur_AF = float(info.replace("AF=", ''))
-                                                    cur_allele = allele
+                        cur_AF = 0.0
+                        cur_allele = "-"
+                        if rows is not None:
+                            for row in rows:
+                                srow=str(row)
+                                record = srow.split('\t')
+                                 
+                                if F[17] == record[3] and F[18] == record[4]:
+                                    allele = record[3]+">"+record[4]
+                                    infos = record[7].split(';')
+                                    for info in infos:
+                                        if info.startswith("AF="):
+                                            cur_AF = float(info.replace("AF=", ''))
+                                            cur_allele = allele
 
-                                            break                                        
+                                    break                                        
            
-                                out_record = junc_record + "\t" + str(pb[0]) + "\t" + str(pb[1]) + "\t" + str(var) + "\t" + cur_allele + "\t" + str(cur_AF) +"\n" 
-                                hout.write(out_record)
+                        out_record = junc_record + "\t" + cur_allele + "\t" + str(cur_AF) +"\n" 
+                        hout.write(out_record)
     
                                     
                 elif c in ["Y"]:
-                    out_record = junc_record + "\t-\t-\t-\tna\t0\n" 
-                    hout.write(out_record)
-                else:
-                    out_record = junc_record + "\tPOS\tREF\tMUT_prediction\tsnp\tsnp_freq\n" 
+                    out_record = junc_record + "\tna\t0\n" 
                     hout.write(out_record)
 
-    """                        
-    elif genome_id == "hg38":
-        
-        # db = "./reference/gnomad.genomes.r3.0.sites.vcf.bgz"  #chr_prefix is "chr".
-        db = gnomad_path
-        tb = pysam.TabixFile(db)
-       
-        with open(file, 'r') as hin:
-            with open(out_file,'w') as hout:
-                for line in hin: # one SJ
-                    line = line.rstrip('\n')
-                    junc_record = line
-                    F = line.split('\t')
-                    c = (F[0].replace('chr', '')) 
-        
-                    if c in ["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","X"]:
-                        if F[13] == "-":
-                            out_record = line + "\t-\t-\t-\t-\t0\n" 
-                            hout.write(out_record)
-                        else:
-                            P = F[13].split(',') # multiple position per SJ.
-                            for i in P:
-                                pb = i.split(':')
-    
-                                for a in pb[2]:
-                                    chr = "chr" + str(c)
-                                    #chr = str(c) #
-                                    rows =tb.fetch(chr, int(pb[0])-1, int(pb[0]))
-                                    if not list(rows):
-                                        out_record = junc_record + "\t" + str(pb[0]) + "\t" + str(pb[1]) + "\t" + str(a) + "\t" + "-" + "\t0.0\n" 
-                                        hout.write(out_record)
-        
-                                for a in pb[2]:
-                                    out_record = ""
-                                    chr = "chr" + str(c)
-                                    #chr = str(c) #
-                                    rows =tb.fetch(chr, int(pb[0])-1, int(pb[0]))
-                                    for row in rows:
-                                        srow=str(row)
-                                        record = srow.split('\t')
-                                        
-                                        if pb[1] == record[3] and a == record[4]:
-                                            allele = record[3]+">"+record[4]
-                                            infos = record[7].split(';')
-                                            for info in infos:
-                                                if info.startswith("AF="):
-                                                    freq = float(info.replace("AF=", ''))
-        
-                                            out_record = junc_record + "\t" + str(pb[0]) + "\t" + str(pb[1]) + "\t" + str(a) + "\t" + allele + "\t" + str(freq) +"\n" 
-                                            print(freq)
-                                            break                                        
-               
-                                        out_record = junc_record + "\t" + str(pb[0]) + "\t" + str(pb[1]) + "\t" + str(a) + "\t" + "-" + "\t0.0\n"
-                                    hout.write(out_record)
-        
-                                        
-                    elif c in ["Y"]:
-                        out_record = junc_record + "\t-\t-\t-\tna\t0\n" 
-                        hout.write(out_record)
-                    else:
-                        out_record = junc_record + "\tPOS\tREF\tMUT_prediction\tsnp\tsnp_freq\n" 
-                        hout.write(out_record)
-    """
 
 if __name__== "__main__":
     import argparse
