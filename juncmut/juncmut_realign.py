@@ -65,8 +65,8 @@ def juncmut_realign(input_file, output_file, bam_file, reference, genome_id, is_
             if (junc_annotated == junc_start and rj_start == junc_start and abs(rj_end - mut_pos) <= template_size) or \
                 (junc_annotated == junc_end and rj_end == junc_end and abs(rj_start - 1 - mut_pos) <= template_size):
                 # without mutation
-                normal_junc_ref_seq = ref_tb.fetch(region = mut_chr + str((rj_start - 1) - (template_size - 1)) + '-' + str(rj_start - 1)) + \
-                    ref_tb.fetch(region = mut_chr + str(rj_end + 1) + '-' + str((rj_end + 1) + (template_size - 1)))
+                normal_junc_ref_seq = ref_tb.fetch(region = mut_chr + ':' + str((rj_start - 1) - (template_size - 1)) + '-' + str(rj_start - 1)) + \
+                    ref_tb.fetch(region = mut_chr + ':' + str(rj_end + 1) + '-' + str((rj_end + 1) + (template_size - 1)))
                 print(">normal_splicing_negative_" + str(njind), file = hout)
                 print(normal_junc_ref_seq, file = hout)
             
