@@ -7,15 +7,9 @@ Created on Wed Jul 31 13:01:49 2019
 
 """
 
-
 def juncmut_assadj(input_file, output_file):
 
-    # import os
-    sample = "dummy"
-
-    # sample = os.path.basename(input_SJ).replace(".SJ.out.tab", '')
-    # file2 = "%s/alterativeSJ_fil_annot/%s.SJ.fil.annot.txt" %(output_dir, sample)
-    # file3= "%s/alterativeSJ_assadjfreq/%s.SJ.fil.annot.assadj.txt" %(output_dir, sample)
+    sample = input_file.split('.')[0]
         
     with open(input_file, 'r') as in1:
             with open(output_file, 'w') as out1:
@@ -87,16 +81,16 @@ if __name__== "__main__":
 
     parser = argparse.ArgumentParser() #make a parser
 
-    parser.add_argument("input", metavar = "prefix. sample.SJ.fil.annot.txt", default = None, type = str,
+    parser.add_argument("input_file", metavar = "input_file", default = None, type = str,
                         help = "input file") 
     
-    parser.add_argument("folder", metavar = "group", default = "my_samples", type = str,
-                        help = "folder name") 
+    parser.add_argument("output_file", metavar = "output_file", default = "my_sample", type = str,
+                        help = "output_file") 
     
     args = parser.parse_args()
 
-    pr = args.input
-    folder = args.folder
+    input_file = args.input_file
+    output_file = args.output_file
 
-    print(pr) 
-    juncmut_assadj(pr, folder)
+    print(input_file) 
+    juncmut_assadj(input_file, output_file)
