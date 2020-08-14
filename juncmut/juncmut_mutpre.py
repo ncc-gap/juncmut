@@ -10,16 +10,8 @@ Created on Wed Jul 31 2019
 """
 
 def juncmut_mutpre(input_file, output_file, reference):
-    # import os
+
     import pysam
- 
-    """
-    if genome_id == "hg19":
-        #reference = "/Volumes/NaIIDA_2018aug/genome/genomon/GRCh37.fa"
-        reference = "./reference/GRCh37.fa"  #no chr prefix
-    elif genome_id == "hg38":
-        reference = "./reference/GRCh38.d1.vd1.fa" #no chr prefix
-    """ 
         
     ref = pysam.FastaFile(reference) # 0-coordinate
     
@@ -36,10 +28,10 @@ def juncmut_mutpre(input_file, output_file, reference):
             for line in in1:
                 F = line.rstrip('\n').split('\t')
                 ln = line.rstrip('\n')
-                #if F[0] in ["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","X","Y"]:
+                
                 if "5" in F[6] and "+" in F[7]: #o-->
                     c=F[0]
-                    c = (c.replace('chr', ''))
+                    #c = (c.replace('chr', ''))
                     s=int(F[1])-1-2 #region -2|0~5  
                     e=int(F[1])+5
                     getbases = ref.fetch(c,s,e)
@@ -61,7 +53,7 @@ def juncmut_mutpre(input_file, output_file, reference):
                     if mlist[2] == "G" or mlist[3] == "T":
                         
                         if mlist[2] == "G" and mlist[3] == "T":
-                            mposi_rec = mposi[2] + ":" + mposi[3]
+                            mposi_rec = mposi[2] + "," + mposi[3]
                             allele = '|' + bases[2] + bases[3] + '>GT*d'
                         elif mlist[2] == "G" and mlist[3] == ".":
                             mposi_rec = mposi[2]
@@ -74,14 +66,14 @@ def juncmut_mutpre(input_file, output_file, reference):
                         mposi_rec = '-'
                     else:
                         allele = 'non-canonical'
-                        mposi_rec = ','.join(map(str,noncamposi))
+                        mposi_rec = ','.join(map(str,noncamposi))                        
                         
                     rec = ln + "\t" + bases + "\t" + ''.join(mlist) + "\t" +  str(mposi_rec) + "\t"+ allele + "\n"
                     out1.write(rec)             
                 
                 elif "5" in F[6] and "-" in F[7]: #<--o
                     c=F[0]
-                    c = (c.replace('chr', ''))
+                    #c = (c.replace('chr', ''))
                     s=int(F[2])-1-5
                     e=int(F[2])+2
                     getbases = ref.fetch(c,s,e)
@@ -105,7 +97,7 @@ def juncmut_mutpre(input_file, output_file, reference):
                     if mlist[4] == "A" or mlist[5] == "C":
 
                         if mlist[4] == "A" and mlist[5] == "C":
-                            mposi_rec = mposi[4] + ":" + mposi[5]
+                            mposi_rec = mposi[4] + "," + mposi[5]
                             allele = '|' + bases[5].translate(trans) + bases[4].translate(trans) + '>GT*d'
                         elif mlist[4] == "A" and mlist[5] == ".":
                             mposi_rec = mposi[4]
@@ -124,7 +116,7 @@ def juncmut_mutpre(input_file, output_file, reference):
                     
                 elif "3" in F[6] and "+" in F[7]: #-->o
                     c=F[0]
-                    c = (c.replace('chr', ''))
+                    #c = (c.replace('chr', ''))
                     s=int(F[2])-1-5 #region -5|1  
                     e=int(F[2])+1
                     getbases = ref.fetch(c,s,e)
@@ -147,7 +139,7 @@ def juncmut_mutpre(input_file, output_file, reference):
 
                     if mlist[4] == "A" or mlist[5] == "G":
                         if mlist[4] == "A" and mlist[5] == "G":
-                            mposi_rec = mposi[4] + ":" + mposi[5]
+                            mposi_rec = mposi[4] + "," + mposi[5]
                             allele =  bases[4] + bases[5] + '|>AG*d'
                         elif mlist[4] == "A" and mlist[5] == ".":
                             mposi_rec = mposi[4]
@@ -167,7 +159,7 @@ def juncmut_mutpre(input_file, output_file, reference):
                 
                 elif "3" in F[6] and "-" in F[7]: #o<--
                     c=F[0]
-                    c = (c.replace('chr', ''))
+                    #c = (c.replace('chr', ''))
                     s=int(F[1])-1-1
                     e=int(F[1])+5
                     getbases = ref.fetch(c,s,e)
@@ -193,7 +185,7 @@ def juncmut_mutpre(input_file, output_file, reference):
 
                     if mlist[1] == "C" or mlist[2] == "T":
                         if mlist[1] == "C" and mlist[2] == "T":
-                            mposi_rec = mposi[1] + ":" + mposi[2]
+                            mposi_rec = mposi[1] + "," + mposi[2]
                             allele =  bases[2].translate(trans) + bases[1].translate(trans) + '|>AG*d'
                         elif mlist[1] == "C" and mlist[2] == ".":
                             mposi_rec = mposi[1]
@@ -216,20 +208,19 @@ if __name__== "__main__":
     
     parser = argparse.ArgumentParser() #make a parser
     
-    parser.add_argument("input", metavar = "prefix", default = None, type = str,
+    parser.add_argument("input_file", metavar = "input_file", default = None, type = str,
                             help = "prefix") 
         
-    parser.add_argument("folder", metavar = "group", default = "my_samples", type = str,
+    parser.add_argument("output_file", metavar = "output_file", default = "my_samples", type = str,
                             help = "folder name of input files") 
     
-    parser.add_argument("--genome_id", choices = ["hg19", "hg38"], default = "hg19",
-                              help = "Genome id used for selecting reference sequences corresponding files (default: %(default)s)") 
-    
+    parser.add_argument("reference", metavar = "reference", default = "my_samples", type = str,
+                            help = "/full/path/to/reference")     
         
     args = parser.parse_args()
     
-    pr = args.input
-    folder = args.folder
-    genome_id = args.genome_id
+    input_file = args.input_file
+    output_file = args.output_file
+    reference = args.reference
     
-    juncmut_mutpre(pr,folder, genome_id)
+    juncmut_mutpre(input_file, output_file, reference)
