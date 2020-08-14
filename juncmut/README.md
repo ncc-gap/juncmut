@@ -159,7 +159,6 @@ juncmut_annotgnomad.py {input_file} {output_file} {path_to_gnomad_db} {genome_id
 output(./juncmut/prefix..SJ.fil.annot.assadj.freq.pmut.SJint.rmut.snp.txt)
 column = ['CHR','start','end','start_ori','end_ori','sample','class','strand','reads', 'total', 'freq', 'ref_bases','mut_prediction_seq','info', 'type', 'intSJ','POS','REF','MUT',rna_bases,rna_alt_reads,rna_alt_ratio,rna_mut, gnomAD, gnomAD_AF]
 
-python ${root}juncmut_annotspliceai.py --spliceai /homeB/naiida/project2/reference/spliceai_scores.hg38.vcf.gz --input_file ./juncmut/${sample}.SJ.fil.annot.assadj.freq.pmut.SJint.rmut.val.snp.txt --output_file ./juncmut/${sample}.SJ.fil.annot.assadj.freq.pmut.SJint.rmut.val.snp.spliceai.txt
 
 Optional:  
 Step1
@@ -183,10 +182,9 @@ agg_1file.py
 #$ -l mem_req=16G,s_vmem=16G
 #$ -pe def_slot 2
 
-root=../../juncmut_codes/
+root=path_to_code_dir
 sample=$1
 rna_bam=$2
-#rna_bam=/homeB/naiida/project2/rna/lung26GRCh38pass1/DRR016694.Aligned.sortedByCoord.out.bam
 
 date
 
@@ -202,13 +200,12 @@ python ${root}juncmut_mutpre.py ./juncmut/${sample}.SJ.fil.annot.assadj.freq.txt
 
 python ${root}juncmut_intersect.py ./juncmut/${sample}.SJ.fil.annot.assadj.freq.pmut.txt ./juncmut/${sample}.SJ.fil.annot.assadj.freq.pmut.SJint.txt ./junction/${sample}.SJ.out.tab
 
-python ${root}juncmut_rnamut.py ./juncmut/${sample}.SJ.fil.annot.assadj.freq.pmut.SJint.txt ./juncmut/${sample}.SJ.fil.annot.assadj.freq.pmut.SJint.rmut.txt ${rna_bam} ../../reference/GRCh38_chr.fa
+python ${root}juncmut_rnamut.py ./juncmut/${sample}.SJ.fil.annot.assadj.freq.pmut.SJint.txt ./juncmut/${sample}.SJ.fil.annot.assadj.freq.pmut.SJint.rmut.txt ${rna_bam} ../../reference/genome.fa
 
-python ${root}juncmut_realign.py ./juncmut/${sample}.SJ.fil.annot.assadj.freq.pmut.SJint.rmut.txt ./juncmut/${sample}.SJ.fil.annot.assadj.freq.pmut.SJint.rmut.val.txt ${rna_bam} ../../reference/GRCh38_chr.fa hg38 F
+python ${root}juncmut_realign.py ./juncmut/${sample}.SJ.fil.annot.assadj.freq.pmut.SJint.rmut.txt ./juncmut/${sample}.SJ.fil.annot.assadj.freq.pmut.SJint.rmut.val.txt ${rna_bam} ../../reference/genome.fa hg38 F
 
 python ${root}juncmut_annotgnomad.py ./juncmut/${sample}.SJ.fil.annot.assadj.freq.pmut.SJint.rmut.val.txt ./juncmut/${sample}.SJ.fil.annot.assadj.freq.pmut.SJint.rmut.val.snp001.txt ../../reference/gnomad.genomes.r3.0.sites.vcf.bgz --genome_id hg38
 
-python ${root}juncmut_annotspliceai.py --spliceai /homeB/naiida/project2/reference/spliceai_scores.hg38.vcf.gz --input_file ./juncmut/${sample}.SJ.fil.annot.assadj.freq.pmut.SJint.rmut.val.snp.txt --output_file ./juncmut/${sample}.SJ.fil.annot.assadj.freq.pmut.SJint.rmut.val.snp.spliceai.txt
 
 
 
