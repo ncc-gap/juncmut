@@ -1,10 +1,16 @@
 #! /usr/bin/env python3
 
+"""
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/homeB/naiida/project2/juncmut_codes
+
+The program check bam or cram from the filename.
+"""
+
 import sys, random
 from pathlib import Path
 import pysam
 import annot_utils
-from .pyssw import realign_main
+from pyssw import realign_main
 
 def juncmut_realign(input_file, output_file, bam_file, reference, genome_id, is_grc, template_size = 10, score_margin = 4):
 
@@ -103,8 +109,11 @@ def juncmut_realign(input_file, output_file, bam_file, reference, genome_id, is_
 
             return(check_flag)
 
-
-        bamfile = pysam.AlignmentFile(bam_file, 'rb')
+        b_path = Path(bam_file)
+        if b_path.suffix == '.bam':
+            bamfile = pysam.AlignmentFile(bam_file, 'rb')
+        if b_path.suffix == '.cram':
+            bamfile = pysam.AlignmentFile(bam_file, 'rc')
 
         read_count = bamfile.count(region = mut_chr + ':' + str(mut_pos) + '-' + str(mut_pos), read_callback = check_read)
         read_ind_list = random.sample(range(read_count), min(max_count, read_count))
@@ -138,40 +147,44 @@ def juncmut_realign(input_file, output_file, bam_file, reference, genome_id, is_
 
     hout = open(output_file, 'w') 
     header = ["Chr", "SJ_Start", "SJ_End", "SJ_Type", "SJ_Strand", "SJ_Read_Count", "SJ_Depth", "SJ_Freq",
-              "Ref_Motif", "Possivle_Alt_Motif", "Is_Canonical", "SJ_Overlap_Count", 
-              "Mut_Pos", "Mut_Ref", "Mut_Alt", "Mut_Count", "Mut_Depth", "Mut_Freq", "AF_Gnomad",
+              "Ref_Motif", "Possivle_Alt_Motif","Possible_Alt_key", "Is_Canonical", "SJ_Overlap_Count", 
+              "Mut_Pos", "Mut_Ref", "Mut_Alt", "Mut_Count", "Mut_Depth", "Mut_Freq",
               "Realign_No_SJ_Neg", "Realign_No_SJ_Pos", "Realign_Target_SJ_Neg", "Reaglin_Target_SJ_Pos",
               "Realign_Normal_SJ_Neg", "Realign_Normal_SJ_Pos"]
     print('\t'.join(header), file = hout)
     
     with open(input_file, 'r') as hin:
+        next(hin)
         for line in hin:
+            
             F = line.rstrip('\n').split('\t')
-            if F[23] != "True": continue
-            F = line.rstrip('\n').split('\t')
-            mut_chr, junc_start, junc_end = F[0], int(F[1]), int(F[2])
-            mut_pos, mut_ref, mut_alt = int(F[16]), F[17], F[18]
-            if (F[6].endswith("5'SS") and F[7] == '+') or (F[6].endswith("3'SS") and F[7] == '-'):
-                junc_annotated = junc_end
+            if F[22] != "True": 
+                print('\t'.join([F[0], F[1], F[2], F[6], F[7], F[8], F[9], F[10], F[11], F[12], F[13], F[14], F[15],
+                             F[16], F[17], F[18], F[20], str(len(F[19])), F[21]]) +"\t-\t-\t-\t-\t-\t-", file = hout)                
             else:
-                junc_annotated = junc_start
-
-            generate_template_seq(output_file + ".tmp.template.fa", ref_tb, junc_tb, mut_chr, mut_pos, mut_ref, mut_alt,
-                junc_start, junc_end, junc_annotated, template_size, genome_id, is_grc)
+                F = line.rstrip('\n').split('\t')
+                mut_chr, junc_start, junc_end = F[0], int(F[1]), int(F[2])
+                mut_pos, mut_ref, mut_alt = int(F[16]), F[17], F[18]
+                if (F[6].endswith("5'SS") and F[7] == '+') or (F[6].endswith("3'SS") and F[7] == '-'):
+                    junc_annotated = junc_end
+                else:
+                    junc_annotated = junc_start
     
-            extract_read_around_boundary(bam_file, output_file + ".tmp.read_seq.fa", mut_chr, mut_pos)
-
-            type2count, ir_pos_sreads, target_pos_sreads = realign_main(output_file + ".tmp.read_seq.fa",
-                output_file + ".tmp.template.fa", 4 * template_size - score_margin)
-
-            print('\t'.join([F[0], F[1], F[2], F[6], F[7], F[8], F[9], F[10], F[11], F[12], F[14], F[15],
-                             F[16], F[17], F[18], F[21], str(len(F[20])), F[22], F[25],
-                             str(type2count["no_splicing_negative"]), str(type2count["no_splicing_positive"]), 
-                             str(type2count["target_splicing_negative"]), str(type2count["target_splicing_positive"]),
-                             str(type2count["normal_splicing_negative"]), str(type2count["normal_splicing_positive"])]), file = hout)
-
-            Path(output_file + ".tmp.template.fa").unlink()
-            Path(output_file + ".tmp.read_seq.fa").unlink()
+                generate_template_seq(output_file + ".tmp.template.fa", ref_tb, junc_tb, mut_chr, mut_pos, mut_ref, mut_alt,
+                    junc_start, junc_end, junc_annotated, template_size, genome_id, is_grc)
+        
+                extract_read_around_boundary(bam_file, output_file + ".tmp.read_seq.fa", mut_chr, mut_pos)
+    
+                type2count, ir_pos_sreads, target_pos_sreads = realign_main(output_file + ".tmp.read_seq.fa",
+                    output_file + ".tmp.template.fa", 4 * template_size - score_margin)
+    
+                print('\t'.join([F[0], F[1], F[2], F[6], F[7], F[8], F[9], F[10], F[11], F[12], F[13], F[14], F[15],
+                                 F[16], F[17], F[18], F[20], str(len(F[19])), F[21],
+                                 str(type2count["no_splicing_negative"]), str(type2count["no_splicing_positive"]), 
+                                 str(type2count["target_splicing_negative"]), str(type2count["target_splicing_positive"]),
+                                 str(type2count["normal_splicing_negative"]), str(type2count["normal_splicing_positive"])]), file = hout)
+                Path(output_file + ".tmp.template.fa").unlink()
+                Path(output_file + ".tmp.read_seq.fa").unlink()
 
     ref_tb.close()
     junc_tb.close()
@@ -191,12 +204,11 @@ if __name__ == "__main__":
     genome_id = sys.argv[5]
     is_grc = True if sys.argv[6] in ["True", "T", "TRUE"] else False
 
-
-    juncmut_realign(input_file, output_file, bam_file, reference, genome_id, is_grc, template_size = 10)
-
+    #juncmut_realign(input_file, output_file, bam_file, reference, genome_id, is_grc, template_size = 10)
+    juncmut_realign(input_file, output_file, bam_file, reference, genome_id, is_grc, template_size = 10, score_margin = 4)
     
 """
-10      21659045        21661704        21659045        21661704        dummy   Intronic alternative 5'SS       -       108     184     0.5869565217391305      TCCCACCT        A.T.....        21661699:T:A,21661701:C:T       non-canonical        20      21661701        C       T       -       0.0     ,,....,,..,....TTtTt..  5       0.22727272727272727     True
-5       124287120       124288581       124287118;124287120     124288579;124288581     dummy   Intronic alternative 3'SS       +       4       34      0.11764705882352941     ATTTCAG Y...AG. 124288580:C:A:124288581:A:G     CA|>AG*d     13      124288580       C       A       -       0.0     AAaA... 4       0.5714285714285714      True
+chr10      21659045        21661704        21659045        21661704        dummy   Intronic alternative 5'SS       -       108     184     0.5869565217391305      TCCCACCT        A.T.....        21661699:T:A,21661701:C:T       non-canonical        20      21661701        C       T       -     ,,....,,..,....TTtTt..  5       0.22727272727272727     True
+chr5       124287120       124288581       124287118;124287120     124288579;124288581     dummy   Intronic alternative 3'SS       +       4       34      0.11764705882352941     ATTTCAG Y...AG. 124288580:C:A:124288581:A:G     CA|>AG*d     13      124288580       C       A       -       AAaA... 4       0.5714285714285714      True
 
 """ 
