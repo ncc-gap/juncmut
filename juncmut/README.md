@@ -53,44 +53,40 @@ prefix_of_query_file (prefix.SJ.out.tab)
 dir_name (./data/dir_name/junction/query files)
 
 ### Each function
-Step1. You are in the directory with a junction folder.
-```
-juncmut_env.py {dir_name}
-```
 
-Step2. filtering by SJ control and annotation of SJ.
+Step1. filtering by SJ control and annotation of SJ.
 
 ```
 juncmut_juncutils.py {input_file} {output_file} --control_file ./reference/SJ_control_2_4.bed.gz ./reference/gtex_sj2r2s.bed.gz
 ```
 output(./juncmut/prefix.SJ.fil.txt, ./juncmut/prefix.SJ.fil.annot.txt )
 
-Step3. Adjustment of the position of SJ.              
+Step2. Adjustment of the position of SJ.              
 ```
 juncmut_assadj.py  {input_file} {output_file}
 ```
 output(./juncmut/prefix.SJ.fil.annot.assadj.txt)
 
 
-Step4. Caluculate the frequency and filteration by the frequency.       
+Step3. Caluculate the frequency and filteration by the frequency.       
 ```
 juncmut_freq.py  {input_file} {output_file} {original_sj_file} --read_num_thres 3 --freq_thres 0.05
 ```
 output(./juncmut/prefix.SJ.fil.annot.assadj.freq.txt)
 
-Step5. Prediction of mutations.
+Step4. Prediction of mutations.
 ```
 juncmut_mutpre.py {input_file} {output_file} {reference}
 ```
 output(./juncmut/prefix.SJ.fil.annot.assadj.freq.pmut.txt)
 
-Step6. Count the number of SJs at a position.
+Step5. Count the number of SJs at a position.
 ```
 juncmut_intersect.py {input_file} {output_file} {original_sj_file}
 ```
 output(./juncmut/prefix.SJ.fil.annot.assadj.freq.pmut.SJinSJ.txt)
 
-Step7. Search the mutation in the RNA bam.
+Step6. Search the mutation in the RNA bam.
 ```
 juncmut_rnamut.py {input_file} {output_file} {rna_bam} {reference}
 ```
@@ -120,7 +116,7 @@ column =
 [21]rna_alt_ratio
 [22]rna_mut
 
-Step10. Realign
+Step7. Realign
 python ${root}juncmut_realign.py ${sample}.SJ.fil.annot.assadj.freq.pmut.SJinSJ.rmut.txt ${sample}.SJ.fil.annot.assadj.freq.pmut.SJinSJ.rmut.val.txt rna_bam ../../reference/GRCh38_chr.fa hg38 F
 
 -grc option: T means that the chromosome names are not chr-prefix.
@@ -152,7 +148,7 @@ output col
 [23] Realign_Normal_SJ_Neg	
 [24] Realign_Normal_SJ_Pos
 
-Step9. Add gnomAD snp annotation.
+Step8. Add gnomAD snp annotation.
 ```
 juncmut_annotgnomad.py {input_file} {output_file} {path_to_gnomad_db} {genome_id} --genome_id hg38
 ```
