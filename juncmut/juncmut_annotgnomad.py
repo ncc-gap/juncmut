@@ -27,7 +27,7 @@ def juncmut_annotgnomad(input_file, output_file, gnomad_path, genome_id):
                 c = F[0].replace('chr', '')
 
                 if c != "Y":
-                    if F[12] == "-":
+                    if F[10] == "-":
                         out_record = line + "\t-\t0.0\n"
                         hout.write(out_record)
                     else:
@@ -36,8 +36,9 @@ def juncmut_annotgnomad(input_file, output_file, gnomad_path, genome_id):
                             chr = str(c)
                         else:
                             chr = "chr" + str(c)
-
-                        rows = tb.fetch(chr, int(F[13]) - 1, int(F[13]))
+                        #rows = tb.fetch(chr, int(F[13]) - 1, int(F[13]))
+                        #skip val
+                        rows = tb.fetch(chr, int(F[14]) - 1, int(F[14]))
 
                         cur_AF = 0.0
                         cur_allele = "-"
@@ -45,8 +46,9 @@ def juncmut_annotgnomad(input_file, output_file, gnomad_path, genome_id):
                             for row in rows:
                                 srow=str(row)
                                 record = srow.split('\t')
-
-                                if F[14] == record[3] and F[15] == record[4]:
+                                #if F[14] == record[3] and F[15] == record[4]:
+                                #skip val
+                                if F[15] == record[3] and F[16] == record[4]:
                                     allele = record[3]+">"+record[4]
                                     infos = record[7].split(';')
                                     for info in infos:

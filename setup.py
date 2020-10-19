@@ -5,12 +5,12 @@ from setuptools import setup, find_packages
     
 setup(
     name = 'juncmut',
-    version = '0.4b1',
-    description='Python programs for the prediction of genomic mutation from RNA-seq splicing junctions data',
+    version = '0.0.1α',
+    description='Python programs for the identification of the genomic mutation from RNA-seq splicing junction data',
     url = 'https://github.com/ni6o6/',
     author = 'Naoko Iida',
     author_email = 'iida.nao08@gamil.com',
-    license = 'GPLv3',
+    license = '',
 
     classifiers = [
         'Development Status :: 1 - Alpha',

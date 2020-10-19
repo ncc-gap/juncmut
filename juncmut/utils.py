@@ -71,6 +71,7 @@ def check_reference(reference):
             grc_count = grc_count + 1
         elif rname in ["chr" + x for x in target_rnames]:
             nongrc_count = nongrc_count + 1
+            rname = rname.replace('chr','')
         else:
             continue
 
@@ -106,5 +107,6 @@ def check_reference(reference):
 
 if __name__ == "__main__":
 
+    
     print(check_reference(sys.argv[1]))
     

@@ -3,6 +3,12 @@
 Naoko Iida
 
 python juncmut_annotgmut.py input_file, output_file, bam, reference
+
+chr in rna_bam and chr in dna_bam -> rmchr F
+chr in rna_bam and no chr in dna_bam -> rmchr T
+no chr in rna_bam and chr in dna_bam -> rmchr F
+no chr in rna_bam and no chr in dna_bam -> rmchr T
+ 
 """
 
 def juncmut_gmut(input_file, output_file, bam, reference, rmchr):
@@ -108,14 +114,16 @@ def juncmut_gmut(input_file, output_file, bam, reference, rmchr):
             print(line, file = hout1)
             
             F = line.rstrip('\n').split('\t')
-            mut_pos = F[13]
-            mut_ref = F[14]
-            var = F[15]
+            mut_pos = F[14]
+            mut_ref = F[15]
+            var = F[16]
             
             if rmchr == 'T':
                 chr = F[0].replace('chr', '')
-            else: chr = F[0]
-            
+            else:
+                chr_t = F[0].replace('chr', '')
+                chr = 'chr'+chr_t
+                
             print('\t'.join([chr, str(int(mut_pos) - 1), str(mut_pos), var]), file = hout2)
             
     #position = chr+":"+str(int(mut_pos) - 1)+"-"+str(mut_pos)
@@ -199,14 +207,15 @@ def juncmut_gmut(input_file, output_file, bam, reference, rmchr):
     if fsize != 0:
         df1 = pd.read_csv(output_file+".tmp3", sep='\t', header=None, index_col=None, dtype = 'object')
         df1.columns = ['Chr', 'Mut_Pos', 'Mut_Ref', 'Mut_Alt', 'g_bases', 'g_alt_reads', 'g_alt_ratio']
+        
         if rmchr == 'T':
             df1['Chr'] = 'chr' + df1['Chr'].astype(str)
         #df1['Chr'] = df1['Chr'].str.split('chr', expand=True)[1]
         df2 = pd.read_csv(output_file+".tmp1", sep='\t', header=None, index_col=None, dtype = 'object')
         
-        df2.columns = ['Chr','SJ_Start','SJ_End','SJ_Type','SJ_Strand','SJ_Read_Count','SJ_Depth','SJ_Freq','Ref_Motif','Possivle_Alt_Motif','Possible_Alt_key',	
-'Is_Canonical', 'SJ_Overlap_Count',	'Mut_Pos','Mut_Ref','Mut_Alt','Mut_Count','Mut_Depth','Mut_Freq','Realign_No_SJ_Neg','Realign_No_SJ_Pos',	
-'Realign_Target_SJ_Neg','Reaglin_Target_SJ_Pos','Realign_Normal_SJ_Neg','Realign_Normal_SJ_Pos','gnomAD','gnomAD_AF']
+        df2.columns = ['Chr','SJ_Start','SJ_End','SJ_Type','SJ_Strand','SJ_Read_Count','SJ_Depth','SJ_Freq','Ref_Motif','Possivle_Alt_Motif',
+'Possible_Alt_key','Is_Canonical','Is_in_exon','SJ_Overlap_Count','Mut_Pos','Mut_Ref','Mut_Alt','Mut_Count','Mut_Depth','Mut_Freq',
+'Realign_No_SJ_Neg','Realign_No_SJ_Pos','Realign_Target_SJ_Neg','Reaglin_Target_SJ_Pos','Realign_Normal_SJ_Neg','Realign_Normal_SJ_Pos','RNA_Mut','gnomAD','gnomAD_AF']
         
         res = pd.merge(df2, df1, on=['Chr', 'Mut_Pos', 'Mut_Ref', 'Mut_Alt'],how='left').drop_duplicates()
         res=res.fillna({'g_bases': '-', 'g_alt_reads': 0, 'g_alt_ratio': 0})
@@ -218,16 +227,16 @@ def juncmut_gmut(input_file, output_file, bam, reference, rmchr):
     else:
 
         df2 = pd.read_csv(output_file + ".tmp1", sep='\t', header=None, index_col=None, dtype = 'object')
-        df2.columns = ['Chr','SJ_Start','SJ_End','SJ_Type','SJ_Strand','SJ_Read_Count','SJ_Depth','SJ_Freq','Ref_Motif','Possivle_Alt_Motif','Possible_Alt_key',	
-'Is_Canonical', 'SJ_Overlap_Count',	'Mut_Pos','Mut_Ref','Mut_Alt','Mut_Count','Mut_Depth','Mut_Freq','Realign_No_SJ_Neg','Realign_No_SJ_Pos',	
-'Realign_Target_SJ_Neg','Reaglin_Target_SJ_Pos','Realign_Normal_SJ_Neg','Realign_Normal_SJ_Pos','gnomAD','gnomAD_AF']
+        df2.columns = ['Chr','SJ_Start','SJ_End','SJ_Type','SJ_Strand','SJ_Read_Count','SJ_Depth','SJ_Freq','Ref_Motif','Possivle_Alt_Motif',
+'Possible_Alt_key','Is_Canonical','Is_in_exon','SJ_Overlap_Count','Mut_Pos','Mut_Ref','Mut_Alt','Mut_Count','Mut_Depth','Mut_Freq',
+'Realign_No_SJ_Neg','Realign_No_SJ_Pos','Realign_Target_SJ_Neg','Reaglin_Target_SJ_Pos','Realign_Normal_SJ_Neg','Realign_Normal_SJ_Pos','RNA_Mut','gnomAD','gnomAD_AF']
         df2['g_bases'] = '-'
         df2['g_alt_reads'] = '0'
         df2['g_alt_ratio'] = '0'
         res = df2.drop_duplicates()
 
         res['g_mut'] = 'na'
-        res.to_csv(output_file, index=False, sep='\t', header=False)
+        res.to_csv(output_file, index=False, sep='\t', header=True)
 
     #Path(output_file + ".tmp1").unlink()
     #Path(output_file + ".tmp2").unlink()
@@ -249,7 +258,7 @@ if __name__== "__main__":
                             help = "output file")
 
     parser.add_argument("bam", metavar = "rna_bam", default = None, type = str,
-                            help = "rna bam")
+                            help = "genomic bam")
 
     parser.add_argument("reference", metavar = "reference", default = None, type = str,
                             help = "/path/to/reference")
