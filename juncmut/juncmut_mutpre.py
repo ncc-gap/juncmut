@@ -208,13 +208,13 @@ if __name__== "__main__":
     
     parser = argparse.ArgumentParser() #make a parser
     
-    parser.add_argument("input_file", metavar = "input_file", default = None, type = str,
+    parser.add_argument("--input_file", metavar = "input_file", default = None, type = str,
                             help = "prefix") 
         
-    parser.add_argument("output_file", metavar = "output_file", default = "my_samples", type = str,
+    parser.add_argument("--output_file", metavar = "output_file", default = "my_samples", type = str,
                             help = "folder name of input files") 
     
-    parser.add_argument("reference", metavar = "reference", default = "my_samples", type = str,
+    parser.add_argument("--reference", metavar = "reference", default = "my_samples", type = str,
                             help = "/full/path/to/reference")     
         
     args = parser.parse_args()

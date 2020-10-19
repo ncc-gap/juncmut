@@ -239,16 +239,16 @@ if __name__== "__main__":
 
     parser = argparse.ArgumentParser() #make a parser
 
-    parser.add_argument("input_file", metavar = "input_file", default = None, type = str,
+    parser.add_argument("--input_file", metavar = "input_file", default = None, type = str,
                             help = "input file")
 
-    parser.add_argument("output_file", metavar = "output_file", default = "my_sample", type = str,
+    parser.add_argument("--output_file", metavar = "output_file", default = "my_sample", type = str,
                             help = "output file")
 
-    parser.add_argument("rna_bam", metavar = "rna_bam", default = None, type = str,
+    parser.add_argument("--rna_bam", metavar = "rna_bam", default = None, type = str,
                             help = "rna bam")
 
-    parser.add_argument("reference", metavar = "reference", default = None, type = str,
+    parser.add_argument("--reference", metavar = "reference", default = None, type = str,
                             help = "/path/to/reference")
 
     args = parser.parse_args()

@@ -32,14 +32,14 @@ def run_juncmut(args):
 
     juncmut_freq("./juncmut/"+pre+".SJ.fil.annot.assadj.txt", 
                  "./juncmut/"+pre+".SJ.fil.annot.assadj.freq.txt",
-                 args.read_num_thres, args.freq_thres)
+                 args.input_file, args.read_num_thres, args.freq_thres)
 
     juncmut_mutpre("./juncmut/"+pre+".SJ.fil.annot.assadj.freq.txt",
                    "./juncmut/"+pre+".SJ.fil.annot.assadj.freq.pmut.txt", 
                    args.reference)
 
     juncmut_intersect("./juncmut/"+pre+".SJ.fil.annot.assadj.freq.pmut.txt", 
-                     "./juncmut/"+pre+".SJ.fil.annot.assadj.freq.pmut.SJint.txt")
+                     "./juncmut/"+pre+".SJ.fil.annot.assadj.freq.pmut.SJint.txt", args.input_file)
 
     juncmut_rnamut("./juncmut/"+pre+".SJ.fil.annot.assadj.freq.pmut.SJint.txt",
                    "./juncmut/"+pre+".SJ.fil.annot.assadj.freq.pmut.SJint.rmut.txt", 

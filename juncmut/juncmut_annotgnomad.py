@@ -5,7 +5,7 @@ Created on Thu Jul 18 15:30:10 2019
 
 @author: genome
 """
-def juncmut_annotgnomad(input_file, output_file, gnomad_path, genome_id):
+def juncmut_annotgnomad(input_file, output_file, gnomad, genome_id):
     import pysam
 
     db = gnomad_path
@@ -72,13 +72,13 @@ if __name__== "__main__":
 
     parser = argparse.ArgumentParser() #make a parser
 
-    parser.add_argument("input_file", metavar = "input_file", default = None, type = str,
+    parser.add_argument("--input_file", metavar = "input_file", default = None, type = str,
                             help = "input file")
-    parser.add_argument("output_file", metavar = "output_file", default = "my sample", type = str,
+    parser.add_argument("--output_file", metavar = "output_file", default = "my sample", type = str,
                             help = "output file")
-    parser.add_argument("gnomad_path", metavar = "gnomad_path", default = None, type = str,
+    parser.add_argument("--gnomad", metavar = "gnomad", default = None, type = str,
                             help = "/path/to/gnomad_db")
-    parser.add_argument("--genome_id", choices = ["hg19", "hg38"], default = "hg19",
+    parser.add_argument("--genome_id", choices = ["hg19", "hg38"], default = "hg38",
                               help = "Genome id used for selecting snp data (default: %(default)s)")
 
     args = parser.parse_args()
@@ -88,4 +88,4 @@ if __name__== "__main__":
     gnomad_path = args.gnomad_path
     genome_id = args.genome_id
 
-    juncmut_annotgnomad(input_file, output_file, gnomad_path, genome_id)
+    juncmut_annotgnomad(input_file, output_file, gnomad, genome_id)
