@@ -8,7 +8,7 @@ Created on Thu Jul 18 15:30:10 2019
 def juncmut_annotgnomad(input_file, output_file, gnomad, genome_id):
     import pysam
 
-    db = gnomad_path
+    db = gnomad
     tb = pysam.TabixFile(db)
 
     with open(input_file, 'r') as hin:
