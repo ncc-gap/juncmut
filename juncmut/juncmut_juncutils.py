@@ -58,16 +58,16 @@ if __name__== "__main__":
 
     parser = argparse.ArgumentParser() #make a parser
     
-    parser.add_argument("input_file", metavar = "input_file", default = None, type = str,
+    parser.add_argument("--input_file", metavar = "input_file", default = None, type = str,
                             help = "prefix") 
         
-    parser.add_argument("output_file", metavar = "output_file", default = "my_sample", type = str,
+    parser.add_argument("--output_file", metavar = "output_file", default = "my_sample", type = str,
                             help = "folder name of input files") 
         
     parser.add_argument('--control_file', nargs='*', type = str, default = [],
                             help = "control data created by merge_control (default: %(default)s), reads filter>=1")
         
-    parser.add_argument("--genome_id", choices = ["hg19", "hg38", "mm10"], default = "hg19",
+    parser.add_argument("--genome_id", choices = ["hg19", "hg38", "mm10"], default = "hg38",
                               help = "Genome id used for selecting UCSC-GRC chromosome name corresponding files (default: %(default)s)")
     
     parser.add_argument("--read_num_thres", metavar = "read_num_thres", default = 1, type = int,

@@ -25,7 +25,7 @@ def run_juncmut(args):
     pre = Path(args.input_file).stem.split('.')[0]
     os.makedirs("juncmut", exist_ok = True)
 
-    juncmut_juncutils(args.input_file, "./juncmut/"+pre+".SJ.fil.annot.txt", args.control_file, genome_id)
+    juncmut_juncutils(args.input_file, "./juncmut/"+pre+".SJ.fil.annot.txt", args.control_file, genome_id, 1)
 
     juncmut_assadj("./juncmut/"+pre+".SJ.fil.annot.txt",
                    "./juncmut/"+pre+".SJ.fil.annot.assadj.txt")
