@@ -25,31 +25,31 @@ def run_juncmut(args):
     pre = Path(args.input_file).stem.split('.')[0]
     os.makedirs("juncmut", exist_ok = True)
 
-    juncmut_juncutils(args.input_file, ./juncmut/pre+".SJ.fil.annot.txt", args.control_file, genome_id)
+    juncmut_juncutils(args.input_file, "./juncmut/"+pre+".SJ.fil.annot.txt", args.control_file, genome_id)
 
-    juncmut_assadj(./juncmut/pre+".SJ.fil.annot.txt",
-                   ./juncmut/pre+".SJ.fil.annot.assadj.txt")
+    juncmut_assadj("./juncmut/"+pre+".SJ.fil.annot.txt",
+                   "./juncmut/"+pre+".SJ.fil.annot.assadj.txt")
 
-    juncmut_freq(./juncmut/pre+".SJ.fil.annot.assadj.txt", 
-                 ./juncmut/pre+".SJ.fil.annot.assadj.freq.txt",
+    juncmut_freq("./juncmut/"+pre+".SJ.fil.annot.assadj.txt", 
+                 "./juncmut/"+pre+".SJ.fil.annot.assadj.freq.txt",
                  args.read_num_thres, args.freq_thres)
 
-    juncmut_mutpre(./juncmut/pre+".SJ.fil.annot.assadj.freq.txt",
-                   ./juncmut/pre+".SJ.fil.annot.assadj.freq.pmut.txt", 
+    juncmut_mutpre("./juncmut/"+pre+".SJ.fil.annot.assadj.freq.txt",
+                   "./juncmut/"+pre+".SJ.fil.annot.assadj.freq.pmut.txt", 
                    args.reference)
 
-    juncmut_intersect(./juncmut/pre+".SJ.fil.annot.assadj.freq.pmut.txt", 
-                     ./juncmut/pre+".SJ.fil.annot.assadj.freq.pmut.SJint.txt")
+    juncmut_intersect("./juncmut/"+pre+".SJ.fil.annot.assadj.freq.pmut.txt", 
+                     "./juncmut/"+pre+".SJ.fil.annot.assadj.freq.pmut.SJint.txt")
 
-    juncmut_rnamut(./juncmut/pre+".SJ.fil.annot.assadj.freq.pmut.SJint.txt",
-                   ./juncmut/pre+".SJ.fil.annot.assadj.freq.pmut.SJint.rmut.txt", 
+    juncmut_rnamut("./juncmut/"+pre+".SJ.fil.annot.assadj.freq.pmut.SJint.txt",
+                   "./juncmut/"+pre+".SJ.fil.annot.assadj.freq.pmut.SJint.rmut.txt", 
                    args.rna_bam, args.reference)
 
-    juncmut_realign(./juncmut/pre+".SJ.fil.annot.assadj.freq.pmut.SJint.rmut.txt",
-                    ./juncmut/pre+".SJ.fil.annot.assadj.freq.pmut.SJint.rmut.ed.txt", 
+    juncmut_realign("./juncmut/"+pre+".SJ.fil.annot.assadj.freq.pmut.SJint.rmut.txt",
+                    "./juncmut/"+pre+".SJ.fil.annot.assadj.freq.pmut.SJint.rmut.ed.txt", 
                     args.rna_bam, args.reference, genome_id, is_grc, template_size = 10, score_margin = 4)
 
-    juncmut_annotgnomad(./juncmut/pre+".SJ.fil.annot.assadj.freq.pmut.SJint.rmut.ed.txt",
-                        ./juncmut/pre+".SJ.fil.annot.assadj.freq.pmut.SJint.rmut.ed.snp.txt",
+    juncmut_annotgnomad("./juncmut/"+pre+".SJ.fil.annot.assadj.freq.pmut.SJint.rmut.ed.txt",
+                        "./juncmut/"+pre+".SJ.fil.annot.assadj.freq.pmut.SJint.rmut.ed.snp.txt",
                         args.gnomad, genome_id)
 
