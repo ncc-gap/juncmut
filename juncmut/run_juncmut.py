@@ -47,7 +47,7 @@ def run_juncmut(args):
 
     juncmut_realign("./juncmut/"+pre+".SJ.fil.annot.assadj.freq.pmut.SJint.rmut.txt",
                     "./juncmut/"+pre+".SJ.fil.annot.assadj.freq.pmut.SJint.rmut.ed.txt", 
-                    args.rna_bam, args.reference, genome_id, is_grc, template_size = 10, score_margin = 4)
+                    args.rna_bam, args.reference, genome_id, is_grc, template_size = 10)
 
     juncmut_annotgnomad("./juncmut/"+pre+".SJ.fil.annot.assadj.freq.pmut.SJint.rmut.ed.txt",
                         "./juncmut/"+pre+".SJ.fil.annot.assadj.freq.pmut.SJint.rmut.ed.snp.txt",
