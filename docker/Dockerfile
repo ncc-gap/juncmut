@@ -43,7 +43,7 @@ RUN pip3 install edlib==1.3.8
 
 RUN wget https://github.com/friend1ws/junc_utils/archive/v0.5.1b1.tar.gz && \
     tar zxvf v0.5.1b1.tar.gz && \
-    cd junc_utils && \
+    cd junc_utils-0.5.1b1 && \
     python3 setup.py build install
 ENV LD_LIBRARY_PATH /usr/local/lib:$LD_LIBRARY_PATH
 
