@@ -33,7 +33,6 @@ ENV HTSLIB_INCLUDE_DIR /usr/local/include
 RUN pip3 install cython==0.29.11
 RUN pip3 install annot_utils==0.3.1
 RUN pip3 install intron_retention_utils==0.6.3
-RUN pip3 install junc_utils==0.5.0
 RUN pip3 install pandas==1.0.1
 RUN wget https://github.com/pysam-developers/pysam/archive/v0.15.2.tar.gz && \
     tar -zxvf v0.15.2.tar.gz && \
@@ -41,6 +40,11 @@ RUN wget https://github.com/pysam-developers/pysam/archive/v0.15.2.tar.gz && \
 ENV LD_LIBRARY_PATH /usr/local/lib:$LD_LIBRARY_PATH
 
 RUN pip3 install edlib==1.3.8
+
+RUN wget https://github.com/friend1ws/junc_utils/archive/v0.5.1b1.tar.gz \
+    tar zxvf v0.5.1b1.tar.gz \
+    cd junc_utils \
+    python3 setup.py build install
 
 RUN pip3 install git+https://github.com/ni6o6/juncmut.git
 
