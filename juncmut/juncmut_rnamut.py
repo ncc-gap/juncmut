@@ -12,7 +12,7 @@ def juncmut_rnamut(input_file, output_file, rna_bam, reference):
     import subprocess
     import pandas as pd
     from pathlib import Path
-    import time
+
 
     def tidy_bases(bases, qualities):  #remove indel and edeage
 

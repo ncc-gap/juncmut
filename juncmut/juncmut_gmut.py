@@ -10,8 +10,7 @@ if is_grc=="F", add "chr" in output.
 
 """
 
-def juncmut_gmut(args.input_file, args.output_file, 
-                   args.dna_bam, args.reference, is_grc)
+def juncmut_gmut(input_file, output_file, dna_bam, reference, is_grc):
     
     import subprocess
     import pandas as pd
@@ -112,7 +111,6 @@ def juncmut_gmut(args.input_file, args.output_file,
             
             F = line.rstrip('\n').split('\t')
             mut_pos = F[14]
-            mut_ref = F[15]
             var = F[16]
             
             if is_grc == 'T':
@@ -123,17 +121,10 @@ def juncmut_gmut(args.input_file, args.output_file,
                 
             print('\t'.join([chr, str(int(mut_pos) - 1), str(mut_pos), var]), file = hout2)
             
-    #position = chr+":"+str(int(mut_pos) - 1)+"-"+str(mut_pos)
-    #mpileup_commands = ["samtools", "mpileup", "-r", position, "-f", reference, bam, "-O", "-o", output_file + ".mpileup.tmp"]
-    mpileup_commands = ["samtools", "mpileup", "-l", output_file + ".tmp1.pos.bed", "-f", reference, bam, "-O", "-o", output_file + ".tmp2"]
+    mpileup_commands = ["samtools", "mpileup", "-l", output_file + ".tmp1.pos.bed", "-f", reference, dna_bam, "-O", "-o", output_file + ".tmp2"]
         
     subprocess.run(mpileup_commands) 
 
-                
-    #original mpileup_commands = ["samtools", "mpileup", "-l", output_file + ".tmp1.pos.bed", "-f", reference, bam, "-O", "-o", output_file + ".tmp2"]    don't work   
-    #mpileup_commands = ["samtools", "mpileup", "-l", output_file + ".tmp1.pos.bed", "-f", reference, bam, "-o", output_file + ".mpileup.tmp"]
-    #subprocess.run(mpileup_commands)
-    
     #arrange of mpileup file
     with open(output_file + ".tmp2", 'r') as in3, open(output_file + ".tmp3", 'w') as m2out:
         for line in in3:  #sample, chr, pos, ,ref, depth, bases, Q, readsposition
@@ -205,7 +196,7 @@ def juncmut_gmut(args.input_file, args.output_file,
         df1 = pd.read_csv(output_file+".tmp3", sep='\t', header=None, index_col=None, dtype = 'object')
         df1.columns = ['Chr', 'Mut_Pos', 'Mut_Ref', 'Mut_Alt', 'g_bases', 'g_alt_reads', 'g_alt_ratio']
         
-        if rmchr == 'T':
+        if is_grc == 'T':
             df1['Chr'] = 'chr' + df1['Chr'].astype(str)
         #df1['Chr'] = df1['Chr'].str.split('chr', expand=True)[1]
         df2 = pd.read_csv(output_file+".tmp1", sep='\t', header=None, index_col=None, dtype = 'object')
@@ -269,4 +260,4 @@ if __name__== "__main__":
     reference = args.reference
     is_grc = args.is_grc
 
-    juncmut_gmut(input_file, output_file, dna_bam, reference, ig_grc)
+    juncmut_gmut(input_file, output_file, dna_bam, reference, is_grc)
