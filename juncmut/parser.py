@@ -54,9 +54,6 @@ def create_parser():
     validate.add_argument("-input_file", metavar = "input_file", default = None, type = str,
                        help = "Input file obtained by the juncmut get")
     
-    validate.add_argument("-output_file", metavar = "output_file", default = None, type = str,
-                       help = "output file. The output file name will be saved in the validate folder.")
-    
     validate.add_argument("-reference", metavar = "reference", default = None, type = str,
                         help = "Path to reference genome")
     
