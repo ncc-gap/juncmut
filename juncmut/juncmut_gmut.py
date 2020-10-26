@@ -1,21 +1,20 @@
 #! /usr/bin/env python
+
 """
 Naoko Iida
 
-python juncmut_annotgmut.py input_file, output_file, bam, reference
+python juncmut_annotgmut.py input_file, output_file, bam, reference, is_grc
 
-chr in rna_bam and chr in dna_bam -> rmchr F
-chr in rna_bam and no chr in dna_bam -> rmchr T
-no chr in rna_bam and chr in dna_bam -> rmchr F
-no chr in rna_bam and no chr in dna_bam -> rmchr T
- 
+if is_grc=="T", remove "chr" in input.
+if is_grc=="F", add "chr" in output.
+
 """
 
-def juncmut_gmut(input_file, output_file, bam, reference, rmchr):
+def juncmut_gmut(args.input_file, args.output_file, 
+                   args.dna_bam, args.reference, is_grc)
     
     import subprocess
     import pandas as pd
-    import time
     from pathlib import Path
 
     def tidy_bases(bases, qualities):  #remove indel and edeage
@@ -103,9 +102,7 @@ def juncmut_gmut(input_file, output_file, bam, reference, rmchr):
         
         return proc1
 
-##mpileup
-
-    start_time = time.time()
+    ##mpileup
 
     # separate records for each variant and create position list
     with open(input_file, 'r') as hin, open(output_file + ".tmp1", 'w') as hout1, open(output_file + ".tmp1.pos.bed", 'w') as hout2:
@@ -118,7 +115,7 @@ def juncmut_gmut(input_file, output_file, bam, reference, rmchr):
             mut_ref = F[15]
             var = F[16]
             
-            if rmchr == 'T':
+            if is_grc == 'T':
                 chr = F[0].replace('chr', '')
             else:
                 chr_t = F[0].replace('chr', '')
@@ -238,40 +235,38 @@ def juncmut_gmut(input_file, output_file, bam, reference, rmchr):
         res['g_mut'] = 'na'
         res.to_csv(output_file, index=False, sep='\t', header=True)
 
-    #Path(output_file + ".tmp1").unlink()
-    #Path(output_file + ".tmp2").unlink()
-    #Path(output_file + ".tmp3").unlink()
-    #Path(output_file + ".mpileup.tmp").unlink()
+    Path(output_file + ".tmp1").unlink()
+    Path(output_file + ".tmp2").unlink()
+    Path(output_file + ".tmp3").unlink()
+    Path(output_file + ".mpileup.tmp").unlink()
 
-    run_time = (time.time()-start_time)/60
-    print(run_time)
     
 if __name__== "__main__":
     import argparse
 
     parser = argparse.ArgumentParser() #make a parser
 
-    parser.add_argument("input_file", metavar = "input_file", default = None, type = str,
+    parser.add_argument("--input_file", metavar = "input_file", default = None, type = str,
                             help = "input file")
 
-    parser.add_argument("output_file", metavar = "output_file", default = "my_sample", type = str,
+    parser.add_argument("--output_file", metavar = "output_file", default = None, type = str,
                             help = "output file")
 
-    parser.add_argument("bam", metavar = "rna_bam", default = None, type = str,
+    parser.add_argument("--dna_bam", metavar = "dna_bam", default = None, type = str,
                             help = "genomic bam")
 
-    parser.add_argument("reference", metavar = "reference", default = None, type = str,
+    parser.add_argument("--reference", metavar = "reference", default = None, type = str,
                             help = "/path/to/reference")
     
-    parser.add_argument("rmchr", metavar = "rmchr", default = "F", type = str,
-                            help = "If a input file has chr prefix but a genomic bam does not have chr prefix, T.")
+    parser.add_argument("--is_grc", metavar = "is_grc", default = "T", type = str,
+                            help = "T means no chr prefix in bam. F means chr prefix in bam")
 
     args = parser.parse_args()
 
     input_file = args.input_file
     output_file = args.output_file
-    bam = args.bam
+    dna_bam = args.dna_bam
     reference = args.reference
-    rmchr = args.rmchr
+    is_grc = args.is_grc
 
-    juncmut_gmut(input_file, output_file, bam, reference, rmchr)
+    juncmut_gmut(input_file, output_file, dna_bam, reference, ig_grc)

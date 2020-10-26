@@ -1,6 +1,6 @@
 Metadata-Version: 1.1
 Name: juncmut
-Version: 0.0.3a0
+Version: 0.1.1a0
 Summary: Python programs for the identification of the genomic mutation from RNA-seq splicing junction data
 Home-page: https://github.com/ni6o6/
 Author: Naoko Iida
@@ -8,7 +8,7 @@ Author-email: iida.nao08@gamil.com
 License: UNKNOWN
 Description: UNKNOWN
 Platform: UNKNOWN
-Classifier: Development Status :: 1 - Alpha
+Classifier: Development Status :: 1.0 - Alpha
 Classifier: Intended Audience :: Science/Research
 Classifier: License :: OSI Approved :: GNU General Public License v3 (GPLv3)
 Classifier: Operating System :: Unix

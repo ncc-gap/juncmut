@@ -112,7 +112,7 @@ def juncmut_rnamut(input_file, output_file, rna_bam, reference):
 
 ##mpileup
 
-    start_time = time.time()
+    
 
     # separate records for each variant and create position list
     with open(input_file, 'r') as hin, open(output_file + ".tmp1", 'w') as hout1, open(output_file + ".tmp1.pos.bed", 'w') as hout2:
@@ -231,8 +231,7 @@ def juncmut_rnamut(input_file, output_file, rna_bam, reference):
     Path(output_file + ".tmp2").unlink()
     Path(output_file + ".tmp3").unlink()
 
-    run_time = (time.time()-start_time)/60
-    print(run_time)
+
     
 if __name__== "__main__":
     import argparse
