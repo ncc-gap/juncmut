@@ -229,7 +229,7 @@ def juncmut_gmut(input_file, output_file, dna_bam, reference, is_grc):
     Path(output_file + ".tmp1").unlink()
     Path(output_file + ".tmp2").unlink()
     Path(output_file + ".tmp3").unlink()
-    Path(output_file + ".mpileup.tmp").unlink()
+    Path(output_file + ".tmp1.pos.bed").unlink()
 
     
 if __name__== "__main__":
