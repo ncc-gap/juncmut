@@ -1,13 +1,10 @@
 #! /usr/bin/env python
-
 """
 Naoko Iida
 
 python juncmut_annotgmut.py input_file, output_file, bam, reference, is_grc
-
 if is_grc=="T", remove "chr" in input.
 if is_grc=="F", add "chr" in output.
-
 """
 
 def juncmut_gmut(input_file, output_file, dna_bam, reference, is_grc):
@@ -106,29 +103,25 @@ def juncmut_gmut(input_file, output_file, dna_bam, reference, is_grc):
     # separate records for each variant and create position list
     with open(input_file, 'r') as hin, open(output_file + ".tmp1", 'w') as hout1, open(output_file + ".tmp1.pos.bed", 'w') as hout2:
         next(hin)
-        for line in hin:
-            print(line, file = hout1)
-            
+        for line in hin:            
             F = line.rstrip('\n').split('\t')
             mut_pos = F[14]
-            var = F[16]
-            
+            var = F[16]           
             if is_grc == 'T':
                 chr = F[0].replace('chr', '')
             else:
                 chr_t = F[0].replace('chr', '')
                 chr = 'chr'+chr_t
-                
+            print(str(chr)+'\t'+'\t'.join(F[1:3]), file = hout1)
             print('\t'.join([chr, str(int(mut_pos) - 1), str(mut_pos), var]), file = hout2)
             
-    mpileup_commands = ["samtools", "mpileup", "-l", output_file + ".tmp1.pos.bed", "-f", reference, dna_bam, "-O", "-o", output_file + ".tmp2"]
-        
+    mpileup_commands = ["samtools", "mpileup", "-l", output_file + ".tmp1.pos.bed", "-f", reference, dna_bam, "-O", "-o", output_file + ".tmp2"]      
     subprocess.run(mpileup_commands) 
 
     #arrange of mpileup file
     with open(output_file + ".tmp2", 'r') as in3, open(output_file + ".tmp3", 'w') as m2out:
         for line in in3:  #sample, chr, pos, ,ref, depth, bases, Q, readsposition
-            print(line)
+            
             col = line.rstrip('\n').split('\t')
 
             base = tidy_bases(col[4], col[5])
@@ -196,9 +189,6 @@ def juncmut_gmut(input_file, output_file, dna_bam, reference, is_grc):
         df1 = pd.read_csv(output_file+".tmp3", sep='\t', header=None, index_col=None, dtype = 'object')
         df1.columns = ['Chr', 'Mut_Pos', 'Mut_Ref', 'Mut_Alt', 'g_bases', 'g_alt_reads', 'g_alt_ratio']
         
-        if is_grc == 'T':
-            df1['Chr'] = 'chr' + df1['Chr'].astype(str)
-        #df1['Chr'] = df1['Chr'].str.split('chr', expand=True)[1]
         df2 = pd.read_csv(output_file+".tmp1", sep='\t', header=None, index_col=None, dtype = 'object')
         
         df2.columns = ['Chr','SJ_Start','SJ_End','SJ_Type','SJ_Strand','SJ_Read_Count','SJ_Depth','SJ_Freq','Ref_Motif','Possivle_Alt_Motif',
