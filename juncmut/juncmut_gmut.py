@@ -91,7 +91,7 @@ def juncmut_gmut(input_file, output_file, dna_bam, reference, is_grc):
         Q = 0
     
         for i in range(0, len(qualities)):
-            #print(str(qualities[i])+"\t"+str(ord(qualities[i])-33))
+            
             if (ord(qualities[i])-33) > Q:
                 proc1 = proc1 + bases[i]
                 proc2 = proc2 + qualities[i]
@@ -101,26 +101,35 @@ def juncmut_gmut(input_file, output_file, dna_bam, reference, is_grc):
     ##mpileup
 
     # separate records for each variant and create position list
-    with open(input_file, 'r') as hin, open(output_file + ".tmp1", 'w') as hout1, open(output_file + ".tmp1.pos.bed", 'w') as hout2:
+    with open(input_file, 'r') as hin, open(output_file + ".tmp1", 'w') as hout1, open(output_file + ".tmp2", 'w') as hout2:
         next(hin)
-        for line in hin:            
+        for line in hin:
             F = line.rstrip('\n').split('\t')
             mut_pos = F[14]
-            var = F[16]           
+            #var = F[16]           
             if is_grc == 'T':
                 chr = F[0].replace('chr', '')
             else:
                 chr_t = F[0].replace('chr', '')
                 chr = 'chr'+chr_t
-            print(str(chr)+'\t'+'\t'.join(F[1:3]), file = hout1)
-            print('\t'.join([chr, str(int(mut_pos) - 1), str(mut_pos), var]), file = hout2)
-            
-    mpileup_commands = ["samtools", "mpileup", "-l", output_file + ".tmp1.pos.bed", "-f", reference, dna_bam, "-O", "-o", output_file + ".tmp2"]      
-    subprocess.run(mpileup_commands) 
+            print(str(chr)+'\t'+'\t'.join(F[1:29]), file = hout1)
+                
+            position = str(chr) + ':' + str(int(mut_pos)-1) + '-' + str(mut_pos)
+            #import pdb; pdb.set_trace()
+            mpileup_commands = ["samtools", "mpileup", "-r", position, "-f", reference, dna_bam, "-O", "-o", output_file + ".tmp22"]
+            subprocess.run(mpileup_commands) 
+        
+            with open(output_file + ".tmp22", 'r') as m2tmp:
+                col = m2tmp.read()
+                if col == "":
+                    continue
+                else:
+                    hout2.write(str(col))
+
 
     #arrange of mpileup file
     with open(output_file + ".tmp2", 'r') as in3, open(output_file + ".tmp3", 'w') as m2out:
-        for line in in3:  #sample, chr, pos, ,ref, depth, bases, Q, readsposition
+        for line in in3:
             
             col = line.rstrip('\n').split('\t')
 
@@ -181,8 +190,6 @@ def juncmut_gmut(input_file, output_file, dna_bam, reference, is_grc):
             val = "F"
         return val
 
-
-    # size = os.path.getsize(output_file + ".tmp3")
     fsize = Path(output_file + ".tmp3").stat().st_size
 
     if fsize != 0:
@@ -219,7 +226,6 @@ def juncmut_gmut(input_file, output_file, dna_bam, reference, is_grc):
     Path(output_file + ".tmp1").unlink()
     Path(output_file + ".tmp2").unlink()
     Path(output_file + ".tmp3").unlink()
-    Path(output_file + ".tmp1.pos.bed").unlink()
 
     
 if __name__== "__main__":
