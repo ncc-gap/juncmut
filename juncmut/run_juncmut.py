@@ -71,14 +71,14 @@ def validate_main(args):
     start_time = time.time()
 
     genome_id, is_grc = check_reference(args.reference)
-    
+    print(is_grc)
     os.makedirs("validate", exist_ok = True)
 
     pre = Path(args.input_file).stem
     
     juncmut_gmut(args.input_file, "./validate/"+pre+".gmut.txt", 
                    args.dna_bam, args.reference, is_grc)
-
+    
 
     run_time = (time.time()-start_time)/60
     print(run_time)
