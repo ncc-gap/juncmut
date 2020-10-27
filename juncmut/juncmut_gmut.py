@@ -245,8 +245,8 @@ if __name__== "__main__":
     parser.add_argument("--reference", metavar = "reference", default = None, type = str,
                             help = "/path/to/reference")
     
-    parser.add_argument("--is_grc", metavar = "is_grc", default = "T", type = str,
-                            help = "T means no chr prefix in bam. F means chr prefix in bam")
+    parser.add_argument("--is_grc", metavar = "is_grc", default = "True", type = str,
+                            help = "True means no chr prefix in bam. False means chr prefix in bam")
 
     args = parser.parse_args()
 
