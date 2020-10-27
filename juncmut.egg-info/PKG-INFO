@@ -1,6 +1,6 @@
 Metadata-Version: 1.1
 Name: juncmut
-Version: 0.1.6a0
+Version: 0.1.7a0
 Summary: Python programs for the identification of the genomic mutation from RNA-seq splicing junction data
 Home-page: https://github.com/ni6o6/
 Author: Naoko Iida

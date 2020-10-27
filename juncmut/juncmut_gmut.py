@@ -107,7 +107,7 @@ def juncmut_gmut(input_file, output_file, dna_bam, reference, is_grc):
             F = line.rstrip('\n').split('\t')
             mut_pos = F[14]
             #var = F[16]           
-            if is_grc == 'T':
+            if is_grc == 'True':
                 chr = F[0].replace('chr', '')
             else:
                 chr_t = F[0].replace('chr', '')
