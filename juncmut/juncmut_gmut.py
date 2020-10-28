@@ -106,15 +106,16 @@ def juncmut_gmut(input_file, output_file, dna_bam, reference, is_grc):
         for line in hin:
             F = line.rstrip('\n').split('\t')
             mut_pos = F[14]
-            #var = F[16]           
-            if is_grc == 'True':
-                chr = F[0].replace('chr', '')
+                       
+            if is_grc == "True":
+                new_chr = F[0].replace('chr', '')
             else:
-                chr_t = F[0].replace('chr', '')
-                chr = 'chr'+chr_t
-            print(str(chr)+'\t'+'\t'.join(F[1:29]), file = hout1)
+                tmp_chr = F[0].replace('chr', '')
+                new_chr = 'chr'+tmp_chr
+            
+            print(str(new_chr)+'\t'+'\t'.join(F[1:29]), file = hout1)
                 
-            position = str(chr) + ':' + str(int(mut_pos)-1) + '-' + str(mut_pos)
+            position = str(new_chr) + ':' + str(int(mut_pos)-1) + '-' + str(mut_pos)
             #import pdb; pdb.set_trace()
             mpileup_commands = ["samtools", "mpileup", "-r", position, "-f", reference, dna_bam, "-O", "-o", output_file + ".tmp22"]
             subprocess.run(mpileup_commands) 
