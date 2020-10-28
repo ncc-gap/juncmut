@@ -66,7 +66,7 @@ def get_main(args):
 def validate_main(args):
     
     from .juncmut_gmut import juncmut_gmut
-    from .utils import check_reference
+    from .utils2 import check_reference
     
     start_time = time.time()
 
