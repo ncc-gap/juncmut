@@ -7,7 +7,7 @@ if is_grc=="T", remove "chr" in input.
 if is_grc=="F", add "chr" in output.
 """
 
-def juncmut_gmut(input_file, output_file, dna_bam, reference, is_grc):
+def juncmut_gmut(input_file, output_file, dna_bam, reference, is_chr):
     
     import subprocess
     import pandas as pd
@@ -226,6 +226,7 @@ def juncmut_gmut(input_file, output_file, dna_bam, reference, is_grc):
 
     Path(output_file + ".tmp1").unlink()
     Path(output_file + ".tmp2").unlink()
+    Path(output_file + ".tmp22").unlink()
     Path(output_file + ".tmp3").unlink()
 
     
@@ -246,8 +247,8 @@ if __name__== "__main__":
     parser.add_argument("--reference", metavar = "reference", default = None, type = str,
                             help = "/path/to/reference")
     
-    parser.add_argument("--is_grc", metavar = "is_grc", default = "True", type = str,
-                            help = "True means no chr prefix in bam. False means chr prefix in bam")
+    parser.add_argument("--is_chr", metavar = "is_chr", default = "grc", type = str,
+                            help = "grc means no chr prefix in bam. ucsc means chr prefix in bam")
 
     args = parser.parse_args()
 
@@ -255,6 +256,6 @@ if __name__== "__main__":
     output_file = args.output_file
     dna_bam = args.dna_bam
     reference = args.reference
-    is_grc = args.is_grc
+    is_chr = args.is_chr
 
-    juncmut_gmut(input_file, output_file, dna_bam, reference, is_grc)
+    juncmut_gmut(input_file, output_file, dna_bam, reference, is_chr)

@@ -25,7 +25,7 @@ def get_main(args):
 
     start_time = time.time()
 
-    genome_id, is_grc = check_reference(args.reference)
+    genome_id, is_grc, is_chr = check_reference(args.reference)
     
     pre = Path(args.input_file).stem.split('.')[0]
     
@@ -66,18 +66,18 @@ def get_main(args):
 def validate_main(args):
     
     from .juncmut_gmut import juncmut_gmut
-    from .utils2 import check_reference
+    from .utils import check_reference
     
     start_time = time.time()
 
-    genome_id, is_grc = check_reference(args.reference)
-    print(is_grc)
+    genome_id, is_grc, is_chr = check_reference(args.reference)
+    
     os.makedirs("validate", exist_ok = True)
 
     pre = Path(args.input_file).stem
     
     juncmut_gmut(args.input_file, "./validate/"+pre+".gmut.txt", 
-                   args.dna_bam, args.reference, is_grc)
+                   args.dna_bam, args.reference, is_chr)
     
 
     run_time = (time.time()-start_time)/60
