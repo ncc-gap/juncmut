@@ -139,8 +139,36 @@ def juncmut_realign(input_file, output_file, bam_file, reference, genome_id, is_
         bamfile.close()
         hout.close()
 
+    
+    def process_cigar(res_cigar):
+        #res_cigar = '16=1X1=1I1='
+        # make a alignment object
+        cigar_align = ''
+        re_cigar = res_cigar.translate(str.maketrans({'=': ',=,','X': ',X,', 'I': ',I,', 'D': ',D,'}))
+        cigar_list = re_cigar.split(',')
+        del cigar_list[-1]
+        for pnum in range(0,len(cigar_list),2):
+            cigar_align = cigar_align + str(str(cigar_list[pnum+1]) * int(cigar_list[pnum]))
+        proc_cigar_list = list(cigar_align)
+        
+        for i in range(0,5):
+            pop_start = proc_cigar_list.pop(0) 
+            pop_end = proc_cigar_list.pop(-1) 
+            if pop_start == 'I' and pop_end == 'I':
+                del proc_cigar_list[0]
+                del proc_cigar_list[-1]
+            elif pop_start == 'I' and pop_end != 'I':
+                del proc_cigar_list[0]
+            elif pop_start != 'I' and pop_end == 'I':
+                del proc_cigar_list[-1]
+            elif pop_start != 'I' and pop_end != 'I': continue
+        
+        mut_count = len([i for i in proc_cigar_list if i != '='])
+        return(mut_count)    
+
 
     ref_tb = pysam.FastaFile(reference)
+    #annot_utils.junction.make_junc_info(output_file + ".gencode.junc.bed.gz", "gencode", genome_id, is_grc, False)
     annot_utils.junction.make_junc_info(output_file + ".gencode.junc.bed.gz", "gencode", genome_id, is_grc, False)
     junc_tb = pysam.TabixFile(output_file + ".gencode.junc.bed.gz")
 
@@ -195,12 +223,12 @@ def juncmut_realign(input_file, output_file, bam_file, reference, genome_id, is_
                 else:
                     is_exon = 'outside of motif'
                     
-            # if RNA_mutation reads>1 and Freq>=0.05, do realign.
+            #if RNA_mutation reads>1 and Freq>=0.05, do realign.
             if float(F[21]) < 0.05 or int(F[20]) <= 1: 
                 print('\t'.join([F[0], F[1], F[2], F[6], F[7], F[8], F[9], F[10], F[11], F[12], F[13], F[14],is_exon, F[15],
-                             F[16], F[17], F[18], F[20], str(len(F[19])), F[21]]) +"\t-\t-\t-\t-\t-\t-\tF", file = hout)                
+                            F[16], F[17], F[18], F[20], str(len(F[19])), F[21]]) +"\t-\t-\t-\t-\t-\t-\tF", file = hout)                
             else:
-            # test if F[0]=='chr21' and str(F[16])=='10569534': 
+            # test if F[0]=='chr19' and str(F[16])=='11830133':  
                 F = line.rstrip('\n').split('\t')
                 mut_chr, junc_start, junc_end = F[0], int(F[1]), int(F[2])
                 mut_pos, mut_ref, mut_alt = int(F[16]), F[17], F[18]
@@ -232,50 +260,74 @@ def juncmut_realign(input_file, output_file, bam_file, reference, genome_id, is_
                         
                         if line.startswith('>'):
                             continue
+                            #read_id = line.rstrip('\n')
+                            #R = rin.readline().rstrip('\n')
                         else:
                             R= line.rstrip('\n')
                             d_ed = {}
+                            d_mut_count = {}
                             for key in d_query:
                                 res = edlib.align(d_query[key],R, mode="HW", task="path")
-                                res_ed = res.get('editDistance')
-                                # Among "Normal_SJ_Neg" or  "Normal_SJ_Pos" templates, choose smaller editDistance.
-                                
-                                if key.startswith('Normal_SJ_Neg_'):
-                                    if 'Normal_SJ_Neg' in d_ed:
-                                        if d_ed['Normal_SJ_Neg'] <= res_ed: continue
+                                res_cigar = res.get('cigar')
+                                res_ed = res.get('editDistance')                             
+                                #mut_count and edit distance
+                                if res_ed <= 2:
+                                    mut_count = process_cigar(res_cigar)
+                                            
+                                    # There may be multiple Normal SJ templates.  Choose template with smaller editDistance than 2.
+                                    if key.startswith('Normal_SJ_Neg_'):
+                                        if 'Normal_SJ_Neg' in d_ed:
+                                            if d_ed['Normal_SJ_Neg'] <= res_ed: continue
+                                            else:
+                                                d_ed['Normal_SJ_Neg'] = res_ed
                                         else:
                                             d_ed['Normal_SJ_Neg'] = res_ed
-                                    else:
-                                        d_ed['Normal_SJ_Neg'] = res_ed 
-                                
-                                elif key.startswith('Normal_SJ_Pos_'):
-                                    if 'Normal_SJ_Pos' in d_ed:
-                                        if d_ed['Normal_SJ_Pos'] <= res_ed: continue
-                                        else:
-                                            d_ed['Normal_SJ_Pos'] = res_ed
-                                    else:
-                                        d_ed['Normal_SJ_Pos'] = res_ed 
-                                
-                                else:
-                                    d_ed[key] = res_ed
                                         
+                                        if 'Normal_SJ_Neg' in d_mut_count:
+                                            if d_mut_count['Normal_SJ_Neg'] >= int(mut_count): continue
+                                            else:
+                                                d_mut_count['Normal_SJ_Neg'] = int(mut_count)
+                                        else:
+                                            d_mut_count['Normal_SJ_Neg'] = int(mut_count)
+                                    
+                                    elif key.startswith('Normal_SJ_Pos_'):
+                                        if 'Normal_SJ_Pos' in d_ed:
+                                            if d_ed['Normal_SJ_Pos'] <= res_ed: continue
+                                            else:
+                                                d_ed['Normal_SJ_Pos'] = res_ed
+                                        else:
+                                            d_ed['Normal_SJ_Pos'] = res_ed 
+
+                                        if 'Normal_SJ_Pos' in d_mut_count:
+                                            if d_mut_count['Normal_SJ_Pos'] >= int(mut_count): continue
+                                            else:
+                                                d_mut_count['Normal_SJ_Pos'] = int(mut_count)
+                                        else:
+                                            d_mut_count['Normal_SJ_Pos'] = int(mut_count)                                    
+                    
+                                    
+                                    else:
+                                        d_ed[key] = res_ed
+                                        d_mut_count[key] = int(mut_count) 
                             
-                            # get minimum edit distance
-                            min_v = min(d_ed.values())
-                            #set min threshold of ed.distance
-                            if min_v <= 2:
-                                min_k = [kv[0] for kv in d_ed.items() if kv[1] == min(d_ed.values())]
+                            #choose minmum ed_distance and the key and count up.                                        
+                            min_k = [kv[0] for kv in d_ed.items() if kv[1] == min(d_ed.values())]
+                            if len(min_k) == 0: continue
+                            else:
                                 min_k_sort = sorted(min_k, key=lambda x: d_order[x])
-                                new_count = d_realign[min_k_sort[0]]+1
-                                d_realign[min_k_sort[0]] = new_count
-                            else: continue
-                        
+                                #import pdb; pdb.set_trace()
+                                # if multiple mutation for the selected key is exist, no count-up.
+                                if int(d_mut_count[min_k_sort[0]]) == 0:
+                                    new_count = d_realign[min_k_sort[0]]+1
+                                    d_realign[min_k_sort[0]] = new_count
+                                                                                                                    
                     if is_exon == 'exon':
-                        if d_realign['No_SJ_Pos'] + d_realign['Target_SJ_Pos'] >= 1:
+                        #if d_realign['No_SJ_Pos'] + d_realign['Target_SJ_Pos'] >= 1:
+                        if d_realign['Target_SJ_Pos'] + d_realign['No_SJ_Pos']+ d_realign['Normal_SJ_Pos'] >=1:
                             rmut = 'T'
                         else: rmut = 'F'
                     elif is_exon == 'intron':
-                        if d_realign['No_SJ_Pos'] >=1:
+                        if d_realign['Target_SJ_Pos'] + d_realign['No_SJ_Pos']+ d_realign['Normal_SJ_Pos'] >=1:
                             rmut = 'T'
                         else: rmut = 'F'
                     else: rmut = '-'
@@ -307,7 +359,7 @@ if __name__ == "__main__":
                             help = "input file")         
     parser.add_argument("-output_file", metavar = "output_file", default = None, type = str,
                             help = "output files") 
-    parser.add_argument("-rna_bam", metavar = "rna_bam", default = None, type = str,
+    parser.add_argument("-bam_file", metavar = "bam_file", default = None, type = str,
                             help = "output files") 
     parser.add_argument("-reference", metavar = "reference", default = None, type = str,
                             help = "/full/path/to/reference")     
@@ -333,4 +385,4 @@ res=edlib.align(template,read, mode="HW", task="path")
 res
 nice = edlib.getNiceAlignment(res, template, read)
 print("\n".join(nice.values()))
-""" 
+"""
