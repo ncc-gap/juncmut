@@ -31,8 +31,8 @@ def juncmut_mutpre(input_file, output_file, reference):
                 
                 if "5" in F[6] and "+" in F[7]: #o-->
                     c=F[0]
-                    #c = (c.replace('chr', ''))
-                    s=int(F[1])-1-2 #region -2|0~5  
+                    #region -2|0~5 
+                    s=int(F[1])-1-2 
                     e=int(F[1])+5
                     getbases = ref.fetch(c,s,e)
                     bases = getbases.upper()
@@ -62,10 +62,10 @@ def juncmut_mutpre(input_file, output_file, reference):
                             mposi_rec = mposi[3]
                             allele = '|' + bases[2] + bases[3] + '>GT'
                     elif len(set(mlist)) == 1:
-                        allele = '-'
+                        allele = '........'
                         mposi_rec = '-'
                     else:
-                        allele = 'non-canonical'
+                        allele = 'non-GT/AG'
                         mposi_rec = ','.join(map(str,noncamposi))                        
                         
                     rec = ln + "\t" + bases + "\t" + ''.join(mlist) + "\t" +  str(mposi_rec) + "\t"+ allele + "\n"
@@ -73,7 +73,6 @@ def juncmut_mutpre(input_file, output_file, reference):
                 
                 elif "5" in F[6] and "-" in F[7]: #<--o
                     c=F[0]
-                    #c = (c.replace('chr', ''))
                     s=int(F[2])-1-5
                     e=int(F[2])+2
                     getbases = ref.fetch(c,s,e)
@@ -106,18 +105,18 @@ def juncmut_mutpre(input_file, output_file, reference):
                             mposi_rec = mposi[5] 
                             allele = '|' + bases[5].translate(trans) + bases[4].translate(trans) + '>GT'
                     elif len(set(mlist)) == 1:
-                        allele = '-'
+                        allele = '........'
                         mposi_rec = '-'
                     else:
-                        allele = 'non-canonical' 
+                        allele = 'non-GT/AG' 
                         mposi_rec = ','.join(map(str,noncamposi))
                     rec = ln + "\t" + bases + "\t" + ''.join(mlist) + "\t" +  str(mposi_rec) + "\t"+ allele + "\n"
                     out1.write(rec) 
                     
                 elif "3" in F[6] and "+" in F[7]: #-->o
                     c=F[0]
-                    #c = (c.replace('chr', ''))
-                    s=int(F[2])-1-5 #region -5|1  
+                    #region -5|1
+                    s=int(F[2])-1-5   
                     e=int(F[2])+1
                     getbases = ref.fetch(c,s,e)
                     bases = getbases.upper()
@@ -149,23 +148,20 @@ def juncmut_mutpre(input_file, output_file, reference):
                             allele =  bases[4] + bases[5] + '|>AG'
                         
                     elif len(set(mlist)) == 1:
-                        allele = '-'
+                        allele = '.......'
                         mposi_rec = '-'
                     else:
-                        allele = 'non-canonical' 
+                        allele = 'non-GT/AG' 
                         mposi_rec = ','.join(map(str,noncamposi))  
                     rec = ln + "\t" + bases + "\t" + ''.join(mlist) + "\t" +  str(mposi_rec) + "\t"+ allele + "\n"
                     out1.write(rec)              
                 
                 elif "3" in F[6] and "-" in F[7]: #o<--
                     c=F[0]
-                    #c = (c.replace('chr', ''))
                     s=int(F[1])-1-1
                     e=int(F[1])+5
                     getbases = ref.fetch(c,s,e)
                     bases = getbases.upper()
-                    #rev = ''.join(reversed(bases))
-                    #comp = rev.translate(trans)
                     mlist = []
                     mposi = []
                     noncamposi = []
@@ -195,10 +191,10 @@ def juncmut_mutpre(input_file, output_file, reference):
                             allele =  bases[2].translate(trans) + bases[1].translate(trans) + '|>AG'                        
                         
                     elif len(set(mlist)) == 1:
-                        allele = '-'
+                        allele = '.......'
                         mposi_rec = '-'
                     else:
-                        allele = 'non-canonical' 
+                        allele = 'non-GT/AG' 
                         mposi_rec = ','.join(map(str,noncamposi)) 
                     rec = ln + "\t" + bases + "\t" + ''.join(mlist) + "\t" +  str(mposi_rec) + "\t"+ allele + "\n"
                     out1.write(rec)  
@@ -206,7 +202,7 @@ def juncmut_mutpre(input_file, output_file, reference):
 if __name__== "__main__":
     import argparse
     
-    parser = argparse.ArgumentParser() #make a parser
+    parser = argparse.ArgumentParser() 
     
     parser.add_argument("--input_file", metavar = "input_file", default = None, type = str,
                             help = "prefix") 

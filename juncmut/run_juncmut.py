@@ -6,12 +6,11 @@ Created on Tue Nov 26 10:39:58 2019
 @author: genome
 """
 
-import os
-from pathlib import Path
-import time
-
 
 def get_main(args):
+    
+    import os
+    import time
     
     from .juncmut_juncutils import juncmut_juncutils 
     from .juncmut_assadj import juncmut_assadj
@@ -25,60 +24,64 @@ def get_main(args):
 
     start_time = time.time()
 
-    genome_id, is_grc, is_chr = check_reference(args.reference)
-    
-    pre = Path(args.input_file).stem.split('.')[0]
-    
-    os.makedirs("juncmut", exist_ok = True)
+    genome_id, is_grc = check_reference(args.reference)
 
-    juncmut_juncutils(args.input_file, "./juncmut/"+pre+".SJ.fil.annot.txt", args.control_file, genome_id, 1)
+    juncmut_juncutils(args.input_file, args.output_file+".fil.annot.txt", args.control_file, genome_id, 1)
 
-    juncmut_assadj("./juncmut/"+pre+".SJ.fil.annot.txt",
-                   "./juncmut/"+pre+".SJ.fil.annot.assadj.txt")
+    juncmut_assadj(args.output_file+".fil.annot.txt",
+                   args.output_file+".fil.annot.assadj.txt")
 
-    juncmut_freq("./juncmut/"+pre+".SJ.fil.annot.assadj.txt", 
-                 "./juncmut/"+pre+".SJ.fil.annot.assadj.freq.txt",
+    juncmut_freq(args.output_file+".fil.annot.assadj.txt", 
+                 args.output_file+".fil.annot.assadj.freq.txt",
                  args.input_file, args.read_num_thres, args.freq_thres)
 
-    juncmut_mutpre("./juncmut/"+pre+".SJ.fil.annot.assadj.freq.txt",
-                   "./juncmut/"+pre+".SJ.fil.annot.assadj.freq.pmut.txt", 
+    juncmut_mutpre(args.output_file+".fil.annot.assadj.freq.txt",
+                   args.output_file+".fil.annot.assadj.freq.pmut.txt", 
                    args.reference)
 
-    juncmut_intersect("./juncmut/"+pre+".SJ.fil.annot.assadj.freq.pmut.txt", 
-                     "./juncmut/"+pre+".SJ.fil.annot.assadj.freq.pmut.SJint.txt", args.input_file)
+    juncmut_intersect(args.output_file+".fil.annot.assadj.freq.pmut.txt", 
+                     args.output_file+".fil.annot.assadj.freq.pmut.SJint.txt", args.input_file)
 
-    juncmut_rnamut("./juncmut/"+pre+".SJ.fil.annot.assadj.freq.pmut.SJint.txt",
-                   "./juncmut/"+pre+".SJ.fil.annot.assadj.freq.pmut.SJint.rmut.txt", 
+    juncmut_rnamut(args.output_file+".fil.annot.assadj.freq.pmut.SJint.txt",
+                   args.output_file+".fil.annot.assadj.freq.pmut.SJint.rmut.txt", 
                    args.rna_bam, args.reference)
 
-    juncmut_realign("./juncmut/"+pre+".SJ.fil.annot.assadj.freq.pmut.SJint.rmut.txt",
-                    "./juncmut/"+pre+".SJ.fil.annot.assadj.freq.pmut.SJint.rmut.ed.txt", 
-                    args.rna_bam, args.reference, genome_id, is_grc, template_size = 10)
+    juncmut_realign(args.output_file+".fil.annot.assadj.freq.pmut.SJint.rmut.txt",
+                    args.output_file+".fil.annot.assadj.freq.pmut.SJint.rmut.ed.txt", 
+                    args.rna_bam, args.reference, genome_id, is_grc, template_size = 10, args.mut_num_thres, args.mut_freq_thres)
 
-    juncmut_annotgnomad("./juncmut/"+pre+".SJ.fil.annot.assadj.freq.pmut.SJint.rmut.ed.txt",
-                        "./juncmut/"+pre+".SJ.fil.annot.assadj.freq.pmut.SJint.rmut.ed.snp.txt",
+    juncmut_annotgnomad(args.output_file+".fil.annot.assadj.freq.pmut.SJint.rmut.ed.txt",
+                        args.output_file,
                         args.gnomad, genome_id)
 
+    if args.debug == "False":
+       os.remove(args.output_file+".fil.annot.txt")
+       os.remove(args.output_file+".fil.annot.assadj.txt")
+       os.remove(args.output_file+".fil.annot.assadj.freq.txt")
+       os.remove(args.output_file+".fil.annot.assadj.freq.pmut.txt")
+       os.remove(args.output_file+".fil.annot.assadj.freq.pmut.SJint.txt")
+       os.remove(args.output_file+".fil.annot.assadj.freq.pmut.SJint.rmut.txt")
+       os.remove(args.output_file+".fil.annot.assadj.freq.pmut.SJint.rmut.ed.txt")
+    
     run_time = (time.time()-start_time)/60
     print(run_time)
 
 
 def validate_main(args):
+
+    import time
     
     from .juncmut_gmut import juncmut_gmut
     from .utils import check_reference
     
     start_time = time.time()
 
-    genome_id, is_grc, is_chr = check_reference(args.reference)
-    
-    os.makedirs("validate", exist_ok = True)
+    genome_id, is_grc = check_reference(args.reference)
 
-    pre = Path(args.input_file).stem
     
-    juncmut_gmut(args.input_file, "./validate/"+pre+".gmut.txt", 
-                   args.dna_bam, args.reference, is_chr)
-    
+    juncmut_gmut(args.input_file, args.output_file, 
+                   args.dna_bam, args.reference, is_grc, args.mut_num_thres, args.mut_freq_thres)
+
 
     run_time = (time.time()-start_time)/60
     print(run_time)

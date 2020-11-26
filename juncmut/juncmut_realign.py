@@ -10,7 +10,7 @@ import pysam
 import annot_utils
 import edlib
 
-def juncmut_realign(input_file, output_file, bam_file, reference, genome_id, is_grc, template_size = 10):
+def juncmut_realign(input_file, output_file, bam_file, reference, genome_id, is_grc, mut_num_thres, mut_freq_thres, template_size = 10):
 
     def generate_template_seq(template_file, ref_tb, junc_tb, mut_chr, mut_pos, mut_ref, mut_alt, 
                               junc_start, junc_end, junc_annotated, template_size, genome_id, is_grc):
@@ -174,7 +174,7 @@ def juncmut_realign(input_file, output_file, bam_file, reference, genome_id, is_
 
     hout = open(output_file, 'w') 
     header = ["Chr", "SJ_Start", "SJ_End", "SJ_Type", "SJ_Strand", "SJ_Read_Count", "SJ_Depth", "SJ_Freq",
-              "Ref_Motif", "Possivle_Alt_Motif","Possible_Alt_key", "Is_Canonical", "Is_in_exon","SJ_Overlap_Count", 
+              "Ref_Motif", "Possivle_Alt_Motif","Possible_Alt_key", "Is_GT/AG", "Is_in_exon","SJ_Overlap_Count", 
               "Mut_Pos", "Mut_Ref", "Mut_Alt", "Mut_Count", "Mut_Depth", "Mut_Freq",
               "Realign_No_SJ_Neg", "Realign_No_SJ_Pos", "Realign_Target_SJ_Neg", "Reaglin_Target_SJ_Pos",
               "Realign_Normal_SJ_Neg", "Realign_Normal_SJ_Pos","RNA_Mut"]
@@ -223,8 +223,8 @@ def juncmut_realign(input_file, output_file, bam_file, reference, genome_id, is_
                 else:
                     is_exon = 'outside of motif'
                     
-            #if RNA_mutation reads>1 and Freq>=0.05, do realign.
-            if float(F[21]) < 0.05 or int(F[20]) <= 1: 
+            #if RNA_mutation reads>=2 and Freq>=0.05, do realign.
+            if float(F[21]) < mut_freq_thres or int(F[20]) < mut_num_thres:
                 print('\t'.join([F[0], F[1], F[2], F[6], F[7], F[8], F[9], F[10], F[11], F[12], F[13], F[14],is_exon, F[15],
                             F[16], F[17], F[18], F[20], str(len(F[19])), F[21]]) +"\t-\t-\t-\t-\t-\t-\tF", file = hout)                
             else:
@@ -324,12 +324,12 @@ def juncmut_realign(input_file, output_file, bam_file, reference, genome_id, is_
                     if is_exon == 'exon':
                         #if d_realign['No_SJ_Pos'] + d_realign['Target_SJ_Pos'] >= 1:
                         if d_realign['Target_SJ_Pos'] + d_realign['No_SJ_Pos']+ d_realign['Normal_SJ_Pos'] >=1:
-                            rmut = 'T'
-                        else: rmut = 'F'
+                            rmut = 'True'
+                        else: rmut = 'False'
                     elif is_exon == 'intron':
                         if d_realign['Target_SJ_Pos'] + d_realign['No_SJ_Pos']+ d_realign['Normal_SJ_Pos'] >=1:
-                            rmut = 'T'
-                        else: rmut = 'F'
+                            rmut = 'True'
+                        else: rmut = 'False'
                     else: rmut = '-'
                             
                 print('\t'.join([F[0], F[1], F[2], F[6], F[7], F[8], F[9], F[10], F[11], F[12], F[13], F[14], is_exon, F[15],
@@ -366,7 +366,12 @@ if __name__ == "__main__":
     parser.add_argument("-genome_id", metavar = "genome_id", default = None, type = str,
                             help = "genome_id")
     parser.add_argument("-is_grc", metavar = "is_grc", default = "True", type = str,
-                            help = "If chr prefix is in chr name.")        
+                            help = "If chr prefix is in chr name.") 
+    parser.add_argument("-mut_num_thres", type = int, default = 2,
+                        help = "If A mutation with the number of mutation alleles >= mut_num_thres and the frequency >= mut_freq_thres, do realign. (default: %(default)s)")    
+    parser.add_argument("-mut_freq_thres", type = float, default = 0.05,
+                        help = "If A mutation with the number of mutation alleles >= mut_num_thres and the frequency >= mut_freq_thres, do realign. (default: %(default)s)")
+       
     args = parser.parse_args()
     
     input_file = args.input_file
@@ -375,8 +380,10 @@ if __name__ == "__main__":
     reference = args.reference
     genome_id = args.genome_id
     is_grc = args.is_grc
+    mut_num_thres = args.mut_num_thres 
+    mut_freq_thres = args.mut_freq_thres
  
-    juncmut_realign(input_file, output_file, bam_file, reference, genome_id, is_grc, template_size = 10)
+    juncmut_realign(input_file, output_file, bam_file, reference, genome_id, is_grc, mut_num_thres, mut_freq_thres, template_size = 10)
     
 """
 read="TTGCTATTTTCTGCTGAATGTCAGTCCACATCTTACTAATTAGCTCAAAATTCTCTTCTGTTAGTTGTTGGAGAAACTTGCACTCTCAAAACACAGAGCCG"

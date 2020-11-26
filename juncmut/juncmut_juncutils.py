@@ -4,6 +4,10 @@
 Created on Wed Jul 31 2019
 
 @author: naokoIida
+
+proc_star_junction(input_file, output_file, control_file, read_num_thres, overhang_thres, remove_annotated, convert_map_splice2):
+convert_map_splice2: start position -1 , end position +1
+remove_annotated == True to remove a line with column[5] != 0.
 """
 
 def juncmut_juncutils(input_file, output_file, cont_list, genome_id, read_num_thres):
@@ -37,7 +41,7 @@ def juncmut_juncutils(input_file, output_file, cont_list, genome_id, read_num_th
         n = 1
         cur_infile, cur_outfile = tmpfile1, tmpfile2 + "_" + str(n)
         for cont in cont_list:
-            proc_star_junction(cur_infile, cur_outfile, cont, read_num_thres, 10, False, False) #<--reads>=1 adapt 2pass
+            proc_star_junction(cur_infile, cur_outfile, cont, read_num_thres, 10, False, False)
             tmpfile_list.append(cur_outfile)
             n = n + 1
             cur_infile, cur_outfile = cur_outfile, tmpfile2 + "_" + str(n)

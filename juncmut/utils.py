@@ -101,9 +101,8 @@ def check_reference(reference):
 
     genome_id = "hg19" if hg19_count > hg38_count else "hg38"
     is_grc = True if grc_count > nongrc_count else False
-    is_chr = "grc" if grc_count > nongrc_count else "ucsc"
 
-    return([genome_id, is_grc, is_chr])
+    return([genome_id, is_grc])
 
 
 if __name__ == "__main__":

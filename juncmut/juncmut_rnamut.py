@@ -126,16 +126,14 @@ def juncmut_rnamut(input_file, output_file, rna_bam, reference):
                     print('\t'.join(F + [pmut_elm[0], pmut_elm[1], var]), file = hout1)
                     print('\t'.join([F[0], str(int(pmut_elm[0]) - 1), pmut_elm[0], var]), file = hout2)
 
-#    with open("./juncmut/"+output_file + ".tmp2", 'w') as hout:
-#        mpileup_commands = ["samtools", "mpileup", "-l", "./juncmut/"+output_file + ".tmp1.pos.bed", "-f", reference, rna_bam]
-#        original:subprocess.check_call(mpileup_commands, stdout = hout)           
     mpileup_commands = ["samtools", "mpileup", "-l", output_file + ".tmp1.pos.bed", "-f", reference, rna_bam,"-O", "-o", output_file + ".tmp2"]
     subprocess.run(mpileup_commands)
     
 
     #arrange of mpileup file
     with open(output_file + ".tmp2", 'r') as in3, open(output_file + ".tmp3", 'w') as m2out:
-        for line in in3:  #sample, chr, pos, ,ref, depth, bases, Q, readsposition
+        for line in in3:  
+            #sample, chr, pos, ,ref, depth, bases, Q, readsposition
 
             col = line.rstrip('\n').split('\t')
 
@@ -152,7 +150,8 @@ def juncmut_rnamut(input_file, output_file, rna_bam, reference):
             for i in range(len(base)):
                 depth = depth + 1
                 if base[i] == '.':
-                    base2num[col[2].upper()] = base2num[col[2].upper()] + 1 #col[3]=REF
+                    base2num[col[2].upper()] = base2num[col[2].upper()] + 1 
+                    #col[3]=REF
                     #base2pos[F[3].upper()].append(pos_vector[i])
                 elif base[i] == ',':
                     base2num[col[2].lower()] = base2num[col[2].lower()] + 1
@@ -186,16 +185,16 @@ def juncmut_rnamut(input_file, output_file, rna_bam, reference):
             m2out.write(rec3)
             m2out.write(rec4)
 
-
+    """
     def f(row):
-        if (str(row['rna_bases']) != '-') & (int(row['rna_alt_reads'])>1) & (float(row['rna_alt_ratio'])>0.05):
+        if (str(row['rna_bases']) != '-') & (int(row['rna_alt_reads'])>=read_num_thres) & (float(row['rna_alt_ratio'])>=freq_thres):
             val = "True"
         elif str(row['rna_bases']) == '-':
-            val = "na"
+            val = "False"
         else:
             val = "False"
         return val
-
+    """    
 
     # size = os.path.getsize(output_file + ".tmp3")
     fsize = Path(output_file + ".tmp3").stat().st_size
@@ -205,14 +204,12 @@ def juncmut_rnamut(input_file, output_file, rna_bam, reference):
 
         df1 = pd.read_csv(output_file+".tmp3", sep='\t', header=None, index_col=None, dtype = 'object')
         df1.columns = ['CHR', 'POS', 'REF', 'MUT', 'rna_bases', 'rna_alt_reads', 'rna_alt_ratio']
-        #df1['CHR'] = df1['CHR'].str.split('chr', expand=True)[1]
         df2 = pd.read_csv(output_file+".tmp1", sep='\t', header=None, index_col=None, dtype = 'object')
         df2.columns = ['CHR','start','end','start_ori','end_ori','sample','class','strand','reads', 'total', 'freq', 'ref_bases','mut_prediction_seq','info', 'type', 'intSJ','POS','REF','MUT']
         res = pd.merge(df2, df1, on=['CHR', 'POS','REF','MUT'],how='left').drop_duplicates()
         res=res.fillna({'rna_bases': '-', 'rna_alt_reads': 0, 'rna_alt_ratio': 0})
 
-        res['rna_mut'] = res.apply(f, axis=1)
-
+        #res['rna_mut'] = res.apply(f, axis=1)
         res.to_csv(output_file, index=False, sep='\t')
 
     else:
@@ -224,7 +221,7 @@ def juncmut_rnamut(input_file, output_file, rna_bam, reference):
         df2['rna_alt_ratio'] = '0'
         res = df2.drop_duplicates()
 
-        res['rna_mut'] = 'na'
+        #res['rna_mut'] = 'na'
         res.to_csv(output_file, index=False, sep='\t', header=False)
 
     Path(output_file + ".tmp1").unlink()
@@ -238,17 +235,18 @@ if __name__== "__main__":
 
     parser = argparse.ArgumentParser() #make a parser
 
-    parser.add_argument("--input_file", metavar = "input_file", default = None, type = str,
+    parser.add_argument("-input_file", metavar = "input_file", default = None, type = str,
                             help = "input file")
 
-    parser.add_argument("--output_file", metavar = "output_file", default = "my_sample", type = str,
+    parser.add_argument("-output_file", metavar = "output_file", default = "my_sample", type = str,
                             help = "output file")
 
-    parser.add_argument("--rna_bam", metavar = "rna_bam", default = None, type = str,
+    parser.add_argument("-rna_bam", metavar = "rna_bam", default = None, type = str,
                             help = "rna bam")
 
-    parser.add_argument("--reference", metavar = "reference", default = None, type = str,
+    parser.add_argument("-reference", metavar = "reference", default = None, type = str,
                             help = "/path/to/reference")
+
 
     args = parser.parse_args()
 
@@ -256,5 +254,6 @@ if __name__== "__main__":
     output_file = args.output_file
     rna_bam = args.rna_bam
     reference = args.reference
+
 
     juncmut_rnamut(input_file, output_file, rna_bam, reference)

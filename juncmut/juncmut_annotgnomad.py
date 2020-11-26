@@ -85,7 +85,7 @@ if __name__== "__main__":
 
     input_file = args.input_file
     output_file = args.output_file
-    gnomad_path = args.gnomad_path
+    gnomad = args.gnomad
     genome_id = args.genome_id
 
     juncmut_annotgnomad(input_file, output_file, gnomad, genome_id)
