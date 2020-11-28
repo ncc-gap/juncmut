@@ -60,6 +60,7 @@ def juncmut_realign(input_file, output_file, bam_file, reference, genome_id, is_
 
         ##########
         # normal splicing (multiple)
+        
         records = junc_tb.fetch(region = mut_chr + ':' + str(mut_pos - template_size - 1) + '-' + str(mut_pos + template_size))
         njind = 0
         for record_line in records:
@@ -169,7 +170,10 @@ def juncmut_realign(input_file, output_file, bam_file, reference, genome_id, is_
 
     ref_tb = pysam.FastaFile(reference)
     #annot_utils.junction.make_junc_info(output_file + ".gencode.junc.bed.gz", "gencode", genome_id, is_grc, False)
-    annot_utils.junction.make_junc_info(output_file + ".gencode.junc.bed.gz", "gencode", genome_id, is_grc, False)
+    if is_grc == 'False':
+        annot_utils.junction.make_junc_info(output_file + ".gencode.junc.bed.gz", "gencode", genome_id, False, False)
+    else:
+        annot_utils.junction.make_junc_info(output_file + ".gencode.junc.bed.gz", "gencode", genome_id, True, False)
     junc_tb = pysam.TabixFile(output_file + ".gencode.junc.bed.gz")
 
     hout = open(output_file, 'w') 
@@ -226,7 +230,7 @@ def juncmut_realign(input_file, output_file, bam_file, reference, genome_id, is_
             #if RNA_mutation reads>=2 and Freq>=0.05, do realign.
             if float(F[21]) < mut_freq_thres or int(F[20]) < mut_num_thres:
                 print('\t'.join([F[0], F[1], F[2], F[6], F[7], F[8], F[9], F[10], F[11], F[12], F[13], F[14],is_exon, F[15],
-                            F[16], F[17], F[18], F[20], str(len(F[19])), F[21]]) +"\t-\t-\t-\t-\t-\t-\tF", file = hout)                
+                            F[16], F[17], F[18], F[20], str(len(F[19])), F[21]]) +"\t-\t-\t-\t-\t-\t-\tFalse", file = hout)                
             else:
             # test if F[0]=='chr19' and str(F[16])=='11830133':  
                 F = line.rstrip('\n').split('\t')
@@ -366,7 +370,7 @@ if __name__ == "__main__":
     parser.add_argument("-genome_id", metavar = "genome_id", default = None, type = str,
                             help = "genome_id")
     parser.add_argument("-is_grc", metavar = "is_grc", default = "True", type = str,
-                            help = "If chr prefix is in chr name.") 
+                            help = "If chr prefix is in chr name, False") 
     parser.add_argument("-mut_num_thres", type = int, default = 2,
                         help = "If A mutation with the number of mutation alleles >= mut_num_thres and the frequency >= mut_freq_thres, do realign. (default: %(default)s)")    
     parser.add_argument("-mut_freq_thres", type = float, default = 0.05,
