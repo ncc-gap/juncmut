@@ -170,8 +170,8 @@ def juncmut_realign(input_file, output_file, bam_file, reference, genome_id, is_
 
     ref_tb = pysam.FastaFile(reference)
     #annot_utils.junction.make_junc_info(output_file + ".gencode.junc.bed.gz", "gencode", genome_id, is_grc, False)
-    print("is_grc by realign() " + is_grc)
-    if is_grc == 'False':
+    print("is_grc by realign() " + str(is_grc))
+    if str(is_grc) == 'False':
         annot_utils.junction.make_junc_info(output_file + ".gencode.junc.bed.gz", "gencode", genome_id, False, False)
     else:
         annot_utils.junction.make_junc_info(output_file + ".gencode.junc.bed.gz", "gencode", genome_id, True, False)

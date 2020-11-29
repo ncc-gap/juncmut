@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
     
 setup(
     name = 'juncmut',
-    version = '0.3.4a',
+    version = '0.3.5a',
     description='Python programs for the identification of the genomic mutation from RNA-seq splicing junction data',
     url = 'https://github.com/ni6o6/',
     author = 'Naoko Iida',
@@ -13,7 +13,7 @@ setup(
     license = '',
 
     classifiers = [
-        'Development Status :: 0.3.4 - Alpha',
+        'Development Status :: 0.3.5 - Alpha',
         'Intended Audience :: Science/Research',
         'License :: OSI Approved :: ',
         'Operating System :: Unix',
