@@ -13,7 +13,7 @@ import edlib
 def juncmut_realign(input_file, output_file, bam_file, reference, genome_id, is_grc, mut_num_thres, mut_freq_thres, template_size = 10):
 
     def generate_template_seq(template_file, ref_tb, junc_tb, mut_chr, mut_pos, mut_ref, mut_alt, 
-                              junc_start, junc_end, junc_annotated, template_size, genome_id, is_grc):
+                              junc_start, junc_end, junc_annotated, template_size):
 
         def change_base_check(tseq, tpos, tref, talt):
             # for debugging
@@ -170,6 +170,7 @@ def juncmut_realign(input_file, output_file, bam_file, reference, genome_id, is_
 
     ref_tb = pysam.FastaFile(reference)
     #annot_utils.junction.make_junc_info(output_file + ".gencode.junc.bed.gz", "gencode", genome_id, is_grc, False)
+    print("is_grc by realign() " + is_grc)
     if is_grc == 'False':
         annot_utils.junction.make_junc_info(output_file + ".gencode.junc.bed.gz", "gencode", genome_id, False, False)
     else:
@@ -242,7 +243,7 @@ def juncmut_realign(input_file, output_file, bam_file, reference, genome_id, is_
                     junc_annotated = junc_start
     
                 generate_template_seq(output_file + ".tmp.template.fa", ref_tb, junc_tb, mut_chr, mut_pos, mut_ref, mut_alt,
-                    junc_start, junc_end, junc_annotated, template_size, genome_id, is_grc)
+                    junc_start, junc_end, junc_annotated, template_size)
         
                 extract_read_around_boundary(bam_file, output_file + ".tmp.read_seq.fa", mut_chr, mut_pos)
     
@@ -369,7 +370,7 @@ if __name__ == "__main__":
                             help = "/full/path/to/reference")     
     parser.add_argument("-genome_id", metavar = "genome_id", default = None, type = str,
                             help = "genome_id")
-    parser.add_argument("-is_grc", metavar = "is_grc", default = "True", type = str,
+    parser.add_argument("-is_grc", metavar = "is_grc", default = None, type = str,
                             help = "If chr prefix is in chr name, False") 
     parser.add_argument("-mut_num_thres", type = int, default = 2,
                         help = "If A mutation with the number of mutation alleles >= mut_num_thres and the frequency >= mut_freq_thres, do realign. (default: %(default)s)")    
