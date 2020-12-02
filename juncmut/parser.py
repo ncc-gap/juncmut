@@ -52,6 +52,12 @@ def create_parser():
     
     get.add_argument("-gnomad", metavar = "gnomad", default = None, type = str,
                         help = "Path to gnomad vcf file")
+
+    get.add_argument("-genecode_gene_file", metavar = "genecode_gene_file", default = None, type = str,
+                        help = "Path to genecode gene file")
+    
+    get.add_argument("-output_bam", metavar = "output_bam", default = None, type = str,
+                        help = "Output bam")
     
     get.add_argument("-debug", metavar = "debug", default = "False", type = str,
                         help = "True keeps the intermediate files.")

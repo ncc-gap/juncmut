@@ -40,8 +40,9 @@ chr\<tab>start_postion\<tab>end_position(\<tab>any..)
 ### get
 ```
 juncmut get \
--input_file ${input_file} -output_file ${output_file} -reference ${reference} -rna_bam ${rna_bam} \
+-input_file ${input_file} -output_file ${output_file} -output_bam ${output_bam} -reference ${reference} -rna_bam ${rna_bam} \
 -control_file ${control_file1} ${control_file2} \
+-genecode_gene_file ${genecode_gene_file}
 -read_num_thres ${read_num_thres} -freq_thres ${freq_thres} -gnomad ${gnomad} -mut_num_thres ${mut_num_thres} -mut_freq_thres ${mut_freq_thres} 
 ```
 ### validate
@@ -55,6 +56,8 @@ juncmut validate \
 ```
 input_file=/tmp/${sample}.SJ.out.tab
 rna_bam=/tmp/${sample}.Aligned.sortedByCoord.out.cram
+output_file=/tmp/${sample}.juncmut.txt
+output_bam=/tmp/${sample}.juncmut.bam
 
 reference=/tmp/ref/GRCh38.d1.vd1.fa
 control_file1=/tmp/ref/SJ_control_2_4_liftHg38_chr.bed.gz
@@ -64,11 +67,13 @@ freq_thres=0.05
 mut_num_thres=2
 mut_freq_thres=0.05
 gnomad=gs://gnomad-public/release/3.0/vcf/genomes/gnomad.genomes.r3.0.sites.vcf.bgz
+genecode_gene_file=/tmp/ref/wgEncodeGencodeBasicV34_hg38.txt.gz
 
 docker run -i --rm  -w /tmp -v ~/environment:/tmp \
-ni6o6/juncmut:0.2.1 juncmut get \
--input_file ${input_file} -reference ${reference} -rna_bam ${rna_bam} \
+ni6o6/juncmut:0.3.1 juncmut get \
+-input_file ${input_file} -output_file ${output_file} -output_bam ${output_bam} -reference ${reference} -rna_bam ${rna_bam} \
 -control_file ${control_file1} ${control_file2} \
+-genecode_gene_file ${genecode_gene_file}  \
 -read_num_thres ${read_num_thres} -freq_thres ${freq_thres} -mut_num_thres ${mut_num_thres} -mut_freq_thres ${mut_freq_thres} -gnomad ${gnomad}
 ```
 ### validate
@@ -80,7 +85,7 @@ mut_freq_thres=0.05
 
 docker run -it --rm -w /tmp -v ~/environment:/tmp \
 ni6o6/juncmut:0.2.1 juncmut validate \
--input_file ${input_file} -dna_bam ${bam} -reference ${reference} -mut_num_thres ${mut_num_thres} -mut_freq_thres ${mut_freq_thres}
+-input_file ${input_file}  -output_file ${output_file} -dna_bam ${bam} -reference ${reference} -mut_num_thres ${mut_num_thres} -mut_freq_thres ${mut_freq_thres}
 ```
 
 ## Each function

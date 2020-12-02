@@ -3,14 +3,12 @@
 
 import subprocess, gzip
 
-import check_bam
+def juncmut_filt_bam_main(input_file, output_file, input_bam, output_bam, genecode_gene_file):
 
-def filt_bam_main(input_file, output_file, input_bam, output_bam, genecode_gene_file):
-
-    def define_longest_transcript(splice_type, strand, tchr, normal_pos, genecode_gene_file):
+    def define_longest_transcript(splice_type, strand, tchr, normal_pos, ref_file):
         gene2tx_info = {}
-        if splice_type == "5" and strand == "+":
-            with gzip.open(genecode_gene_file, 'rt') as hin:
+        if splice_type == "5'SS" and strand == "+":
+            with gzip.open(ref_file, 'rt') as hin:
                 for record in hin:
                     R = record.rstrip('\n').split('\t')
                     ref_chr = R[2]
@@ -22,8 +20,8 @@ def filt_bam_main(input_file, output_file, input_bam, output_bam, genecode_gene_
                         ref_tx_end = R[5]
                         ref_gene = R[12]
                         gene2tx_info[ref_tx_id] = tchr, ref_tx_start, ref_tx_end, ref_gene
-        if splice_type == "5" and strand == "-":
-            with gzip.open(genecode_gene_file, 'rt') as hin:
+        if splice_type == "5'SS" and strand == "-":
+            with gzip.open(ref_file, 'rt') as hin:
                 for record in hin:
                     R = record.rstrip('\n').split('\t')
                     ref_chr = R[2]
@@ -35,8 +33,8 @@ def filt_bam_main(input_file, output_file, input_bam, output_bam, genecode_gene_
                         ref_tx_end = R[5]
                         ref_gene = R[12]
                         gene2tx_info[ref_tx_id] = tchr, ref_tx_start, ref_tx_end, ref_gene
-        if splice_type == "3" and strand == "+":
-            with gzip.open(genecode_gene_file, 'rt') as hin:
+        if splice_type == "3'SS" and strand == "+":
+            with gzip.open(ref_file, 'rt') as hin:
                 for record in hin:
                     R = record.rstrip('\n').split('\t')
                     ref_chr = R[2]
@@ -48,8 +46,8 @@ def filt_bam_main(input_file, output_file, input_bam, output_bam, genecode_gene_
                         ref_tx_end = R[5]
                         ref_gene = R[12]
                         gene2tx_info[ref_tx_id] = tchr, ref_tx_start, ref_tx_end, ref_gene
-        if splice_type == "3" and strand == "-":
-            with gzip.open(genecode_gene_file, 'rt') as hin:
+        if splice_type == "3'SS" and strand == "-":
+            with gzip.open(ref_file, 'rt') as hin:
                 for record in hin:
                     R = record.rstrip('\n').split('\t')
                     ref_chr = R[2]
@@ -70,7 +68,8 @@ def filt_bam_main(input_file, output_file, input_bam, output_bam, genecode_gene_
             tx_chr, tx_start, tx_end, gene = gene2tx_info[id]
 
             if gene in gene2chr:
-                if gene2tx_info[gene] != tx_chr:
+                
+                if gene2chr[gene] != tx_chr:
                     print('Wrong.')
             else: gene2chr[gene] = tx_chr
                         
@@ -78,6 +77,7 @@ def filt_bam_main(input_file, output_file, input_bam, output_bam, genecode_gene_
                 if int(gene2start[gene]) > int(tx_start):
                     gene2start[gene] = tx_start
             else: gene2start[gene] = tx_start
+            
             if gene in gene2end:
                 if int(gene2end[gene]) < int(tx_end):
                     gene2end[gene] = tx_end
@@ -85,8 +85,9 @@ def filt_bam_main(input_file, output_file, input_bam, output_bam, genecode_gene_
         
         region_list=[]
         genes_list=[]
+        genes = '---'
         for gene in gene2chr:
-            #import pdb; pdb.set_trace() 
+             
             region = gene2chr[gene] + ':' + str(gene2start[gene]) + '-' + str(gene2end[gene])
             region_list.append(region)
             genes_list.append(gene)
@@ -98,33 +99,34 @@ def filt_bam_main(input_file, output_file, input_bam, output_bam, genecode_gene_
     ex_region_list =[]
     # open a file and make a trnscript list for RNA_Mut True.
     with open(input_file) as fin:
-        header = fin.readline()
+        header = fin.readline().rstrip('\n')
         new_header = header + "Gene"
         print(new_header, file=hout)
         
         for line in fin:
             lie = line.rstrip('\n')
             F = line.rstrip('\n').split('\t')
-            gene = F[-1]
             tchr = F[0]
             strand = F[4]
             #o-->
-            if "5" in F[3] and strand == "+": 
-                splice_type = "5"
+            if "5'SS" in F[3] and strand == "+": 
+                splice_type = "5'SS"
                 normal_pos = F[2]    
             #<--o
-            if "5" in F[3] and strand == "-":
-                splice_type = "5"
+            if "5'SS" in F[3] and strand == "-":
+                splice_type = "5'SS"
                 normal_pos = int(F[1])-1      
             #-->o
-            if "3" in F[3] and strand == "+":
-                splice_type = "3"
+            if "3'SS" in F[3] and strand == "+":
+                splice_type = "3'SS"
                 normal_pos = int(F[1])-1
             #o<--
-            if "3" in F[3] and strand == "-": 
+            if "3'SS" in F[3] and strand == "-":
+                splice_type = "3'SS"
                 normal_pos = F[2]
 
-            genes, region_list = define_longest_transcript(splice_type, strand, tchr, normal_pos, genecode_gene_file) 
+            genes, region_list = define_longest_transcript(splice_type, strand, tchr, str(normal_pos), genecode_gene_file) 
+            #import pdb; pdb.set_trace() 
             # col F[-3] is RNA_Mut                
             if F[-3] == 'True':
                 print(lie + '\t' + genes, file=hout)
@@ -136,15 +138,17 @@ def filt_bam_main(input_file, output_file, input_bam, output_bam, genecode_gene_
     # initialize the file
     hout = open(output_bam + ".tmp.unsorted.sam", 'w')
     hout.close()
-
+    import pdb; pdb.set_trace() 
     hout = open(output_bam + ".tmp.unsorted.sam", 'a')
-    for region in sorted(ex_region_list):
+    
+    for region in sorted(list(set(ex_region_list))):
         subprocess.check_call(["samtools", "view", input_bam, region], stdout = hout, stderr = subprocess.DEVNULL)
     hout.close()
 
     hout = open(output_bam + ".tmp.unsorted.rmdup.sam", 'w')
     subprocess.check_call(["sort", "-u", output_bam + ".tmp.unsorted.sam"], stdout = hout)
-
+    hout.close()
+    
     hout = open(output_bam + ".tmp.unsorted2.sam", 'w')
     subprocess.check_call(["samtools", "view", "-H", input_bam], stdout = hout, stderr = subprocess.DEVNULL)
     hout.close()
@@ -194,5 +198,5 @@ if __name__ == "__main__":
     output_bam = args.output_bam
     gencode_gene_file = args.gencode_gene_file
 
-    filt_bam_main(input_file, output_file, input_bam, output_bam, gencode_gene_file)
+    juncmut_filt_bam_main(input_file, output_file, input_bam, output_bam, gencode_gene_file)
     

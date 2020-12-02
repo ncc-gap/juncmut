@@ -200,7 +200,7 @@ def juncmut_gmut(input_file, output_file, dna_bam, reference, is_grc, mut_num_th
         
         df2.columns = ['Chr','SJ_Start','SJ_End','SJ_Type','SJ_Strand','SJ_Read_Count','SJ_Depth','SJ_Freq','Ref_Motif','Possivle_Alt_Motif',
 'Possible_Alt_key','Is_GT/AG','Is_in_exon','SJ_Overlap_Count','Mut_Pos','Mut_Ref','Mut_Alt','Mut_Count','Mut_Depth','Mut_Freq',
-'Realign_No_SJ_Neg','Realign_No_SJ_Pos','Realign_Target_SJ_Neg','Reaglin_Target_SJ_Pos','Realign_Normal_SJ_Neg','Realign_Normal_SJ_Pos','RNA_Mut','gnomAD','gnomAD_AF']
+'Realign_No_SJ_Neg','Realign_No_SJ_Pos','Realign_Target_SJ_Neg','Reaglin_Target_SJ_Pos','Realign_Normal_SJ_Neg','Realign_Normal_SJ_Pos','RNA_Mut','gnomAD','gnomAD_AF','Gene']
         
         res = pd.merge(df2, df1, on=['Chr', 'Mut_Pos', 'Mut_Ref', 'Mut_Alt'],how='left').drop_duplicates()
         res=res.fillna({'g_bases': '-', 'g_alt_reads': 0, 'g_alt_ratio': 0})
@@ -214,7 +214,7 @@ def juncmut_gmut(input_file, output_file, dna_bam, reference, is_grc, mut_num_th
         df2 = pd.read_csv(output_file + ".tmp1", sep='\t', header=None, index_col=None, dtype = 'object')
         df2.columns = ['Chr','SJ_Start','SJ_End','SJ_Type','SJ_Strand','SJ_Read_Count','SJ_Depth','SJ_Freq','Ref_Motif','Possivle_Alt_Motif',
 'Possible_Alt_key','Is_GT/AG','Is_in_exon','SJ_Overlap_Count','Mut_Pos','Mut_Ref','Mut_Alt','Mut_Count','Mut_Depth','Mut_Freq',
-'Realign_No_SJ_Neg','Realign_No_SJ_Pos','Realign_Target_SJ_Neg','Reaglin_Target_SJ_Pos','Realign_Normal_SJ_Neg','Realign_Normal_SJ_Pos','RNA_Mut','gnomAD','gnomAD_AF']
+'Realign_No_SJ_Neg','Realign_No_SJ_Pos','Realign_Target_SJ_Neg','Reaglin_Target_SJ_Pos','Realign_Normal_SJ_Neg','Realign_Normal_SJ_Pos','RNA_Mut','gnomAD','gnomAD_AF','Gene']
         df2['g_bases'] = '-'
         df2['g_alt_reads'] = '0'
         df2['g_alt_ratio'] = '0'
