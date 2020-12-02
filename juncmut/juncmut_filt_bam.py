@@ -138,7 +138,7 @@ def juncmut_filt_bam_main(input_file, output_file, input_bam, output_bam, geneco
     # initialize the file
     hout = open(output_bam + ".tmp.unsorted.sam", 'w')
     hout.close()
-    import pdb; pdb.set_trace() 
+    #import pdb; pdb.set_trace() 
     hout = open(output_bam + ".tmp.unsorted.sam", 'a')
     
     for region in sorted(list(set(ex_region_list))):
