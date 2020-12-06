@@ -100,7 +100,7 @@ def juncmut_filt_bam_main(input_file, output_file, input_bam, output_bam, geneco
     # open a file and make a trnscript list for RNA_Mut True.
     with open(input_file) as fin:
         header = fin.readline().rstrip('\n')
-        new_header = header + "Gene"
+        new_header = header + "\tGene"
         print(new_header, file=hout)
         
         for line in fin:

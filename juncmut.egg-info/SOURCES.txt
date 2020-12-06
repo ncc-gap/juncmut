@@ -4,6 +4,7 @@ juncmut/__init__.py
 juncmut/juncmut_annotgnomad.py
 juncmut/juncmut_assadj.py
 juncmut/juncmut_env.py
+juncmut/juncmut_filt_bam.py
 juncmut/juncmut_freq.py
 juncmut/juncmut_gmut.py
 juncmut/juncmut_intersect.py

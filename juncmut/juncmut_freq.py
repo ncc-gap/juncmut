@@ -92,6 +92,7 @@ def juncmut_freq(input_file, output_file, original_sj_file, read_num_thres, freq
                     F = line.rstrip('\n').split('\t')
                     if int(float(F[8])) >= read_num_thres and float(F[10]) >= freq_thres:
                         out2.write(line)
+    os.remove(output_file + ".tmp")
                     
 if __name__== "__main__":
     import argparse
