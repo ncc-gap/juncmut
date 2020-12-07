@@ -9,6 +9,7 @@ Date:10152019
 def juncmut_freq(input_file, output_file, original_sj_file, read_num_thres, freq_thres):
     
     import pandas as pd
+    import os
 
     data = pd.read_csv(input_file, sep='\t', header=None,  dtype={0:'str',1:'int',2:'int',3:'int',4:'int'})
     data.columns = ['chr','s','e','s_ori','e_ori', 'sample', 'class','strand', 'reads']
