@@ -4,7 +4,7 @@ Naoko Iida
 
 python juncmut_annotgmut.py input_file, output_file, bam, reference, is_grc
 if is_grc=="True", remove "chr" in input.
-if is_grc=="False", add "chr" in output.
+if is_grc=="False", add "chr" in input.
 """
 
 def juncmut_gmut(input_file, output_file, dna_bam, reference, is_grc, mut_num_thres, mut_freq_thres):  
@@ -105,7 +105,6 @@ def juncmut_gmut(input_file, output_file, dna_bam, reference, is_grc, mut_num_th
         header = hin.readline()
         header_list = header.rstrip('\n').split('\t')
         ncol = len(header_list)
-        print(ncol)
         header_list[0] = "Mut_key_"
         for line in hin:
             F = line.rstrip('\n').split('\t')
@@ -113,9 +112,9 @@ def juncmut_gmut(input_file, output_file, dna_bam, reference, is_grc, mut_num_th
             P = mut_key.split(',')
             mut_pos = P[1]
            
-            if is_grc == 'True':
+            if is_grc == 'isTrue':
                 chr = P[0].replace('chr', '')
-            else:
+            elif is_grc == 'isFalse':
                 chr_t = P[0].replace('chr', '')
                 chr = 'chr'+chr_t
                 

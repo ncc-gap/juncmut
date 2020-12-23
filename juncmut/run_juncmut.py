@@ -83,9 +83,13 @@ def validate_main(args):
 
     genome_id, is_grc = check_reference(args.reference)
 
-    
+    if is_grc:
+        grc = 'isTrue'
+    else:
+        grc = 'isFalse'
+        
     juncmut_gmut(args.input_file, args.output_file, 
-                   args.dna_bam, args.reference, is_grc, args.mut_num_thres, args.mut_freq_thres)
+                   args.dna_bam, args.reference, grc, args.mut_num_thres, args.mut_freq_thres)
 
 
     run_time = (time.time()-start_time)/60
