@@ -102,18 +102,27 @@ def juncmut_gmut(input_file, output_file, dna_bam, reference, is_grc, mut_num_th
 
     # separate records for each variant and create position list
     with open(input_file, 'r') as hin, open(output_file + ".tmp1", 'w') as hout1, open(output_file + ".tmp2", 'w') as hout2:
-        next(hin)
+        header = hin.readline()
+        header_list = header.rstrip('\n').split('\t')
+        ncol = len(header_list)
+        print(ncol)
+        header_list[0] = "Mut_key_"
         for line in hin:
             F = line.rstrip('\n').split('\t')
-            mut_pos = F[14]
-            #var = F[16]           
+            mut_key = F[0]
+            P = mut_key.split(',')
+            mut_pos = P[1]
+           
             if is_grc == 'True':
-                chr = F[0].replace('chr', '')
+                chr = P[0].replace('chr', '')
             else:
-                chr_t = F[0].replace('chr', '')
+                chr_t = P[0].replace('chr', '')
                 chr = 'chr'+chr_t
-            print(str(chr)+'\t'+'\t'.join(F[1:29]), file = hout1)
                 
+            new_mut_key = chr+","+str(mut_pos)+","+P[2]+","+P[3]
+            
+            hout1.write(new_mut_key+'\t'+'\t'.join(F[1:int(ncol)])+'\n')
+            
             position = str(chr) + ':' + str(int(mut_pos)-1) + '-' + str(mut_pos)
             #import pdb; pdb.set_trace()
             mpileup_commands = ["samtools", "mpileup", "-r", position, "-f", reference, dna_bam, "-O", "-o", output_file + ".tmp22"]
@@ -170,10 +179,15 @@ def juncmut_gmut(input_file, output_file, dna_bam, reference, is_grc, mut_num_th
                 C_rate = float(base2num['C'] + base2num['c'])/(depth_p + depth_n)
                 C_reads = base2num['C'] + base2num['c']
 
-                rec1 = col[0] +"\t"+ col[1] +"\t"+ col[2] + "\tA\t" + base + "\t" + str(A_reads) + "\t" + str(A_rate) + "\n"
-                rec2 = col[0] +"\t"+ col[1] +"\t"+ col[2] + "\tT\t" + base + "\t" + str(T_reads) + "\t" + str(T_rate) + "\n"
-                rec3 = col[0] +"\t"+ col[1] +"\t"+ col[2] + "\tG\t" + base + "\t" + str(G_reads) + "\t" + str(G_rate) + "\n"
-                rec4 = col[0] +"\t"+ col[1] +"\t"+ col[2] + "\tC\t" + base + "\t" + str(C_reads) + "\t" + str(C_rate) + "\n"
+                #rec1 = col[0] +"\t"+ col[1] +"\t"+ col[2] + "\tA\t" + base + "\t" + str(A_reads) + "\t" + str(A_rate) + "\n"
+                #rec2 = col[0] +"\t"+ col[1] +"\t"+ col[2] + "\tT\t" + base + "\t" + str(T_reads) + "\t" + str(T_rate) + "\n"
+                #rec3 = col[0] +"\t"+ col[1] +"\t"+ col[2] + "\tG\t" + base + "\t" + str(G_reads) + "\t" + str(G_rate) + "\n"
+                #rec4 = col[0] +"\t"+ col[1] +"\t"+ col[2] + "\tC\t" + base + "\t" + str(C_reads) + "\t" + str(C_rate) + "\n"
+                
+                rec1 = col[0] +","+ col[1] +","+ col[2] + ",A\t" + str(len(base)) + "\t" + str(A_reads) + "\t" + str(A_rate) + "\n"
+                rec2 = col[0] +","+ col[1] +","+ col[2] + ",T\t" + str(len(base)) + "\t" + str(T_reads) + "\t" + str(T_rate) + "\n"
+                rec3 = col[0] +","+ col[1] +","+ col[2] + ",G\t" + str(len(base)) + "\t" + str(G_reads) + "\t" + str(G_rate) + "\n"
+                rec4 = col[0] +","+ col[1] +","+ col[2] + ",C\t" + str(len(base)) + "\t" + str(C_reads) + "\t" + str(C_rate) + "\n"
 
             m2out.write(rec1)
             m2out.write(rec2)
@@ -182,9 +196,9 @@ def juncmut_gmut(input_file, output_file, dna_bam, reference, is_grc, mut_num_th
 
 
     def f(row):
-        if (str(row['g_bases']) != '-') & (int(row['g_alt_reads']) >= mut_num_thres) & (float(row['g_alt_ratio']) >= mut_freq_thres):
+        if (int(row['g_depth']) > 0) & (int(row['g_alt_reads']) >= mut_num_thres) & (float(row['g_alt_ratio']) >= mut_freq_thres):
             val = "True"
-        elif str(row['g_bases']) == '-':
+        elif int(row['g_depth']) == 0:
             val = "False"
         else:
             val = "False"
@@ -194,16 +208,14 @@ def juncmut_gmut(input_file, output_file, dna_bam, reference, is_grc, mut_num_th
 
     if fsize != 0:
         df1 = pd.read_csv(output_file+".tmp3", sep='\t', header=None, index_col=None, dtype = 'object')
-        df1.columns = ['Chr', 'Mut_Pos', 'Mut_Ref', 'Mut_Alt', 'g_bases', 'g_alt_reads', 'g_alt_ratio']
+        df1.columns = ['Mut_key_', 'g_depth', 'g_alt_reads', 'g_alt_ratio']
         
         df2 = pd.read_csv(output_file+".tmp1", sep='\t', header=None, index_col=None, dtype = 'object')
         
-        df2.columns = ['Chr','SJ_Start','SJ_End','SJ_Type','SJ_Strand','SJ_Read_Count','SJ_Depth','SJ_Freq','Ref_Motif','Possivle_Alt_Motif',
-'Possible_Alt_key','Is_GT/AG','Is_in_exon','SJ_Overlap_Count','Mut_Pos','Mut_Ref','Mut_Alt','Mut_Count','Mut_Depth','Mut_Freq',
-'Realign_No_SJ_Neg','Realign_No_SJ_Pos','Realign_Target_SJ_Neg','Reaglin_Target_SJ_Pos','Realign_Normal_SJ_Neg','Realign_Normal_SJ_Pos','RNA_Mut','gnomAD','gnomAD_AF','Gene']
+        df2.columns = header_list
         
-        res = pd.merge(df2, df1, on=['Chr', 'Mut_Pos', 'Mut_Ref', 'Mut_Alt'],how='left').drop_duplicates()
-        res=res.fillna({'g_bases': '-', 'g_alt_reads': 0, 'g_alt_ratio': 0})
+        res = pd.merge(df2, df1, on=['Mut_key_'],how='left').drop_duplicates()
+        res=res.fillna({'g_depth': 0, 'g_alt_reads': 0, 'g_alt_ratio': 0})
 
         res['g_mut'] = res.apply(f, axis=1)
 
@@ -212,10 +224,8 @@ def juncmut_gmut(input_file, output_file, dna_bam, reference, is_grc, mut_num_th
     else:
 
         df2 = pd.read_csv(output_file + ".tmp1", sep='\t', header=None, index_col=None, dtype = 'object')
-        df2.columns = ['Chr','SJ_Start','SJ_End','SJ_Type','SJ_Strand','SJ_Read_Count','SJ_Depth','SJ_Freq','Ref_Motif','Possivle_Alt_Motif',
-'Possible_Alt_key','Is_GT/AG','Is_in_exon','SJ_Overlap_Count','Mut_Pos','Mut_Ref','Mut_Alt','Mut_Count','Mut_Depth','Mut_Freq',
-'Realign_No_SJ_Neg','Realign_No_SJ_Pos','Realign_Target_SJ_Neg','Reaglin_Target_SJ_Pos','Realign_Normal_SJ_Neg','Realign_Normal_SJ_Pos','RNA_Mut','gnomAD','gnomAD_AF','Gene']
-        df2['g_bases'] = '-'
+        df2.columns = header_list
+        df2['g_depth'] = '-'
         df2['g_alt_reads'] = '0'
         df2['g_alt_ratio'] = '0'
         res = df2.drop_duplicates()
@@ -249,10 +259,10 @@ if __name__== "__main__":
     parser.add_argument("--is_grc", metavar = "is_grc", default = "True", type = str,
                             help = "True means no chr prefix in bam. False means chr prefix in bam")
     
-    parser.add_argument("-mut_num_thres", type = int, default = 2,
+    parser.add_argument("--mut_num_thres", type = int, default = 2,
                         help = "A mutation with mutation alleles >= mut_num_thres is a true candidate (default: %(default)s)")
     
-    parser.add_argument("-mut_freq_thres", type = float, default = 0.05,
+    parser.add_argument("--mut_freq_thres", type = float, default = 0.05,
                         help = "A mutation with frequency >= mut_freq_thres is a true candidate (default: %(default)s)")
 
     args = parser.parse_args()
