@@ -111,10 +111,7 @@ def juncmut_rnamut(input_file, output_file, rna_bam, reference):
         return proc1
 
 ##mpileup
-
-    
-
-    # separate records for each variant and create position list
+    # separate records for each variant and create position list. If no candidates, create zero size file.
     with open(input_file, 'r') as hin, open(output_file + ".tmp1", 'w') as hout1, open(output_file + ".tmp1.pos.bed", 'w') as hout2:
         for line in hin:
             F = line.rstrip('\n').split('\t')
@@ -125,77 +122,76 @@ def juncmut_rnamut(input_file, output_file, rna_bam, reference):
                 for var in pmut_elm[2]:
                     print('\t'.join(F + [pmut_elm[0], pmut_elm[1], var]), file = hout1)
                     print('\t'.join([F[0], str(int(pmut_elm[0]) - 1), pmut_elm[0], var]), file = hout2)
-
-    mpileup_commands = ["samtools", "mpileup", "-l", output_file + ".tmp1.pos.bed", "-f", reference, rna_bam,"-O", "-o", output_file + ".tmp2"]
-    subprocess.run(mpileup_commands)
     
+    query_size = Path(output_file + ".tmp1").stat().st_size
+    if query_size != 0:
+        
+        mpileup_commands = ["samtools", "mpileup", "-l", output_file + ".tmp1.pos.bed", "-f", reference, rna_bam,"-O", "-o", output_file + ".tmp2"]
+        subprocess.run(mpileup_commands)
+        
+    
+        #arrange of mpileup file
+        with open(output_file + ".tmp2", 'r') as in3, open(output_file + ".tmp3", 'w') as m2out:
+            for line in in3:  
+                #sample, chr, pos, ,ref, depth, bases, Q, readsposition
+    
+                col = line.rstrip('\n').split('\t')
+    
+                base = tidy_bases(col[4], col[5])
+    
+                depth = 0
+                base2num = {'A': 0, 'C': 0, 'G': 0, 'T': 0, 'N': 0, 'a': 0, 'c': 0, 'g': 0, 't': 0, 'n': 0}
+                #base2pos = {'A': [], 'C': [], 'G': [], 'T': [], 'N': [], 'a': [], 'c': [], 'g': [], 't': [], 'n': []}
+    
+                rec1 = ""
+                rec2 = ""
+                rec3 = ""
+                rec4 = ""
+                for i in range(len(base)):
+                    depth = depth + 1
+                    if base[i] == '.':
+                        base2num[col[2].upper()] = base2num[col[2].upper()] + 1 
+                        #col[3]=REF
+                        #base2pos[F[3].upper()].append(pos_vector[i])
+                    elif base[i] == ',':
+                        base2num[col[2].lower()] = base2num[col[2].lower()] + 1
+                        #base2pos[F[3].lower()].append(pos_vector[i])
+                    else:
+                        # print(base)
+                        base2num[base[i]] = base2num[base[i]] + 1
+                        #base2pos[F5[i]].append(pos_vector[i])
+    
+                    if depth == 0: continue
+    
+                    depth_p = base2num['A'] + base2num['C'] + base2num['G'] + base2num['T']
+                    depth_n = base2num['a'] + base2num['c'] + base2num['g'] + base2num['t']
+    
+                    A_rate = float(base2num['A'] + base2num['a'])/(depth_p + depth_n)
+                    A_reads = base2num['A'] + base2num['a']
+                    T_rate = float(base2num['T'] + base2num['t'])/(depth_p + depth_n)
+                    T_reads = base2num['T'] + base2num['t']
+                    G_rate = float(base2num['G'] + base2num['g'])/(depth_p + depth_n)
+                    G_reads = base2num['G'] + base2num['g']
+                    C_rate = float(base2num['C'] + base2num['c'])/(depth_p + depth_n)
+                    C_reads = base2num['C'] + base2num['c']
+    
+                    rec1 = col[0] +"\t"+ col[1] +"\t"+ col[2] + "\tA\t" + base + "\t" + str(A_reads) + "\t" + str(A_rate) + "\n"
+                    rec2 = col[0] +"\t"+ col[1] +"\t"+ col[2] + "\tT\t" + base + "\t" + str(T_reads) + "\t" + str(T_rate) + "\n"
+                    rec3 = col[0] +"\t"+ col[1] +"\t"+ col[2] + "\tG\t" + base + "\t" + str(G_reads) + "\t" + str(G_rate) + "\n"
+                    rec4 = col[0] +"\t"+ col[1] +"\t"+ col[2] + "\tC\t" + base + "\t" + str(C_reads) + "\t" + str(C_rate) + "\n"
+    
+                m2out.write(rec1)
+                m2out.write(rec2)
+                m2out.write(rec3)
+                m2out.write(rec4)
 
-    #arrange of mpileup file
-    with open(output_file + ".tmp2", 'r') as in3, open(output_file + ".tmp3", 'w') as m2out:
-        for line in in3:  
-            #sample, chr, pos, ,ref, depth, bases, Q, readsposition
-
-            col = line.rstrip('\n').split('\t')
-
-            base = tidy_bases(col[4], col[5])
-
-            depth = 0
-            base2num = {'A': 0, 'C': 0, 'G': 0, 'T': 0, 'N': 0, 'a': 0, 'c': 0, 'g': 0, 't': 0, 'n': 0}
-            #base2pos = {'A': [], 'C': [], 'G': [], 'T': [], 'N': [], 'a': [], 'c': [], 'g': [], 't': [], 'n': []}
-
-            rec1 = ""
-            rec2 = ""
-            rec3 = ""
-            rec4 = ""
-            for i in range(len(base)):
-                depth = depth + 1
-                if base[i] == '.':
-                    base2num[col[2].upper()] = base2num[col[2].upper()] + 1 
-                    #col[3]=REF
-                    #base2pos[F[3].upper()].append(pos_vector[i])
-                elif base[i] == ',':
-                    base2num[col[2].lower()] = base2num[col[2].lower()] + 1
-                    #base2pos[F[3].lower()].append(pos_vector[i])
-                else:
-                    # print(base)
-                    base2num[base[i]] = base2num[base[i]] + 1
-                    #base2pos[F5[i]].append(pos_vector[i])
-
-                if depth == 0: continue
-
-                depth_p = base2num['A'] + base2num['C'] + base2num['G'] + base2num['T']
-                depth_n = base2num['a'] + base2num['c'] + base2num['g'] + base2num['t']
-
-                A_rate = float(base2num['A'] + base2num['a'])/(depth_p + depth_n)
-                A_reads = base2num['A'] + base2num['a']
-                T_rate = float(base2num['T'] + base2num['t'])/(depth_p + depth_n)
-                T_reads = base2num['T'] + base2num['t']
-                G_rate = float(base2num['G'] + base2num['g'])/(depth_p + depth_n)
-                G_reads = base2num['G'] + base2num['g']
-                C_rate = float(base2num['C'] + base2num['c'])/(depth_p + depth_n)
-                C_reads = base2num['C'] + base2num['c']
-
-                rec1 = col[0] +"\t"+ col[1] +"\t"+ col[2] + "\tA\t" + base + "\t" + str(A_reads) + "\t" + str(A_rate) + "\n"
-                rec2 = col[0] +"\t"+ col[1] +"\t"+ col[2] + "\tT\t" + base + "\t" + str(T_reads) + "\t" + str(T_rate) + "\n"
-                rec3 = col[0] +"\t"+ col[1] +"\t"+ col[2] + "\tG\t" + base + "\t" + str(G_reads) + "\t" + str(G_rate) + "\n"
-                rec4 = col[0] +"\t"+ col[1] +"\t"+ col[2] + "\tC\t" + base + "\t" + str(C_reads) + "\t" + str(C_rate) + "\n"
-
-            m2out.write(rec1)
-            m2out.write(rec2)
-            m2out.write(rec3)
-            m2out.write(rec4)
-
-    """
-    def f(row):
-        if (str(row['rna_bases']) != '-') & (int(row['rna_alt_reads'])>=read_num_thres) & (float(row['rna_alt_ratio'])>=freq_thres):
-            val = "True"
-        elif str(row['rna_bases']) == '-':
-            val = "False"
-        else:
-            val = "False"
-        return val
-    """    
-
+    else:
+        
+        file3 = Path(output_file + ".tmp3")
+        file3.touch()
+        file2 = Path(output_file + ".tmp2")
+        file2.touch()
+        
     # size = os.path.getsize(output_file + ".tmp3")
     fsize = Path(output_file + ".tmp3").stat().st_size
 
@@ -208,22 +204,20 @@ def juncmut_rnamut(input_file, output_file, rna_bam, reference):
         df2.columns = ['CHR','start','end','start_ori','end_ori','sample','class','strand','reads', 'total', 'freq', 'ref_bases','mut_prediction_seq','info', 'type', 'intSJ','POS','REF','MUT']
         res = pd.merge(df2, df1, on=['CHR', 'POS','REF','MUT'],how='left').drop_duplicates()
         res=res.fillna({'rna_bases': '-', 'rna_alt_reads': 0, 'rna_alt_ratio': 0})
-
-        #res['rna_mut'] = res.apply(f, axis=1)
         res.to_csv(output_file, index=False, sep='\t')
 
     else:
-
-        df2 = pd.read_csv(output_file + ".tmp1", sep='\t', header=None, index_col=None, dtype = 'object')
-        df2.columns = ['CHR','start','end','start_ori','end_ori','sample','class','strand','reads', 'total', 'freq', 'ref_bases','mut_prediction_seq','info', 'type', 'intSJ','POS','REF','MUT']
-        df2['rna_bases'] = '-'
-        df2['rna_alt_reads'] = '0'
-        df2['rna_alt_ratio'] = '0'
-        res = df2.drop_duplicates()
-
-        #res['rna_mut'] = 'na'
-        res.to_csv(output_file, index=False, sep='\t', header=False)
-
+        if query_size != 0:
+            df2 = pd.read_csv(output_file + ".tmp1", sep='\t', header=None, index_col=None, dtype = 'object')
+            df2.columns = ['CHR','start','end','start_ori','end_ori','sample','class','strand','reads', 'total', 'freq', 'ref_bases','mut_prediction_seq','info', 'type', 'intSJ','POS','REF','MUT']
+            df2['rna_bases'] = '-'
+            df2['rna_alt_reads'] = '0'
+            df2['rna_alt_ratio'] = '0'
+            res = df2.drop_duplicates()
+            res.to_csv(output_file, index=False, sep='\t')
+        else:
+            res = pd.DataFrame(columns=['CHR','start','end','start_ori','end_ori','sample','class','strand','reads', 'total', 'freq', 'ref_bases','mut_prediction_seq','info', 'type', 'intSJ','POS','REF','MUT','rna_bases', 'rna_alt_reads', 'rna_alt_ratio'])
+            res.to_csv(output_file, index=False, sep='\t')
     Path(output_file + ".tmp1").unlink()
     Path(output_file + ".tmp2").unlink()
     Path(output_file + ".tmp3").unlink()
