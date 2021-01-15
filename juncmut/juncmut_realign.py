@@ -96,7 +96,7 @@ def juncmut_realign(input_file, output_file, bam_file, reference, genome_id, is_
 
             # get the flag information
             flags = format(int(read.flag), "#014b")[:1:-1]
-    
+
             # skip unmapped read  
             if flags[2] == "1" or flags[3] == "1": check_flag = False
      
@@ -132,15 +132,35 @@ def juncmut_realign(input_file, output_file, bam_file, reference, genome_id, is_
 
             # get the flag information
             flags = format(int(read.flag), "#014b")[:1:-1]
-
+            #import pdb; pdb.set_trace()
             read_id = read.qname + '_1' if flags[6] == '1' else read.qname + '_2'
-            read_id = read_id + '_' + str(read.reference_start + 1) + '_' + str(read.reference_end) + '_' + str(read.cigarstring) 
+            read_id = read_id + '_' + str(read.reference_start + 1) + '_' + str(read.reference_end) + '_' + str(read.cigarstring) + '_' + str(read.next_reference_start + 1)
             print('>' + read_id + '\n' + read.seq, file = hout)
 
         bamfile.close()
         hout.close()
 
-    
+    #remove duplicates
+    def remove_duplicate_reads(input_fa, output_fa):
+        read_dict = {}
+        position_list =[]
+        with open(input_fa, 'r') as fin:
+            for row in fin:
+                if row.startswith('>'):
+                    read_id = row.rstrip('\n')
+                    id_info = row.rstrip('\n').split('_')
+                    position = id_info[1]+'_'+id_info[2]+'_'+id_info[4]
+                    R = fin.readline().rstrip('\n')
+                    if position in position_list: continue
+                    else:
+                        read_dict[read_id] = R
+                        position_list.append(position)
+                        
+        with open(output_fa, 'w') as fout:
+            for key, value in read_dict.items():
+                fout.write(key + "\n")
+                fout.write(value + "\n")
+
     def process_cigar(res_cigar):
         #res_cigar = '16=1X1=1I1='
         # make a alignment object
@@ -169,18 +189,20 @@ def juncmut_realign(input_file, output_file, bam_file, reference, genome_id, is_
 
 
     ref_tb = pysam.FastaFile(reference)
-    annot_utils.junction.make_junc_info(output_file + ".gencode.junc.bed.gz", "gencode", genome_id, is_grc, False)
+    #annot_utils.junction.make_junc_info(output_file + ".gencode.junc.bed.gz", "gencode", genome_id, is_grc, False)
     
-    #if str(is_grc) == 'False':
-    #    annot_utils.junction.make_junc_info(output_file + ".gencode.junc.bed.gz", "gencode", genome_id, False, False)
-    #else:
-    #    annot_utils.junction.make_junc_info(output_file + ".gencode.junc.bed.gz", "gencode", genome_id, True, False)
+    if str(is_grc) == 'False':
+        annot_utils.junction.make_junc_info(output_file + ".gencode.junc.bed.gz", "gencode", genome_id, False, False)
+    else:
+        annot_utils.junction.make_junc_info(output_file + ".gencode.junc.bed.gz", "gencode", genome_id, True, False)
     junc_tb = pysam.TabixFile(output_file + ".gencode.junc.bed.gz")
 
+    ## start 
+    sample_name = input_file.split('.')[0]
     hout = open(output_file, 'w') 
-    header = ["Chr", "SJ_Start", "SJ_End", "SJ_Type", "SJ_Strand", "SJ_Read_Count", "SJ_Depth", "SJ_Freq",
+    header = ["Mut_key", "SJ_key", "Sample", "SJ_Type", "SJ_Strand", "SJ_Read_Count", "SJ_Depth", "SJ_Freq",
               "Ref_Motif", "Possivle_Alt_Motif","Possible_Alt_key", "Is_GT/AG", "Is_in_exon","SJ_Overlap_Count", 
-              "Mut_Pos", "Mut_Ref", "Mut_Alt", "Mut_Count", "Mut_Depth", "Mut_Freq",
+              "Chr","Mut_Pos", "Mut_Ref", "Mut_Alt", "Mut_Count", "Mut_Depth", "Mut_Freq",
               "Realign_No_SJ_Neg", "Realign_No_SJ_Pos", "Realign_Target_SJ_Neg", "Reaglin_Target_SJ_Pos",
               "Realign_Normal_SJ_Neg", "Realign_Normal_SJ_Pos","RNA_Mut"]
     print('\t'.join(header), file = hout)
@@ -188,7 +210,7 @@ def juncmut_realign(input_file, output_file, bam_file, reference, genome_id, is_
     with open(input_file, 'r') as hin:
         next(hin)
         for line in hin:
-            
+            # key_readid_dict to remove read duplicates
             F = line.rstrip('\n').split('\t')
             # Is a position of mutation in Exon or Intron
             #o-->
@@ -227,11 +249,13 @@ def juncmut_realign(input_file, output_file, bam_file, reference, genome_id, is_
                     is_exon = 'intron'
                 else:
                     is_exon = 'outside of motif'
-                    
+            
+            mut_key = F[0]+","+F[16]+","+F[17]+","+F[18]
+            sj_key = F[0]+":"+F[1]+"-"+F[2]
             #if RNA_mutation reads>=2 and Freq>=0.05, do realign.
             if float(F[21]) < mut_freq_thres or int(F[20]) < mut_num_thres:
-                print('\t'.join([F[0], F[1], F[2], F[6], F[7], F[8], F[9], F[10], F[11], F[12], F[13], F[14],is_exon, F[15],
-                            F[16], F[17], F[18], F[20], str(len(F[19])), F[21]]) +"\t-\t-\t-\t-\t-\t-\tFalse", file = hout)                
+                print('\t'.join([mut_key, sj_key, sample_name, F[6], F[7], F[8], F[9], F[10], F[11], F[12], F[13], F[14],is_exon, F[15],
+                                F[0], F[16], F[17], F[18], F[20], str(len(F[19])), F[21]]) +"\t-\t-\t-\t-\t-\t-\tFalse", file = hout)                
             else:
             # test if F[0]=='chr19' and str(F[16])=='11830133':  
                 F = line.rstrip('\n').split('\t')
@@ -246,6 +270,8 @@ def juncmut_realign(input_file, output_file, bam_file, reference, genome_id, is_
                     junc_start, junc_end, junc_annotated, template_size)
         
                 extract_read_around_boundary(bam_file, output_file + ".tmp.read_seq.fa", mut_chr, mut_pos)
+                
+                remove_duplicate_reads(output_file + ".tmp.read_seq.fa", output_file + ".tmp.read_seq_rmdup.fa")
     
                 d_query = {}
                 d_realign = {'No_SJ_Neg': 0, 'No_SJ_Pos': 0, 'Target_SJ_Neg': 0, 'Target_SJ_Pos': 0, 'Normal_SJ_Neg': 0, 'Normal_SJ_Pos': 0}            
@@ -253,22 +279,22 @@ def juncmut_realign(input_file, output_file, bam_file, reference, genome_id, is_
                 
                 # query to dict    
                 with open(output_file + ".tmp.template.fa", 'r') as qin:
-                    for line in qin:
-                        Q = line.rstrip('\n').split('\t')
+                    for l in qin:
+                        Q = l.rstrip('\n').split('\t')
                         d_query[Q[0]] = Q[1]
                 
                 # alignment
-                with open(output_file + ".tmp.read_seq.fa", 'r') as rin:
+                with open(output_file + ".tmp.read_seq_rmdup.fa", 'r') as rin:
                     rmut = '-'
                     
-                    for line in rin:
+                    for row in rin:
                         
-                        if line.startswith('>'):
-                            continue
-                            #read_id = line.rstrip('\n')
-                            #R = rin.readline().rstrip('\n')
-                        else:
-                            R= line.rstrip('\n')
+                        if row.startswith('>'):
+                            #read_id = read_id + '_' + str(read.reference_start + 1) + '_' + str(read.reference_end) + '_' + str(read.cigarstring) + '_' + str(read.next_reference_start + 1) 
+                            #read_id = ['>DRR016694.11533413', '2', '14065429', '14484178', '39M418647N15M2D47M', '14484206']
+
+                            R = rin.readline().rstrip('\n')
+                            
                             d_ed = {}
                             d_mut_count = {}
                             for key in d_query:
@@ -324,26 +350,20 @@ def juncmut_realign(input_file, output_file, bam_file, reference, genome_id, is_
                                 # if multiple mutation for the selected key is exist, no count-up.
                                 if int(d_mut_count[min_k_sort[0]]) == 0:
                                     new_count = d_realign[min_k_sort[0]]+1
-                                    d_realign[min_k_sort[0]] = new_count
-                                                                                                                    
-                    if is_exon == 'exon':
-                        #if d_realign['No_SJ_Pos'] + d_realign['Target_SJ_Pos'] >= 1:
-                        if d_realign['Target_SJ_Pos'] + d_realign['No_SJ_Pos']+ d_realign['Normal_SJ_Pos'] >=1:
-                            rmut = 'True'
-                        else: rmut = 'False'
-                    elif is_exon == 'intron':
-                        if d_realign['Target_SJ_Pos'] + d_realign['No_SJ_Pos']+ d_realign['Normal_SJ_Pos'] >=1:
-                            rmut = 'True'
-                        else: rmut = 'False'
-                    else: rmut = '-'
-                            
-                print('\t'.join([F[0], F[1], F[2], F[6], F[7], F[8], F[9], F[10], F[11], F[12], F[13], F[14], is_exon, F[15],
-                                         F[16], F[17], F[18], F[20], str(len(F[19])), F[21],
+                                    d_realign[min_k_sort[0]] = new_count  
+                                    
+                    if d_realign['Target_SJ_Pos'] + d_realign['No_SJ_Pos']+ d_realign['Normal_SJ_Pos'] >=2:
+                        rmut = 'True'
+                    else: rmut = 'False'                   
+                    
+                print('\t'.join([mut_key, sj_key, sample_name, F[6], F[7], F[8], F[9], F[10], F[11], F[12], F[13], F[14], is_exon, F[15],
+                                         F[0], F[16], F[17], F[18], F[20], str(len(F[19])), F[21],
                                          str(d_realign["No_SJ_Neg"]), str(d_realign["No_SJ_Pos"]), 
                                          str(d_realign["Target_SJ_Neg"]), str(d_realign["Target_SJ_Pos"]),
                                          str(d_realign["Normal_SJ_Neg"]), str(d_realign["Normal_SJ_Pos"]), rmut]), file = hout)
                 Path(output_file + ".tmp.template.fa").unlink()
                 Path(output_file + ".tmp.read_seq.fa").unlink()
+                Path(output_file + ".tmp.read_seq_rmdup.fa").unlink()
 
     ref_tb.close()
     junc_tb.close()
@@ -398,3 +418,15 @@ res
 nice = edlib.getNiceAlignment(res, template, read)
 print("\n".join(nice.values()))
 """
+"""
+input_file="A427.SJ.fil.annot.assadj.freq.pmut.SJint.rmutT4test.txt"
+bam_file="/Volumes/NIIDA_SSD1R/GAP_eSJ/juncmut_26lung1GRCh38_bam/rna/lung26GRCh38pass1/DRR016694.Aligned.sortedByCoord.out.bam"
+reference="/Volumes/NIIDA_SSD1R/genome/GRCh38.d1.vd1.fa"
+genome_id="hg38"
+is_grc=False
+mut_num_thres=2
+mut_freq_thres=0.05
+output_file="test_result.txt"
+"""
+
+
