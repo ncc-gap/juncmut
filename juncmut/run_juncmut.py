@@ -21,6 +21,7 @@ def get_main(args):
     from .juncmut_mutpre import juncmut_mutpre
     from .juncmut_realign import juncmut_realign
     from .juncmut_rnamut import juncmut_rnamut
+    from .juncmut_supportread_count import juncmut_supportread_count
     from .utils import check_reference
 
     start_time = time.time()
@@ -50,12 +51,16 @@ def get_main(args):
     juncmut_realign(args.output_file+".fil.annot.assadj.freq.pmut.SJint.rmut.txt",
                     args.output_file+".fil.annot.assadj.freq.pmut.SJint.rmut.ed.txt", 
                     args.rna_bam, args.reference, genome_id, is_grc, args.mut_num_thres, args.mut_freq_thres, template_size = 10)
+    
+    juncmut_supportread_count(args.output_file+".fil.annot.assadj.freq.pmut.SJint.rmut.ed.txt",
+                    args.output_file+".fil.annot.assadj.freq.pmut.SJint.rmut.ed.rmdup.txt", 
+                    args.rna_bam, args.reference, genome_id, is_grc, args.mut_num_thres, args.mut_freq_thres, template_size = 10)    
 
-    juncmut_annotgnomad(args.output_file+".fil.annot.assadj.freq.pmut.SJint.rmut.ed.txt",
-                        args.output_file+".fil.annot.assadj.freq.pmut.SJint.rmut.ed.gnomad.txt",
+    juncmut_annotgnomad(args.output_file+".fil.annot.assadj.freq.pmut.SJint.rmut.ed.rmdup.txt",
+                        args.output_file+".fil.annot.assadj.freq.pmut.SJint.rmut.ed.rmdup.gnomad.txt",
                         args.gnomad, genome_id)
 
-    juncmut_filt_bam_main(args.output_file+".fil.annot.assadj.freq.pmut.SJint.rmut.ed.gnomad.txt",
+    juncmut_filt_bam_main(args.output_file+".fil.annot.assadj.freq.pmut.SJint.rmut.ed.rmdup.gnomad.txt",
                        args.output_file, args.rna_bam, args.output_bam, args.genecode_gene_file)
 
     if args.debug == "False":
@@ -66,7 +71,8 @@ def get_main(args):
        os.remove(args.output_file+".fil.annot.assadj.freq.pmut.SJint.txt")
        os.remove(args.output_file+".fil.annot.assadj.freq.pmut.SJint.rmut.txt")
        os.remove(args.output_file+".fil.annot.assadj.freq.pmut.SJint.rmut.ed.txt")
-       os.remove(args.output_file+".fil.annot.assadj.freq.pmut.SJint.rmut.ed.gnomad.txt")
+       os.remove(args.output_file+".fil.annot.assadj.freq.pmut.SJint.rmut.ed.rmdup.txt")
+       os.remove(args.output_file+".fil.annot.assadj.freq.pmut.SJint.rmut.ed.rmdup.gnomad.txt")
     
     run_time = (time.time()-start_time)/60
     print(run_time)
@@ -83,13 +89,9 @@ def validate_main(args):
 
     genome_id, is_grc = check_reference(args.reference)
 
-    if is_grc:
-        grc = 'isTrue'
-    else:
-        grc = 'isFalse'
-        
+    
     juncmut_gmut(args.input_file, args.output_file, 
-                   args.dna_bam, args.reference, grc, args.mut_num_thres, args.mut_freq_thres)
+                   args.dna_bam, args.reference, is_grc, args.mut_num_thres, args.mut_freq_thres)
 
 
     run_time = (time.time()-start_time)/60

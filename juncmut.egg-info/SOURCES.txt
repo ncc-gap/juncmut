@@ -12,6 +12,7 @@ juncmut/juncmut_juncutils.py
 juncmut/juncmut_mutpre.py
 juncmut/juncmut_realign.py
 juncmut/juncmut_rnamut.py
+juncmut/juncmut_supportread_count.py
 juncmut/parser.py
 juncmut/run_juncmut.py
 juncmut/utils.py

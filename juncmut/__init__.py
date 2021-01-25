@@ -1,10 +1,4 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Nov 26 11:20:15 2019
-
-@author: Naoko Iida
-"""
+__version__='0.4.1'
 
 from .parser import create_parser
 

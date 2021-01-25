@@ -139,7 +139,7 @@ def juncmut_realign(input_file, output_file, bam_file, reference, genome_id, is_
 
         bamfile.close()
         hout.close()
-
+    """
     #remove duplicates
     def remove_duplicate_reads(input_fa, output_fa):
         read_dict = {}
@@ -160,7 +160,7 @@ def juncmut_realign(input_file, output_file, bam_file, reference, genome_id, is_
             for key, value in read_dict.items():
                 fout.write(key + "\n")
                 fout.write(value + "\n")
-
+    """
     def process_cigar(res_cigar):
         #res_cigar = '16=1X1=1I1='
         # make a alignment object
@@ -271,7 +271,7 @@ def juncmut_realign(input_file, output_file, bam_file, reference, genome_id, is_
         
                 extract_read_around_boundary(bam_file, output_file + ".tmp.read_seq.fa", mut_chr, mut_pos)
                 
-                remove_duplicate_reads(output_file + ".tmp.read_seq.fa", output_file + ".tmp.read_seq_rmdup.fa")
+                #remove_duplicate_reads(output_file + ".tmp.read_seq.fa", output_file + ".tmp.read_seq_rmdup.fa")
     
                 d_query = {}
                 d_realign = {'No_SJ_Neg': 0, 'No_SJ_Pos': 0, 'Target_SJ_Neg': 0, 'Target_SJ_Pos': 0, 'Normal_SJ_Neg': 0, 'Normal_SJ_Pos': 0}            
@@ -284,7 +284,7 @@ def juncmut_realign(input_file, output_file, bam_file, reference, genome_id, is_
                         d_query[Q[0]] = Q[1]
                 
                 # alignment
-                with open(output_file + ".tmp.read_seq_rmdup.fa", 'r') as rin:
+                with open(output_file + ".tmp.read_seq.fa", 'r') as rin:
                     rmut = '-'
                     
                     for row in rin:
@@ -352,7 +352,7 @@ def juncmut_realign(input_file, output_file, bam_file, reference, genome_id, is_
                                     new_count = d_realign[min_k_sort[0]]+1
                                     d_realign[min_k_sort[0]] = new_count  
                                     
-                    if d_realign['Target_SJ_Pos'] + d_realign['No_SJ_Pos']+ d_realign['Normal_SJ_Pos'] >=2:
+                    if d_realign['Target_SJ_Pos'] + d_realign['No_SJ_Pos']+ d_realign['Normal_SJ_Pos'] >=1:
                         rmut = 'True'
                     else: rmut = 'False'                   
                     
@@ -363,7 +363,7 @@ def juncmut_realign(input_file, output_file, bam_file, reference, genome_id, is_
                                          str(d_realign["Normal_SJ_Neg"]), str(d_realign["Normal_SJ_Pos"]), rmut]), file = hout)
                 Path(output_file + ".tmp.template.fa").unlink()
                 Path(output_file + ".tmp.read_seq.fa").unlink()
-                Path(output_file + ".tmp.read_seq_rmdup.fa").unlink()
+                
 
     ref_tb.close()
     junc_tb.close()
@@ -410,23 +410,5 @@ if __name__ == "__main__":
  
     juncmut_realign(input_file, output_file, bam_file, reference, genome_id, is_grc, mut_num_thres, mut_freq_thres, template_size = 10)
     
-"""
-read="TTGCTATTTTCTGCTGAATGTCAGTCCACATCTTACTAATTAGCTCAAAATTCTCTTCTGTTAGTTGTTGGAGAAACTTGCACTCTCAAAACACAGAGCCG"
-template="CAAATGACATCGTGAAAATG"
-res=edlib.align(template,read, mode="HW", task="path")
-res
-nice = edlib.getNiceAlignment(res, template, read)
-print("\n".join(nice.values()))
-"""
-"""
-input_file="A427.SJ.fil.annot.assadj.freq.pmut.SJint.rmutT4test.txt"
-bam_file="/Volumes/NIIDA_SSD1R/GAP_eSJ/juncmut_26lung1GRCh38_bam/rna/lung26GRCh38pass1/DRR016694.Aligned.sortedByCoord.out.bam"
-reference="/Volumes/NIIDA_SSD1R/genome/GRCh38.d1.vd1.fa"
-genome_id="hg38"
-is_grc=False
-mut_num_thres=2
-mut_freq_thres=0.05
-output_file="test_result.txt"
-"""
 
 

@@ -13,7 +13,6 @@ def juncmut_rnamut(input_file, output_file, rna_bam, reference):
     import pandas as pd
     from pathlib import Path
 
-
     def tidy_bases(bases, qualities):  #remove indel and edeage
 
         import re
@@ -21,7 +20,7 @@ def juncmut_rnamut(input_file, output_file, rna_bam, reference):
         proc1 = ""
         proc2 = ""
 
-        #del end position in a read.   $ is the last position of read, following the base. But some reads finish with "$". ^ is the start position of read, following the quality and the base. Eregular case $^~.
+        # $ means the last position of read.  ^ is the start position of read.
         while len(bases) > 0:
             match = re.search(r'[$\^]', bases)
             if match is None:
@@ -34,25 +33,16 @@ def juncmut_rnamut(input_file, output_file, rna_bam, reference):
                 proc1 = proc1 + bases[0:pos]
                 bases = bases[(pos + 3):len(bases)]
                 proc2 = proc2 + qualities[0:pos]
-                qualities = qualities[(pos + 1): len(qualities)] #delete 1 char
-            else:  #match == "$"
+                qualities = qualities[(pos + 1): len(qualities)] 
+            #match == "$"
+            else:
                 pos = match.start()
-                if pos+1 == len(bases): #$ is the last character.
-                    proc1 = proc1 + bases[0:pos]
-                    bases = ""
-                    proc2 = proc2 + qualities[0:pos]
-                    qualities = ""
-                elif bases[pos+1] == "^":
-                    proc1 = proc1 + bases[0:pos]
-                    bases = bases[(pos + 4):len(bases)]
-                    proc2 = proc2 + qualities[0:pos]
-                    qualities = qualities[(pos + 1): len(qualities)]
-                else:
-                    proc1 = proc1 + bases[0:pos]
-                    bases = bases[(pos + 2):len(bases)]
-                    proc2 = proc2 + qualities[0:pos]
-                    qualities = qualities[(pos + 1): len(qualities)] #delete 1 char
-        #del indel. +/- +[0-9]+[bases]. * means the deletion(?).
+                proc1 = proc1 + bases[0:pos]
+                bases = bases[(pos + 1):len(bases)]
+                proc2 = proc2 + qualities[0:pos]
+                qualities = qualities[(pos + 1): len(qualities)] 
+                
+        #remove indel. +/- +[0-9]+[atgcnATGCN*#]
         bases = proc1
         proc1 = ""
         qualities = proc2
@@ -72,12 +62,17 @@ def juncmut_rnamut(input_file, output_file, rna_bam, reference):
                 qualities = qualities[(pos + 1): len(qualities)]
             else:
                 pos = match.start()
-                del_num = bases[match.start()+1]
+                if match.group() == "+":
+                    indel_length = re.search(r'\+\d+', bases).group().replace('+','')
+                if match.group() == "-":
+                    indel_length = re.search(r'\-\d+', bases).group().replace('-','')     
+                skip_num = len(str(indel_length))+int(indel_length)+1
+                
                 proc1 = proc1 + bases[0:pos]
-                bases = bases[pos+int(del_num)+2: len(bases)]
+                bases = bases[pos+int(skip_num): len(bases)]
                 proc2 = proc2 + qualities[0:pos]
-                qualities = qualities[(pos + 1): len(qualities)] #delete 1 char
-        #del no-base position in a read.
+                qualities = qualities[(pos + 1): len(qualities)]
+        #remove skip-base position in a read.
         bases = proc1
         proc1 = ""
         qualities = proc2
@@ -101,7 +96,6 @@ def juncmut_rnamut(input_file, output_file, rna_bam, reference):
         qualities = proc2
         proc2 = ""
         Q = 15
-
         for i in range(0, len(qualities)):
             #print(str(qualities[i])+"\t"+str(ord(qualities[i])-33))
             if (ord(qualities[i])-33) > Q:

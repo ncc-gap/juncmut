@@ -21,45 +21,44 @@ def juncmut_annotgnomad(input_file, output_file, gnomad, genome_id):
                 line = line.rstrip('\n')
                 junc_record = line
                 F = line.split('\t')
+                mut_key = F[0].split(',')
+                chrmo = mut_key[0]
+                pos = mut_key[1]
+                mut_ref = mut_key[2]
+                mut_alt = mut_key[3]
                 
-
-
-                c = F[0].replace('chr', '')
+                c = chrmo.replace('chr', '')
 
                 if c != "Y":
-                    if F[10] == "-":
-                        out_record = line + "\t-\t0.0\n"
-                        hout.write(out_record)
+                    out_record = ""
+                    if genome_id == "hg19":
+                        chr = str(c)
                     else:
-                        out_record = ""
-                        if genome_id == "hg19":
-                            chr = str(c)
-                        else:
-                            chr = "chr" + str(c)
-                        #rows = tb.fetch(chr, int(F[13]) - 1, int(F[13]))
-                        #skip val
-                        rows = tb.fetch(chr, int(F[14]) - 1, int(F[14]))
+                        chr = "chr" + str(c)
+                    #rows = tb.fetch(chr, int(F[13]) - 1, int(F[13]))
+                    #skip val
+                    rows = tb.fetch(chr, int(pos) - 1, int(pos))
 
-                        cur_AF = 0.0
-                        cur_allele = "-"
-                        if rows is not None:
-                            for row in rows:
-                                srow=str(row)
-                                record = srow.split('\t')
-                                #if F[14] == record[3] and F[15] == record[4]:
-                                #skip val
-                                if F[15] == record[3] and F[16] == record[4]:
-                                    allele = record[3]+">"+record[4]
-                                    infos = record[7].split(';')
-                                    for info in infos:
-                                        if info.startswith("AF="):
-                                            cur_AF = float(info.replace("AF=", ''))
-                                            cur_allele = allele
+                    cur_AF = 0.0
+                    cur_allele = "-"
+                    if rows is not None:
+                        for row in rows:
+                            srow=str(row)
+                            record = srow.split('\t')
+                            #if mut_ref == record[3] and mut_alt == record[4]:
+                            #skip val
+                            if mut_ref == record[3] and mut_alt == record[4]:
+                                allele = record[3]+">"+record[4]
+                                infos = record[7].split(';')
+                                for info in infos:
+                                    if info.startswith("AF="):
+                                        cur_AF = float(info.replace("AF=", ''))
+                                        cur_allele = allele
 
-                                    break
-                        #if cur_AF <= 0.01:
-                        out_record = junc_record + "\t" + cur_allele + "\t" + str(cur_AF) +"\n"
-                        hout.write(out_record)
+                                break
+                    
+                    out_record = junc_record + "\t" + cur_allele + "\t" + str(cur_AF) +"\n"
+                    hout.write(out_record)
 
 
                 elif c in ["Y"]:
