@@ -37,7 +37,6 @@ def juncmut_rnamut(input_file, output_file, rna_bam, reference):
                 qualities = qualities[(pos + 1): len(qualities)] 
             #match == "$"
             else:
-                print('false')
                 pos = match.start()
                 proc1 = proc1 + bases[0:pos]
                 bases = bases[(pos + 1):len(bases)]

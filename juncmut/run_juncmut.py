@@ -54,7 +54,7 @@ def get_main(args):
     
     juncmut_supportread_count(args.output_file+".fil.annot.assadj.freq.pmut.SJint.rmut.ed.txt",
                     args.output_file+".fil.annot.assadj.freq.pmut.SJint.rmut.ed.rmdup.txt", 
-                    args.rna_bam, args.reference, genome_id, is_grc, args.mut_num_thres, args.mut_freq_thres, template_size = 10)    
+                    args.rna_bam, args.reference)    
 
     juncmut_annotgnomad(args.output_file+".fil.annot.assadj.freq.pmut.SJint.rmut.ed.rmdup.txt",
                         args.output_file+".fil.annot.assadj.freq.pmut.SJint.rmut.ed.rmdup.gnomad.txt",
