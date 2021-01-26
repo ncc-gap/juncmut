@@ -23,19 +23,21 @@ def juncmut_rnamut(input_file, output_file, rna_bam, reference):
         # $ means the last position of read.  ^ is the start position of read.
         while len(bases) > 0:
             match = re.search(r'[$\^]', bases)
+            
             if match is None:
                 proc1 = proc1 + bases
                 bases = ""
                 proc2 = proc2 + qualities
                 qualities = ""
-            elif match == "^":
+            elif match.group() == "^":
                 pos = match.start()
                 proc1 = proc1 + bases[0:pos]
-                bases = bases[(pos + 3):len(bases)]
+                bases = bases[(pos + 2):len(bases)]
                 proc2 = proc2 + qualities[0:pos]
                 qualities = qualities[(pos + 1): len(qualities)] 
             #match == "$"
             else:
+                print('false')
                 pos = match.start()
                 proc1 = proc1 + bases[0:pos]
                 bases = bases[(pos + 1):len(bases)]
