@@ -92,7 +92,7 @@ def juncmut_supportread_count(input_file, output_file, bam_file, reference):
             F = line.rstrip('\n').split('\t')
             # Is a position of mutation in Exon or Intron
             if F[-1] != "True":
-                print(lie + "\t0n\tFalse", file = hout)                
+                print(lie + "\t0\tFalse", file = hout)                
             else:
                 #mpileup
                 mut_elm = F[0].split(',')

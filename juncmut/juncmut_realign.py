@@ -198,7 +198,8 @@ def juncmut_realign(input_file, output_file, bam_file, reference, genome_id, is_
     junc_tb = pysam.TabixFile(output_file + ".gencode.junc.bed.gz")
 
     ## start 
-    sample_name = input_file.split('.')[0]
+    s_path = Path(input_file)
+    sample_name = s_path.stem.split('.')[0]
     hout = open(output_file, 'w') 
     header = ["Mut_key", "SJ_key", "Sample", "SJ_Type", "SJ_Strand", "SJ_Read_Count", "SJ_Depth", "SJ_Freq",
               "Ref_Motif", "Possivle_Alt_Motif","Possible_Alt_key", "Is_GT/AG", "Is_in_exon","SJ_Overlap_Count", 

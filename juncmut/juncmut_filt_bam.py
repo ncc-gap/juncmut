@@ -96,49 +96,53 @@ def juncmut_filt_bam_main(input_file, output_file, input_bam, output_bam, geneco
         return(genes, region_list) 
     
     hout = open(output_file, 'w')
+    fout = open(output_file + ".full.txt", 'w')
     ex_region_list =[]
     # open a file and make a trnscript list for RNA_Mut True.
     with open(input_file) as fin:
         header = fin.readline().rstrip('\n')
         new_header = header + "\tGene"
         print(new_header, file=hout)
+        print(new_header, file=fout)
         
         for line in fin:
             lie = line.rstrip('\n')
             F = line.rstrip('\n').split('\t')
-            mut_key = F[0].split(',')[0]
-            tchr = mut_key[0]
-            strand = F[4]
-            sj_pos = F[1].split(':')[1].split('-')
-            sj_start = sj_pos[0]
-            sj_end = sj_pos[1]
-            
-            #o-->
-            if "5'SS" in F[3] and strand == "+": 
-                splice_type = "5'SS"
-                normal_pos = sj_end    
-            #<--o
-            if "5'SS" in F[3] and strand == "-":
-                splice_type = "5'SS"
-                normal_pos = int(sj_start)-1      
-            #-->o
-            if "3'SS" in F[3] and strand == "+":
-                splice_type = "3'SS"
-                normal_pos = int(sj_start)-1
-            #o<--
-            if "3'SS" in F[3] and strand == "-":
-                splice_type = "3'SS"
-                normal_pos = sj_end
-
-            genes, region_list = define_longest_transcript(splice_type, strand, tchr, str(normal_pos), genecode_gene_file) 
-            #import pdb; pdb.set_trace() 
-            # col F[-3] is RNA_Mut                
+            # col F[-3] is RNA_Mut
             if F[-3] == 'True':
+                mut_key = F[0].split(',')
+                tchr = mut_key[0]
+                strand = F[4]
+                sj_pos = F[1].split(':')[1].split('-')
+                sj_start = sj_pos[0]
+                sj_end = sj_pos[1]
+                
+                #o-->
+                if "5'SS" in F[3] and strand == "+": 
+                    splice_type = "5'SS"
+                    normal_pos = sj_end    
+                #<--o
+                if "5'SS" in F[3] and strand == "-":
+                    splice_type = "5'SS"
+                    normal_pos = int(sj_start)-1      
+                #-->o
+                if "3'SS" in F[3] and strand == "+":
+                    splice_type = "3'SS"
+                    normal_pos = int(sj_start)-1
+                #o<--
+                if "3'SS" in F[3] and strand == "-":
+                    splice_type = "3'SS"
+                    normal_pos = sj_end
+    
+                genes, region_list = define_longest_transcript(splice_type, strand, tchr, str(normal_pos), genecode_gene_file) 
+
                 print(lie + '\t' + genes, file=hout)
+                print(lie + '\t' + genes, file=fout)
                 ex_region_list.extend(region_list)
             else:
-                print(lie + '\t' + genes, file=hout)
-    hout.close()            
+                print(lie + '\t---', file=fout)
+    hout.close() 
+    fout.close()           
 
     # initialize the file
     hout = open(output_bam + ".tmp.unsorted.sam", 'w')
