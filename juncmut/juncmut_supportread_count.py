@@ -130,7 +130,7 @@ def juncmut_supportread_count(input_file, output_file, bam_file, reference):
     bamfile.close()
     hout.close()
 
-    #Path(output_file + ".tmp1.txt").unlink()
+    Path(output_file + ".tmp1.txt").unlink()
 
 if __name__ == "__main__":
     
