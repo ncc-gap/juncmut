@@ -126,11 +126,13 @@ def juncmut_supportread_count(input_file, output_file, bam_file, reference):
                 else: rna_mut = "False"
                 
                 print(lie + "\t"+ str(support_read_rmdup) + "\t" + str(rna_mut), file = hout) 
+                
+                Path(output_file + ".tmp1.txt").unlink()
 
     bamfile.close()
     hout.close()
 
-    Path(output_file + ".tmp1.txt").unlink()
+    
 
 if __name__ == "__main__":
     
