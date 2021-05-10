@@ -91,8 +91,8 @@ def juncmut_supportread_count(input_file, output_file, bam_file, reference):
             lie = line.rstrip('\n')
             F = line.rstrip('\n').split('\t')
             # Is a position of mutation in Exon or Intron
-            if F[-1] != "True":
-                print(lie + "\t0\tFalse", file = hout)                
+            if F[-1] != "True": continue
+                #print(lie + "\t0\tFalse", file = hout)                
             else:
                 #mpileup
                 mut_elm = F[0].split(',')
@@ -123,9 +123,10 @@ def juncmut_supportread_count(input_file, output_file, bam_file, reference):
                 support_read_rmdup = len(set(pos_read_list))
                 if support_read_rmdup >= 2:
                     rna_mut = "True"
-                else: rna_mut = "False"
+                    print(lie + "\t"+ str(support_read_rmdup) + "\t" + str(rna_mut), file = hout) 
+                #else: rna_mut = "False"
                 
-                print(lie + "\t"+ str(support_read_rmdup) + "\t" + str(rna_mut), file = hout) 
+                #print(lie + "\t"+ str(support_read_rmdup) + "\t" + str(rna_mut), file = hout) 
                 
                 Path(output_file + ".tmp1.txt").unlink()
 
