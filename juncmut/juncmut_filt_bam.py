@@ -96,91 +96,87 @@ def juncmut_filt_bam_main(input_file, output_file, input_bam, output_bam, geneco
         return(genes, region_list) 
     
     hout = open(output_file, 'w')
-    fout = open(output_file + ".full.txt", 'w')
     ex_region_list =[]
     # open a file and make a trnscript list for RNA_Mut True.
     with open(input_file) as fin:
         header = fin.readline().rstrip('\n')
         new_header = header + "\tGene"
         print(new_header, file=hout)
-        print(new_header, file=fout)
         
         for line in fin:
             lie = line.rstrip('\n')
             F = line.rstrip('\n').split('\t')
             # col F[-3] is RNA_Mut
-            if F[-3] == 'True':
-                mut_key = F[0].split(',')
-                tchr = mut_key[0]
-                strand = F[4]
-                sj_pos = F[1].split(':')[1].split('-')
-                sj_start = sj_pos[0]
-                sj_end = sj_pos[1]
-                
-                #o-->
-                if "5'SS" in F[3] and strand == "+": 
-                    splice_type = "5'SS"
-                    normal_pos = sj_end    
-                #<--o
-                if "5'SS" in F[3] and strand == "-":
-                    splice_type = "5'SS"
-                    normal_pos = int(sj_start)-1      
-                #-->o
-                if "3'SS" in F[3] and strand == "+":
-                    splice_type = "3'SS"
-                    normal_pos = int(sj_start)-1
-                #o<--
-                if "3'SS" in F[3] and strand == "-":
-                    splice_type = "3'SS"
-                    normal_pos = sj_end
-    
-                genes, region_list = define_longest_transcript(splice_type, strand, tchr, str(normal_pos), genecode_gene_file) 
+            mut_key = F[0].split(',')
+            tchr = mut_key[0]
+            strand = F[4]
+            sj_pos = F[1].split(':')[1].split('-')
+            sj_start = sj_pos[0]
+            sj_end = sj_pos[1]
+            
+            #o-->
+            if "5'SS" in F[3] and strand == "+": 
+                splice_type = "5'SS"
+                normal_pos = sj_end    
+            #<--o
+            if "5'SS" in F[3] and strand == "-":
+                splice_type = "5'SS"
+                normal_pos = int(sj_start)-1      
+            #-->o
+            if "3'SS" in F[3] and strand == "+":
+                splice_type = "3'SS"
+                normal_pos = int(sj_start)-1
+            #o<--
+            if "3'SS" in F[3] and strand == "-":
+                splice_type = "3'SS"
+                normal_pos = sj_end
 
-                print(lie + '\t' + genes, file=hout)
-                print(lie + '\t' + genes, file=fout)
-                ex_region_list.extend(region_list)
-            else:
-                print(lie + '\t---', file=fout)
+            genes, region_list = define_longest_transcript(splice_type, strand, tchr, str(normal_pos), genecode_gene_file) 
+
+            print(lie + '\t' + genes, file=hout)
+
+            ex_region_list.extend(region_list)
+
     hout.close() 
-    fout.close()           
-
+           
+    if not ex_region_list: 
     # initialize the file
-    hout = open(output_bam + ".tmp.unsorted.sam", 'w')
-    hout.close()
-    #import pdb; pdb.set_trace() 
-    hout = open(output_bam + ".tmp.unsorted.sam", 'a')
+        hout = open(output_bam + ".tmp.unsorted.sam", 'w')
+        hout.close()
+        #import pdb; pdb.set_trace() 
+        hout = open(output_bam + ".tmp.unsorted.sam", 'a')
+        
+        for region in sorted(list(set(ex_region_list))):
+            subprocess.check_call(["samtools", "view", input_bam, region], stdout = hout, stderr = subprocess.DEVNULL)
+        hout.close()
     
-    for region in sorted(list(set(ex_region_list))):
-        subprocess.check_call(["samtools", "view", input_bam, region], stdout = hout, stderr = subprocess.DEVNULL)
-    hout.close()
-
-    hout = open(output_bam + ".tmp.unsorted.rmdup.sam", 'w')
-    subprocess.check_call(["sort", "-u", output_bam + ".tmp.unsorted.sam"], stdout = hout)
-    hout.close()
+        hout = open(output_bam + ".tmp.unsorted.rmdup.sam", 'w')
+        subprocess.check_call(["sort", "-u", output_bam + ".tmp.unsorted.sam"], stdout = hout)
+        hout.close()
+        
+        hout = open(output_bam + ".tmp.unsorted2.sam", 'w')
+        subprocess.check_call(["samtools", "view", "-H", input_bam], stdout = hout, stderr = subprocess.DEVNULL)
+        hout.close()
     
-    hout = open(output_bam + ".tmp.unsorted2.sam", 'w')
-    subprocess.check_call(["samtools", "view", "-H", input_bam], stdout = hout, stderr = subprocess.DEVNULL)
-    hout.close()
-
-    hout = open(output_bam + ".tmp.unsorted2.sam", 'a')
-    subprocess.check_call(["cat", output_bam + ".tmp.unsorted.rmdup.sam"], stdout = hout)
-    hout.close()
-
-    hout = open(output_bam + ".tmp.unsorted2.bam", 'w')
-    subprocess.check_call(["samtools", "view", "-hbS", output_bam + ".tmp.unsorted2.sam"], stdout = hout)
-    hout.close()
-
-    hout = open(output_bam, 'w')
-    subprocess.check_call(["samtools", "sort", output_bam + ".tmp.unsorted2.bam"], stdout = hout)
-    hout.close()
-
-    subprocess.check_call(["samtools", "index", output_bam])
-
+        hout = open(output_bam + ".tmp.unsorted2.sam", 'a')
+        subprocess.check_call(["cat", output_bam + ".tmp.unsorted.rmdup.sam"], stdout = hout)
+        hout.close()
     
-    subprocess.check_call(["rm", "-rf", output_bam + ".tmp.unsorted.sam"])
-    subprocess.check_call(["rm", "-rf", output_bam + ".tmp.unsorted.rmdup.sam"])
-    subprocess.check_call(["rm", "-rf", output_bam + ".tmp.unsorted2.sam"])
-    subprocess.check_call(["rm", "-rf", output_bam + ".tmp.unsorted2.bam"])
+        hout = open(output_bam + ".tmp.unsorted2.bam", 'w')
+        subprocess.check_call(["samtools", "view", "-hbS", output_bam + ".tmp.unsorted2.sam"], stdout = hout)
+        hout.close()
+    
+        hout = open(output_bam, 'w')
+        subprocess.check_call(["samtools", "sort", output_bam + ".tmp.unsorted2.bam"], stdout = hout)
+        hout.close()
+    
+        subprocess.check_call(["samtools", "index", output_bam])
+            
+        subprocess.check_call(["rm", "-rf", output_bam + ".tmp.unsorted.sam"])
+        subprocess.check_call(["rm", "-rf", output_bam + ".tmp.unsorted.rmdup.sam"])
+        subprocess.check_call(["rm", "-rf", output_bam + ".tmp.unsorted2.sam"])
+        subprocess.check_call(["rm", "-rf", output_bam + ".tmp.unsorted2.bam"])
+    
 
 if __name__ == "__main__":
     
