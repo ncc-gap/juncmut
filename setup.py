@@ -5,15 +5,15 @@ from setuptools import setup, find_packages
     
 setup(
     name = 'juncmut',
-    version = '0.4.8',
-    description='Python programs for the identification of the genomic mutation from RNA-seq splicing junction data',
+    version = '0.5.0',
+    description='Python programs for the identification of the genomic mutation from RNA-seq data',
     url = 'https://github.com/ni6o6/',
     author = 'Naoko Iida',
     author_email = 'iida.nao08@gamil.com',
     license = '',
 
     classifiers = [
-        'Development Status :: 4 - Alpha',
+        'Development Status :: 5 - Alpha',
         'Intended Audience :: Science/Research',
         'License :: OSI Approved :: ',
         'Operating System :: Unix',

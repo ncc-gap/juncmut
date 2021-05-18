@@ -106,7 +106,7 @@ def juncmut_gmut(input_file, output_file, dna_bam, reference, is_grc, mut_num_th
         header_list = header.rstrip('\n').split('\t')
         ncol = len(header_list)
         print(ncol)
-        header_list[0] = "Mut_key_"
+        header_list[0] = "Mut_key"
         for line in hin:
             F = line.rstrip('\n').split('\t')
             mut_key = F[0]
