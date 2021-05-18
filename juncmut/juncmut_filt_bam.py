@@ -138,8 +138,9 @@ def juncmut_filt_bam_main(input_file, output_file, input_bam, output_bam, geneco
             ex_region_list.extend(region_list)
 
     hout.close() 
-           
-    if not ex_region_list: 
+
+    if ex_region_list: 
+
     # initialize the file
         hout = open(output_bam + ".tmp.unsorted.sam", 'w')
         hout.close()
