@@ -141,7 +141,7 @@ def juncmut_filt_bam_main(input_file, output_file, input_bam, output_bam, geneco
 
     if ex_region_list: 
 
-    # initialize the file
+        # initialize the file
         hout = open(output_bam + ".tmp.unsorted.sam", 'w')
         hout.close()
         #import pdb; pdb.set_trace() 
@@ -177,6 +177,24 @@ def juncmut_filt_bam_main(input_file, output_file, input_bam, output_bam, geneco
         subprocess.check_call(["rm", "-rf", output_bam + ".tmp.unsorted.rmdup.sam"])
         subprocess.check_call(["rm", "-rf", output_bam + ".tmp.unsorted2.sam"])
         subprocess.check_call(["rm", "-rf", output_bam + ".tmp.unsorted2.bam"])
+    
+    else:
+        # initialize the file
+        hout = open(output_bam + ".tmp.unsorted.sam", 'w')
+        hout.close()
+        hout = open(output_bam + ".tmp.unsorted.sam", 'a')
+        subprocess.check_call(["samtools", "view", "-H", input_bam], stdout = hout, stderr = subprocess.DEVNULL)
+        hout.close()
+        hout = open(output_bam, 'w')
+        subprocess.check_call(["samtools", "view", "-hbS", output_bam + ".tmp.unsorted.sam"], stdout = hout)
+        hout.close()
+        subprocess.check_call(["samtools", "index", output_bam])    
+        
+        subprocess.check_call(["rm", "-rf", output_bam + ".tmp.unsorted.sam"])
+        
+        
+        
+    
     
 
 if __name__ == "__main__":
