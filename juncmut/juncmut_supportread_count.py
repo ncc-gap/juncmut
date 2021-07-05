@@ -29,7 +29,8 @@ def juncmut_supportread_count(input_file, output_file, bam_file, reference):
         if flags[10] == "1": check_flag = False
 
         return(check_flag)
-    
+
+   
     def tidy_reads(seq, qualities, read_ids, mut_mut):
         import re
         read_id_list = read_ids.split(',')
@@ -56,7 +57,6 @@ def juncmut_supportread_count(input_file, output_file, bam_file, reference):
             elif seq[baseIndex] == '+' or seq[baseIndex] == '-':
                 indel_length = re.search(r'\d+', seq[baseIndex:]).group()
                 baseIndex += len(str(indel_length))+int(indel_length)+1 
-                proc = proc + 'I'            
             else:
                 proc = proc + seq[baseIndex]
                 baseIndex += 1
@@ -68,7 +68,7 @@ def juncmut_supportread_count(input_file, output_file, bam_file, reference):
                     pos_read_id_list.append(read_id_list[i])
                     
         return pos_read_id_list
-  
+
     b_path = Path(bam_file)
 
     if b_path.suffix == '.bam':
