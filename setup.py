@@ -1,16 +1,15 @@
 #!/usr/bin/env python
 
 from setuptools import setup, find_packages
- 
-    
+
 setup(
     name = 'juncmut',
-    version = '0.5.2',
+    version = '0.5.3',
     description='Python programs for the identification of the genomic mutation from RNA-seq data',
-    url = 'https://github.com/ni6o6/',
-    author = 'Naoko Iida',
-    author_email = 'iida.nao08@gamil.com',
-    license = '',
+    url = 'https://github.com/ncc-gap/juncmut.git',
+    author = 'Naoko Iida, Ai Okada and Yuichi Shiraishi',
+    author_email = 'genomon.devel@gmail.com',
+    license = 'GPLv3',
 
     classifiers = [
         'Development Status :: 5 - Alpha',
@@ -21,8 +20,8 @@ setup(
         'Topic :: Scientific/Engineering :: Bio-Informatics'
     ],
 
-    packages = find_packages(exclude = ['docker']),
-    package_data={'juncmut': ['*']},
+    packages = find_packages(),
+    package_data={},
     #install_requires = [],
 
     entry_points = {'console_scripts': ['juncmut = juncmut:main']}
