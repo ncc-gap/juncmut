@@ -1,11 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Tue Nov 26 10:39:58 2019
-
-@author: genome
-"""
-
 
 def get_main(args):
     from .utils import check_reference

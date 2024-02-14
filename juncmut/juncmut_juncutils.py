@@ -1,14 +1,5 @@
 #!/usr/bin/env python3
-
-"""
-Created on Wed Jul 31 2019
-
-@author: naokoIida
-
-proc_star_junction(input_file, output_file, control_file, read_num_thres, overhang_thres, remove_annotated, convert_map_splice2):
-convert_map_splice2: start position -1 , end position +1
-remove_annotated == True to remove a line with column[5] != 0.
-"""
+# -*- coding: utf-8 -*-
 
 def juncmut_juncutils(input_file, output_file, cont_list, genome_id, read_num_thres):
     import subprocess

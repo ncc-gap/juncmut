@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+
 def juncmut_annotgnomad(input_file, output_file, gnomad, genome_id):
     import csv
     import os

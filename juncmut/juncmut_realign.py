@@ -1,8 +1,5 @@
 #! /usr/bin/env python3
-
-"""
-The program check bam or cram from the filename.
-"""
+# -*- coding: utf-8 -*-
 
 import csv
 import os

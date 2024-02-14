@@ -1,11 +1,5 @@
 #! /usr/bin/env python
-"""
-Naoko Iida
-
-python juncmut_annotgmut.py input_file, output_file, bam, reference, is_grc
-if is_grc=="True", remove "chr" in input.
-if is_grc=="False", add "chr" in output.
-"""
+# -*- coding: utf-8 -*-
 
 def juncmut_gmut(input_file, output_file, dna_bam, reference, is_grc, mut_num_thres, mut_freq_thres):  
 
