@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+from . import __version__
 from .run_juncmut import get_main 
 from .run_juncmut import annot_main 
 from .run_juncmut import validate_main 
 import argparse
 
 def create_parser():
-    
     parser = argparse.ArgumentParser(prog = "juncmut")
+    parser.add_argument("--version", action = "version", version = __version__)
+
     subparsers = parser.add_subparsers()
     
     #####

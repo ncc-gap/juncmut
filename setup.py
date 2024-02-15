@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 
 from setuptools import setup, find_packages
+from juncmut import __version__
 
 setup(
     name = 'juncmut',
-    version = '0.5.3',
+    version = __version__,
     description='Python programs for the identification of the genomic mutation from RNA-seq data',
     url = 'https://github.com/ncc-gap/juncmut.git',
     author = 'Naoko Iida, Ai Okada and Yuichi Shiraishi',
