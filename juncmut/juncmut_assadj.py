@@ -31,6 +31,10 @@ def juncmut_assadj(input_file, output_file):
                 offset = csvobj["Offset_2"].split(';',2)[0]
             else:
                 raise Exception("juncmut_assadj.py: Unexpected data format")
+
+            if offset == "*":
+                print("juncmut_assadj.py: Unexpected data format, offset == '*'")
+                offset = 0
             
             if "e" in csvobj["Is_Boundary_1"] or "s" in csvobj["Is_Boundary_2"]:
                 strand = "+"
