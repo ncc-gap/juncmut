@@ -26,7 +26,6 @@ RUN wget -q https://github.com/arq5x/bedtools2/releases/download/v2.27.0/bedtool
 RUN pip3 install --upgrade pip setuptools && \
     pip3 install cython pysam \
     annot_utils==0.3.1 \
-    intron_retention_utils==0.6.3 \
     edlib==1.3.8
 
 RUN wget -q https://github.com/friend1ws/junc_utils/archive/v0.5.1b1.tar.gz && \
