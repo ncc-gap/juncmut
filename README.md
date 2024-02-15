@@ -28,10 +28,10 @@ chr\<tab>intron_start_position\<tab>intron_end_position\<tab>0\<tab>0\<tab>0\<ta
 format:<br>
 chr\<tab>start_postion\<tab>end_position(\<tab>any..)
 
-## Requirment of RNA bam
-
 ## Commands
 ### get
+
+Requirment of RNA bam
 ```
 usage: juncmut get [-h] -input_file input_file -output_file output_file -reference reference -rna_bam rna_bam [-control_file [CONTROL_FILE [CONTROL_FILE ...]]] [-read_num_thres READ_NUM_THRES]
                    [-freq_thres FREQ_THRES] [-mut_num_thres MUT_NUM_THRES] [-mut_freq_thres MUT_FREQ_THRES] -genecode_gene_file genecode_gene_file -output_bam output_bam [-debug debug]
@@ -105,34 +105,35 @@ Step8. Add gnomAD snp annotation.
 -grc option: T means that the chromosome names are not chr-prefix.
 
 ## Output col  
-Mut_key 
-SJ_key 
-Sample 
-Splicing_class 
-SJ_strand 
-SJ_read_count 
-SJ_depth 
-SJ_freq 
-Ref_motif: reference 5’ to 3’  
-Possive_alt_motif: reference 5’ to 3’ discription. A,T,G,C,R(AG),Y(CT), .(match)  
-Possive_alt_key: chr:position,Ref,Alt  
-Is_GT_AG 
-Is_in_exon 
-SJ_overlap_count 
-Chr 
-Mut_pos 
-Mut_ref 
-Mut_alt 
-Mut_count 
-Mut_depth 
-Mut_freq 
-Realign_no_SJ_neg 
-Realign_no_SJ_pos 
-Realign_target_SJ_neg 
-Reaglin_target_SJ_pos 
-Realign_normal_SJ_neg 
-Realign_normal_SJ_pos 
-Realign_result 
-Support_read_rmdup 
-RNA_mut 
+ - Mut_key
+ - SJ_key
+ - Sample
+ - Splicing_class
+ - SJ_strand
+ - SJ_read_count
+ - SJ_depth
+ - SJ_freq
+ - Ref_motif: reference 5’ to 3’
+ - Possive_alt_motif: reference 5’ to 3’ discription. A,T,G,C,R(AG),Y(CT), .(match)
+ - Possive_alt_key: chr:position,Ref,Alt
+ - Is_GT_AG
+ - Is_in_exon
+ - SJ_overlap_count
+ - Chr
+ - Mut_pos
+ - Mut_ref
+ - Mut_alt
+ - Mut_count
+ - Mut_depth
+ - Mut_freq
+ - Realign_no_SJ_neg
+ - Realign_no_SJ_pos
+ - Realign_target_SJ_neg
+ - Reaglin_target_SJ_pos
+ - Realign_normal_SJ_neg
+ - Realign_normal_SJ_pos
+ - Realign_result
+ - Support_read_rmdup
+ - RNA_mut
+
 Gene 
