@@ -24,7 +24,10 @@ RUN wget -q https://github.com/arq5x/bedtools2/releases/download/v2.27.0/bedtool
     cd bedtools2 && make && make install
 
 RUN pip3 install --upgrade pip setuptools && \
-    pip3 install cython pysam \
+    pip3 install cython \
+    pysam \
+    awscli \
+    boto3 \
     annot_utils==0.3.1 \
     edlib==1.3.8
 
