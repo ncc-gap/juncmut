@@ -25,21 +25,19 @@ RUN wget -q https://github.com/arq5x/bedtools2/releases/download/v2.27.0/bedtool
 
 RUN pip3 install --upgrade pip setuptools && \
     pip3 install cython \
-    pysam \
-    awscli \
-    boto3 \
     annot_utils==0.3.1 \
     edlib==1.3.8
 
+RUN wget https://github.com/pysam-developers/pysam/archive/v0.22.0.tar.gz && \
+    tar -zxvf v0.22.0.tar.gz && \
+    cd pysam-0.22.0 && python3 setup.py build install
+    
 RUN wget -q https://github.com/friend1ws/junc_utils/archive/v0.5.1b1.tar.gz && \
     tar zxvf v0.5.1b1.tar.gz && \
     cd junc_utils-0.5.1b1 && \
     python3 setup.py build install
 
-COPY juncmut-master.zip ./
-RUN unzip juncmut-master.zip && \
-    cd juncmut-master && \
-    python3 setup.py build install
+RUN pip3 install git+https://github.com/ncc-gap/juncmut.git
 
 ENV HTSLIB_LIBRARY_DIR /usr/local/lib
 ENV HTSLIB_INCLUDE_DIR /usr/local/include
