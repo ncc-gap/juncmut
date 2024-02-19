@@ -85,30 +85,6 @@ optional arguments:
   -debug debug          True keeps the intermediate files.
 ```
 
-### validate
-```
-usage: juncmut validate [-h]
- -input_file input_file
- -output_file output_file
- -reference reference
- -dna_bam dna_bam
- [-mut_num_thres MUT_NUM_THRES]
- [-mut_freq_thres MUT_FREQ_THRES]
-
-optional arguments:
-  -h, --help            show this help message and exit
-  -input_file input_file
-                        Input file obtained by the juncmut get
-  -output_file output_file
-                        Output file
-  -reference reference  Path to reference genome
-  -dna_bam dna_bam      Path to DNA bam file
-  -mut_num_thres MUT_NUM_THRES
-                        A mutation with mutation alleles >= mut_num_thres is a true candidate (default: 1)
-  -mut_freq_thres MUT_FREQ_THRES
-                        A mutation with frequency >= mut_freq_thres is a true candidate (default: 0.05)
-```
-
 ## Tutorial
 
 See this [page](https://github.com/ncc-gap/juncmut/wiki/Tutorial)
