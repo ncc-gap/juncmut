@@ -4,7 +4,7 @@
 from . import __version__
 from .run_juncmut import get_main 
 from .run_juncmut import annot_main 
-from .run_juncmut import validate_main 
+#from .run_juncmut import validate_main 
 import argparse
 
 def create_parser():
@@ -46,16 +46,16 @@ def create_parser():
     
     #####
     # validate
-    validate = subparsers.add_parser("validate", help = "Validate the mutations on DNA.")
-    
-    validate.add_argument("-input_file", metavar = "input_file", required = True, type = str, help = "Input file obtained by the juncmut get")
-    validate.add_argument("-output_file", metavar = "output_file", required = True, type = str, help = "Output file")
-    validate.add_argument("-reference", metavar = "reference", required = True, type = str, help = "Path to reference genome")
-    validate.add_argument("-dna_bam", metavar = "dna_bam", required = True, type = str, help = "Path to DNA bam file")
-    validate.add_argument("-mut_num_thres", type = int, default = 1, help = "A mutation with mutation alleles >= mut_num_thres is a true candidate (default: %(default)s)")
-    validate.add_argument("-mut_freq_thres", type = float, default = 0.05, help = "A mutation with frequency >= mut_freq_thres is a true candidate (default: %(default)s)")
-    
-    validate.set_defaults(func = validate_main)
+    #validate = subparsers.add_parser("validate", help = "Validate the mutations on DNA.")
+    #
+    #validate.add_argument("-input_file", metavar = "input_file", required = True, type = str, help = "Input file obtained by the juncmut get")
+    #validate.add_argument("-output_file", metavar = "output_file", required = True, type = str, help = "Output file")
+    #validate.add_argument("-reference", metavar = "reference", required = True, type = str, help = "Path to reference genome")
+    #validate.add_argument("-dna_bam", metavar = "dna_bam", required = True, type = str, help = "Path to DNA bam file")
+    #validate.add_argument("-mut_num_thres", type = int, default = 1, help = "A mutation with mutation alleles >= mut_num_thres is a true candidate (default: %(default)s)")
+    #validate.add_argument("-mut_freq_thres", type = float, default = 0.05, help = "A mutation with frequency >= mut_freq_thres is a true candidate (default: %(default)s)")
+    #
+    #validate.set_defaults(func = validate_main)
     
     #####
     
