@@ -141,7 +141,7 @@ def process_cigar(res_cigar):
     mut_count = len([i for i in proc_cigar_list if i != '='])
     return(mut_count)
 
-def juncmut_realign(input_file, output_file, bam_file, reference, genome_id, is_grc, mut_num_thres, mut_freq_thres, template_size = 10):
+def juncmut_realign(input_file, output_file, bam_file, reference, genome_id, is_grc, template_size = 10):
 
     ref_tb = pysam.FastaFile(reference)
 
@@ -157,9 +157,9 @@ def juncmut_realign(input_file, output_file, bam_file, reference, genome_id, is_
     with open(input_file, 'r') as hin, open(output_file, 'w') as hout:
         csvreader = csv.DictReader(hin, delimiter='\t')
         output_header = [
-            "Mut_key", "SJ_key", "Sample", "Splicing_class", "SJ_strand", "SJ_read_count", "SJ_depth", "SJ_freq", "Ref_motif", "Possive_alt_motif", "Possive_alt_key", "Is_GT_AG",
-            "Is_in_exon", "SJ_overlap_count", "Chr", "Mut_pos", "Mut_ref", "Mut_alt", "Mut_count", "Mut_depth", "Mut_freq", 
-            "Realign_no_SJ_neg", "Realign_no_SJ_pos", "Realign_target_SJ_neg", "Reaglin_target_SJ_pos", "Realign_normal_SJ_neg", "Realign_normal_SJ_pos","Realign_result"
+            "Mut_key", "SJ_key", "Sample", "Created_motif", "SJ_strand", "SJ_read_count", "SJ_depth", "SJ_freq", "Ref_motif", "Possive_alt_motif", "Possive_alt_key", "Is_GT_AG",
+            "Is_in_exon", "SJ_overlap_count", "Pileup_mut_count", "Pileup_depth", "Support_read_rmdup",
+            "Realign_no_SJ_neg", "Realign_no_SJ_pos", "Realign_target_SJ_neg", "Reaglin_target_SJ_pos", "Realign_normal_SJ_neg", "Realign_normal_SJ_pos"
         ]
         csvwriter = csv.DictWriter(hout, delimiter='\t', lineterminator='\n', fieldnames=output_header)
         csvwriter.writeheader()
@@ -170,42 +170,48 @@ def juncmut_realign(input_file, output_file, bam_file, reference, genome_id, is_
                 if key in output_header:
                     output_obj[key] = csvobj[key]
 
-            junc_start = int(csvobj["Start"])
-            junc_end = int(csvobj["End"])
-            mut_pos = int(csvobj["Mut_pos"])
+            (sj_key_chr, sj_key_start, sj_key_end) = csvobj["SJ_key"].split(",")
+            sj_key_start = int(sj_key_start)
+            sj_key_end = int(sj_key_end)
+            output_obj["SJ_key"] = "%s:%d-%d" % (sj_key_chr, sj_key_start, sj_key_end)
+
+            (mut_key_chr, mut_key_pos, mut_key_ref, mut_key_alt) = csvobj["Mut_key"].split(",")
+            mut_key_pos = int(mut_key_pos)
+
+            splice_type = csvobj["Created_motif"] + csvobj["SJ_strand"]
 
             # [TODO] fix this item
-            output_obj["Mut_key"] = "%s,%s,%s,%s" % (csvobj["Chr"], csvobj["Mut_pos"], csvobj["Mut_ref"], csvobj["Mut_alt"])
-            output_obj["SJ_key"] = "%s:%s-%s" % (csvobj["Chr"], csvobj["Start"], csvobj["End"])
+            #output_obj["Mut_key"] = "%s,%s,%s,%s" % (csvobj["Chr"], csvobj["Mut_pos"], csvobj["Mut_ref"], csvobj["Mut_alt"])
+            #output_obj["SJ_key"] = "%s:%s-%s" % (csvobj["Chr"], csvobj["Start"], csvobj["End"])
             output_obj["Sample"] = sample_name
 
             # key_readid_dict to remove read duplicates
             # Is a position of mutation in Exon or Intron
             is_exon = 'outside of motif'
             #o-->
-            if "5" in csvobj["Splicing_class"] and "+" in csvobj["SJ_strand"]:
-                dis_mut_SJstart = mut_pos - junc_start
+            if splice_type == "Donor+":
+                dis_mut_SJstart = mut_key_pos - sj_key_start
                 if dis_mut_SJstart < 0 and dis_mut_SJstart > -3:
                     is_exon = 'exon'
                 elif dis_mut_SJstart < 6 and dis_mut_SJstart >= 0:
                     is_exon = 'intron'
             #-->o
-            elif "3" in csvobj["Splicing_class"] and "+" in csvobj["SJ_strand"]:
-                dis_mut_SJend = mut_pos - junc_end
+            elif splice_type == "Acceptor+":
+                dis_mut_SJend = mut_key_pos - sj_key_end
                 if dis_mut_SJend == 1:
                     is_exon = 'exon'
                 elif dis_mut_SJend < 1 and dis_mut_SJend > -6:
                     is_exon = 'intron'
             #o<--       
-            elif "3" in csvobj["Splicing_class"] and "-" in csvobj["SJ_strand"]:
-                dis_mut_SJstart = mut_pos - junc_start
+            elif splice_type == "Acceptor-":
+                dis_mut_SJstart = mut_key_pos - sj_key_start
                 if dis_mut_SJstart == -1:
                     is_exon = 'exon'
                 elif dis_mut_SJstart < 6 and dis_mut_SJstart >= 0:
                     is_exon = 'intron'
             #<--o
-            elif "5" in csvobj["Splicing_class"] and "-" in csvobj["SJ_strand"]: 
-                dis_mut_SJend = mut_pos - junc_end
+            elif splice_type == "Donor-": 
+                dis_mut_SJend = mut_key_pos - sj_key_end
                 if dis_mut_SJend > 0 and dis_mut_SJend < 3:
                     is_exon = 'exon'
                 elif dis_mut_SJend < 1 and dis_mut_SJend > -6:
@@ -214,26 +220,18 @@ def juncmut_realign(input_file, output_file, bam_file, reference, genome_id, is_
             output_obj["Is_in_exon"] = is_exon
 
             #if RNA_mutation reads>=2 and Freq>=0.05, do realign.
-            if float(csvobj["Mut_freq"]) < mut_freq_thres or int(csvobj["Mut_count"]) < mut_num_thres:
-                output_obj["Realign_no_SJ_neg"] = "-"
-                output_obj["Realign_no_SJ_pos"] = "-"
-                output_obj["Realign_target_SJ_neg"] = "-"
-                output_obj["Reaglin_target_SJ_pos"] = "-"
-                output_obj["Realign_normal_SJ_neg"] = "-"
-                output_obj["Realign_normal_SJ_pos"] = "-"
-                output_obj["Realign_result"] = "False"
-                csvwriter.writerow(output_obj)
-                continue
+            #if float(csvobj["Pileup_mut_count"])/float(csvobj["Pileup_depth"]) < mut_freq_thres or int(csvobj["Mut_count"]) < mut_num_thres:
+            #    continue
             
-            junc_annotated = junc_start
-            if ("5" in csvobj["Splicing_class"] and csvobj["SJ_strand"] == '+') or ("3" in csvobj["Splicing_class"] and csvobj["SJ_strand"] == '-'):
-                junc_annotated = junc_end
+            junc_annotated = sj_key_start
+            if splice_type == "Donor+" or splice_type == "Acceptor-":
+                junc_annotated = sj_key_end
             
             generate_template_seq(
-                output_file + ".tmp.template.fa", ref_tb, junc_tb, csvobj["Chr"], mut_pos, csvobj["Mut_ref"], csvobj["Mut_alt"],
-                junc_start, junc_end, junc_annotated, template_size)
+                output_file + ".tmp.template.fa", ref_tb, junc_tb, mut_key_chr, mut_key_pos, mut_key_ref, mut_key_alt,
+                sj_key_start, sj_key_end, junc_annotated, template_size)
             
-            extract_read_around_boundary(bam_file, output_file + ".tmp.read_seq.fa", csvobj["Chr"], mut_pos)
+            extract_read_around_boundary(bam_file, output_file + ".tmp.read_seq.fa", mut_key_chr, mut_key_pos)
             
             # query to dict
             d_query = {}
@@ -294,14 +292,14 @@ def juncmut_realign(input_file, output_file, bam_file, reference, genome_id, is_
                 if d_realign['Target_SJ_Pos'] + d_realign['No_SJ_Pos']+ d_realign['Normal_SJ_Pos'] >=1:
                     realign_result = 'True'
             
-            output_obj["Realign_no_SJ_neg"] = d_realign["No_SJ_Neg"]
-            output_obj["Realign_no_SJ_pos"] = d_realign["No_SJ_Pos"]
-            output_obj["Realign_target_SJ_neg"] = d_realign["Target_SJ_Neg"]
-            output_obj["Reaglin_target_SJ_pos"] = d_realign["Target_SJ_Pos"]
-            output_obj["Realign_normal_SJ_neg"] = d_realign["Normal_SJ_Neg"]
-            output_obj["Realign_normal_SJ_pos"] = d_realign["Normal_SJ_Pos"]
-            output_obj["Realign_result"] = realign_result
-            csvwriter.writerow(output_obj)
+            if realign_result == 'True':
+                output_obj["Realign_no_SJ_neg"] = d_realign["No_SJ_Neg"]
+                output_obj["Realign_no_SJ_pos"] = d_realign["No_SJ_Pos"]
+                output_obj["Realign_target_SJ_neg"] = d_realign["Target_SJ_Neg"]
+                output_obj["Reaglin_target_SJ_pos"] = d_realign["Target_SJ_Pos"]
+                output_obj["Realign_normal_SJ_neg"] = d_realign["Normal_SJ_Neg"]
+                output_obj["Realign_normal_SJ_pos"] = d_realign["Normal_SJ_Pos"]
+                csvwriter.writerow(output_obj)
 
             os.remove(output_file + ".tmp.template.fa")
             os.remove(output_file + ".tmp.read_seq.fa")
@@ -319,4 +317,4 @@ if __name__ == "__main__":
     bam_file = sys.argv[3]
     reference = sys.argv[4]
 
-    juncmut_realign(input_file, output_file, bam_file, reference, "hg38", "False", 2, 0.05, 10)
+    juncmut_realign(input_file, output_file, bam_file, reference, "hg38", "False", 10)

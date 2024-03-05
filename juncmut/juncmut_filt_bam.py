@@ -18,11 +18,11 @@ def define_longest_transcript(splice_type, mut_key_chr, normal_pos, ref_file):
             ref_tx_start = R[4]
             ref_tx_end = R[5]
             ref_gene = R[12]
-            if splice_type == "5'SS+" or splice_type == "3'SS-":
+            if splice_type == "Donor+" or splice_type == "Acceptor-":
                 exonStarts = R[9].split(',')
                 if normal_pos in exonStarts:
                     gene2tx_info[ref_tx_id] = mut_key_chr, ref_tx_start, ref_tx_end, ref_gene
-            elif splice_type == "5'SS-" or splice_type == "3'SS+":
+            elif splice_type == "Donor-" or splice_type == "Acceptor+":
                 exonEnds = R[10].split(',')
                 if normal_pos in exonEnds:
                     gene2tx_info[ref_tx_id] = mut_key_chr, ref_tx_start, ref_tx_end, ref_gene
@@ -73,23 +73,12 @@ def juncmut_filt_bam_main(input_file, output_file, input_bam, output_bam, geneco
             sj_pos = csvobj["SJ_key"].split(':')[1].split('-')
             sj_start = int(sj_pos[0])
             sj_end = int(sj_pos[1])
-            
-            #o-->
-            if "5'SS" in csvobj["Splicing_class"] and csvobj["SJ_strand"] == "+": 
-                splice_type = "5'SS+"
+
+            splice_type = csvobj["Created_motif"] + csvobj["SJ_strand"]
+            if splice_type == "Donor+" or splice_type == "Acceptor-": 
                 normal_pos = sj_end
-            #<--o
-            elif "5'SS" in csvobj["Splicing_class"] and csvobj["SJ_strand"] == "-":
-                splice_type = "5'SS-"
+            elif splice_type == "Donor-" or splice_type == "Acceptor+":
                 normal_pos = sj_start - 1
-            #-->o
-            elif "3'SS" in csvobj["Splicing_class"] and csvobj["SJ_strand"] == "+":
-                splice_type = "3'SS+"
-                normal_pos = sj_start - 1
-            #o<--
-            elif "3'SS" in csvobj["Splicing_class"] and csvobj["SJ_strand"] == "-":
-                splice_type = "3'SS-"
-                normal_pos = sj_end
 
             genes, region_list = define_longest_transcript(splice_type, mut_key_chr, str(normal_pos), genecode_gene_file)
 

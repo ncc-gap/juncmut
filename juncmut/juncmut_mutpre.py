@@ -23,13 +23,14 @@ def juncmut_mutpre(input_file, output_file, reference):
         csvwriter.writeheader()
 
         for csvobj in csvreader:
-            chrom = csvobj["Chr"]
-            start = int(csvobj["Start"])
-            end = int(csvobj["End"])
+            (sj_key_chr, sj_key_start, sj_key_end) = csvobj["SJ_key"].split(",")
+            start = int(sj_key_start)
+            end = int(sj_key_end)
+            splice_type = csvobj["Created_motif"] + csvobj["SJ_strand"]
 
-            if "5" in csvobj["Splicing_class"] and "+" in csvobj["SJ_strand"]: #o-->
+            if splice_type == "Donor+": #o-->
                 #region -2|0~5 
-                bases = ref.fetch(chrom, start-1-2, start+5).upper()
+                bases = ref.fetch(sj_key_chr, start-1-2, start+5).upper()
 
                 mlist = []
                 mposi = []
@@ -61,8 +62,8 @@ def juncmut_mutpre(input_file, output_file, reference):
                     allele = 'non-GT/AG'
                     mposi_rec = ','.join(noncamposi)
             
-            elif "5" in csvobj["Splicing_class"] and "-" in csvobj["SJ_strand"]: #<--o
-                bases = ref.fetch(chrom, end-1-5, end+2).upper()
+            elif splice_type == "Donor-": #<--o
+                bases = ref.fetch(sj_key_chr, end-1-5, end+2).upper()
 
                 mlist = []
                 mposi = []
@@ -94,9 +95,9 @@ def juncmut_mutpre(input_file, output_file, reference):
                     allele = 'non-GT/AG' 
                     mposi_rec = ','.join(noncamposi)
             
-            elif "3" in csvobj["Splicing_class"] and "+" in csvobj["SJ_strand"]: #-->o
+            elif splice_type == "Acceptor+": #-->o
                 #region -5|1
-                bases = ref.fetch(chrom, end-1-5, end+1).upper()
+                bases = ref.fetch(sj_key_chr, end-1-5, end+1).upper()
                 mlist = []
                 mposi = []
                 noncamposi = []
@@ -132,8 +133,8 @@ def juncmut_mutpre(input_file, output_file, reference):
                     allele = 'non-GT/AG' 
                     mposi_rec = ','.join(noncamposi)
             
-            elif "3" in csvobj["Splicing_class"] and "-" in csvobj["SJ_strand"]: #o<--
-                bases = ref.fetch(chrom,start-1-1,start+5).upper()
+            elif splice_type == "Acceptor-": #o<--
+                bases = ref.fetch(sj_key_chr,start-1-1,start+5).upper()
                 mlist = []
                 mposi = []
                 noncamposi = []

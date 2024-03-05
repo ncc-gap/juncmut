@@ -3,11 +3,11 @@
 
 def juncmut_assadj(input_file, output_file):
     import csv
-    
+    print(input_file)
     with open(input_file) as hin, open(output_file, 'w') as hout:
         # [TODO] set sample
         csvwriter = csv.DictWriter(hout, delimiter='\t', lineterminator='\n', fieldnames=[
-            "Chr", "SJ_2", "SJ_3", "Start_ori", "End_ori", "Sample", "Splicing_class", "SJ_strand", "SJ_read_count", 
+            "SJ_key", "Start_ori", "End_ori", "Created_motif", "SJ_strand", "SJ_read_count", 
         ])
         csvwriter.writeheader()
         
@@ -15,15 +15,14 @@ def juncmut_assadj(input_file, output_file):
         for csvobj in csvreader:
             if not "alternative" in csvobj["Splicing_Class"].lower():
                 continue
-            
-            out_csvobj = {
-                "Chr": csvobj["SJ_1"],
-                "Start_ori": csvobj["SJ_2"],
-                "End_ori": csvobj["SJ_3"],
-                "Sample": "",
-                "Splicing_class": csvobj["Splicing_Class"],
-                "SJ_read_count": csvobj["SJ_7"],
-            }
+
+            created_motif = ""
+            if "5'SS" in csvobj["Splicing_Class"]:
+                created_motif = "Donor"
+            elif "3'SS" in csvobj["Splicing_Class"]:
+                created_motif = "Acceptor"
+            else:
+                continue
             
             if "e" in csvobj["Is_Boundary_1"] or "s" in csvobj["Is_Boundary_1"]:
                 offset = csvobj["Offset_1"].split(';', 2)[0]
@@ -40,10 +39,17 @@ def juncmut_assadj(input_file, output_file):
                 strand = "+"
             elif "s" in csvobj["Is_Boundary_1"] or "e" in csvobj["Is_Boundary_2"]:
                 strand = "-"
-            
-            out_csvobj["SJ_2"] = int(csvobj["SJ_2"]) - 1 * int(offset)
-            out_csvobj["SJ_3"] = int(csvobj["SJ_3"]) - 1 * int(offset)
-            out_csvobj["SJ_strand"] = strand
+            else:
+                continue
+
+            out_csvobj = {
+                "SJ_key": "%s,%d,%d" % (csvobj["SJ_1"], int(csvobj["SJ_2"]) - 1 * int(offset), int(csvobj["SJ_3"]) - 1 * int(offset)),
+                "Start_ori": csvobj["SJ_2"],
+                "End_ori": csvobj["SJ_3"],
+                "Created_motif": created_motif,
+                "SJ_read_count": csvobj["SJ_7"],
+                "SJ_strand": strand
+            }
             csvwriter.writerow(out_csvobj)
 
 if __name__== "__main__":

@@ -46,4 +46,4 @@ if __name__== "__main__":
     output_file = sys.argv[2]
     cont_list = sys.argv[3].split(",")
     
-    juncmut_juncutils(input_file, output_file, cont_list, "hg38", 3)
+    juncmut_juncutils(input_file, output_file, cont_list, "hg38", 1)

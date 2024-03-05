@@ -75,15 +75,11 @@ def juncmut_supportread_count(input_file, output_file, input_bam_file, reference
     with open(input_file, 'r') as hin, open(output_file, 'w') as hout:
         csvreader = csv.DictReader(hin, delimiter='\t')
         csvwriter = csv.DictWriter(hout, delimiter='\t', lineterminator='\n', fieldnames=csvreader.fieldnames + [
-            "Support_read_rmdup", "RNA_mut"
+            "Support_read_rmdup"
         ])
         csvwriter.writeheader()
 
         for csvobj in csvreader:
-            # Is a position of mutation in Exon or Intron
-            if csvobj["Realign_result"] != "True":
-                continue
-
             # mpileup
             (mut_chr, mut_pos, mut_ref, mut_mut) = csvobj["Mut_key"].split(',')
             mpileup_commands = ["samtools", "mpileup", "-r", "%s:%s-%s" % (mut_chr, mut_pos, mut_pos), "-f", reference, input_bam_file, "--output-QNAME", "-o", output_file + ".tmp1.txt"]
@@ -110,7 +106,6 @@ def juncmut_supportread_count(input_file, output_file, input_bam_file, reference
             support_read_rmdup = len(set(pos_read_list))
             if support_read_rmdup >= 2:
                 csvobj["Support_read_rmdup"] = support_read_rmdup
-                csvobj["RNA_mut"] = "True"
                 csvwriter.writerow(csvobj)
 
             os.remove(output_file + ".tmp1.txt")

@@ -51,7 +51,9 @@ def get_main(args):
         args.output_file+".fil.annot.assadj.freq.pmut.SJint.txt",
         args.output_file+".fil.annot.assadj.freq.pmut.SJint.rmut.txt", 
         args.rna_bam, 
-        args.reference
+        args.reference,
+        args.mut_num_thres, 
+        args.mut_freq_thres, 
     )
 
     juncmut_realign(
@@ -61,20 +63,11 @@ def get_main(args):
         args.reference, 
         genome_id, 
         is_grc, 
-        args.mut_num_thres, 
-        args.mut_freq_thres, 
         template_size = 10
-    )
-    
-    juncmut_supportread_count(
-        args.output_file+".fil.annot.assadj.freq.pmut.SJint.rmut.ed.txt",
-        args.output_file+".fil.annot.assadj.freq.pmut.SJint.rmut.ed.rmdup.txt", 
-        args.rna_bam, 
-        args.reference
     )
 
     juncmut_filt_bam_main(
-        args.output_file+".fil.annot.assadj.freq.pmut.SJint.rmut.ed.rmdup.txt",
+        args.output_file+".fil.annot.assadj.freq.pmut.SJint.rmut.ed.txt",
         args.output_file, 
         args.rna_bam, 
         args.output_bam, 
@@ -90,7 +83,6 @@ def get_main(args):
         os.remove(args.output_file+".fil.annot.assadj.freq.pmut.SJint.txt")
         os.remove(args.output_file+".fil.annot.assadj.freq.pmut.SJint.rmut.txt")
         os.remove(args.output_file+".fil.annot.assadj.freq.pmut.SJint.rmut.ed.txt")
-        os.remove(args.output_file+".fil.annot.assadj.freq.pmut.SJint.rmut.ed.rmdup.txt")
 
 def annot_main(args):
     from .utils import check_reference
