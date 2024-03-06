@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import os
 def get_main(args):
     from .utils import check_reference
     from .juncmut_juncutils import juncmut_juncutils
@@ -10,9 +11,7 @@ def get_main(args):
     from .juncmut_intersect import juncmut_intersect
     from .juncmut_rnamut import juncmut_rnamut
     from .juncmut_realign import juncmut_realign
-    from .juncmut_supportread_count import juncmut_supportread_count
     from .juncmut_filt_bam import juncmut_filt_bam_main
-    from .juncmut_annotgnomad import juncmut_annotgnomad
 
     genome_id, is_grc = check_reference(args.reference)
 
@@ -74,8 +73,7 @@ def get_main(args):
         args.genecode_gene_file
     )
 
-    if args.debug == "False":
-        import os
+    if not args.debug:
         os.remove(args.output_file+".fil.annot.txt")
         os.remove(args.output_file+".fil.annot.assadj.txt")
         os.remove(args.output_file+".fil.annot.assadj.freq.txt")
@@ -85,17 +83,81 @@ def get_main(args):
         os.remove(args.output_file+".fil.annot.assadj.freq.pmut.SJint.rmut.ed.txt")
 
 def annot_main(args):
+    import shutil
     from .utils import check_reference
-    from .juncmut_annotgnomad import juncmut_annotgnomad
+    from .annot_gnomad import annot_gnomad
+    from .annot_cgc import annot_cgc
+    from .annot_clinvar import annot_clinvar
+    from .annot_gene_list import annot_gene_list
+    from .annot_cgd import annot_cgd
 
-    genome_id, is_grc = check_reference(args.reference)
+    if args.gnomad == "":
+        shutil.copy(args.input_file, args.output_file + ".tmp1")
+    else:
+        genome_id, is_grc = check_reference(args.reference)
+        annot_gnomad(args.input_file, args.output_file + ".tmp1", args.gnomad, genome_id)
 
-    juncmut_annotgnomad(
-        args.input_file,
-        args.output_file,
-        args.gnomad, 
-        genome_id
-    )
+    if args.cgc_file == "":
+        shutil.copy(args.output_file + ".tmp1", args.output_file + ".tmp2")
+    else:
+        annot_cgc(args.output_file + ".tmp1", args.output_file + ".tmp2", args.cgc_file)
+
+    if args.clinvar_file == "":
+        shutil.copy(args.output_file + ".tmp2", args.output_file + ".tmp3")
+    else:
+        annot_clinvar(args.output_file + ".tmp2", args.output_file + ".tmp3", args.clinvar_file)
+
+    if args.acmg_file == "":
+        shutil.copy(args.output_file + ".tmp3", args.output_file + ".tmp4")
+    else:
+        annot_gene_list(args.output_file + ".tmp3", args.output_file + ".tmp4", args.acmg_file, "Is_ACMG")
+
+    if args.clinvar_star234_file == "":
+        shutil.copy(args.output_file + ".tmp4", args.output_file + ".tmp5")
+    else:
+        annot_gene_list(args.output_file + ".tmp4", args.output_file + ".tmp5", args.clinvar_star234_file, "Is_ClinVar_Star234")
+
+    if args.pancan_file == "":
+        shutil.copy(args.output_file + ".tmp5", args.output_file + ".tmp6")
+    else:
+        annot_gene_list(args.output_file + ".tmp5", args.output_file + ".tmp6", args.pancan_file, "Is_PancanAtlas")
+
+    if args.dosage_sensitivity_file == "":
+        shutil.copy(args.output_file + ".tmp6", args.output_file + ".tmp7")
+    else:
+        annot_gene_list(args.output_file + ".tmp6", args.output_file + ".tmp7", args.dosage_sensitivity_file, "Is_dosage_sensitivity")
+
+    if args.cgd_file == "":
+        shutil.copy(args.output_file + ".tmp7", args.output_file)
+    else:
+        annot_cgd(args.output_file + ".tmp7", args.output_file, args.cgd_file)
+
+    if not args.debug:
+        os.remove(args.output_file+".tmp1")
+        os.remove(args.output_file+".tmp2")
+        os.remove(args.output_file+".tmp3")
+        os.remove(args.output_file+".tmp4")
+        os.remove(args.output_file+".tmp5")
+        os.remove(args.output_file+".tmp6")
+        os.remove(args.output_file+".tmp7")
+
+def filt_main(args):
+    from .juncmut_filt import juncmut_filt
+
+    juncmut_filt(args.input_file, args.output_file)
+
+def sjclass_main(args):
+    from .sjclass_transcript import sjclass_transcript
+    from .sjclass_classify import sjclass_classify
+    from .sjclass_frame import sjclass_frame
+
+    sjclass_transcript(args.input_file, args.output_file + ".transcript.txt", args.gencode, args.mane)
+    sjclass_classify(args.output_file + ".transcript.txt", args.output_file + ".classify.txt", args.bam, args.sj, args.depth_th)
+    sjclass_frame(args.output_file + ".classify.txt", args.output_file, args.reference)
+    
+    if not args.debug:
+        os.remove(args.output_file +".transcript.txt")
+        os.remove(args.output_file +".classify.txt")
 
 def validate_main(args):
     from .utils import check_reference

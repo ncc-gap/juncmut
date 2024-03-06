@@ -9,7 +9,7 @@ def juncmut_freq(input_file, output_file, original_sj_file, read_num_thres, freq
         csvreader = csv.DictReader(hin, delimiter='\t')
         for csvobj in csvreader:
             sj_key = csvobj["SJ_key"]
-            splicing_type = "%s,%s" % (csvobj["Created_motif"], csvobj["SJ_strand"])
+            splicing_type = csvobj["Created_motif"] + csvobj["SJ_strand"]
             if not sj_key in junc_obj:
                 junc_obj[sj_key] = {
                     "SJ_read_count_total": 0
@@ -59,17 +59,15 @@ def juncmut_freq(input_file, output_file, original_sj_file, read_num_thres, freq
             sj_read_count = junc_obj[sj_key]["SJ_read_count_total"]
 
             for key in sorted(list(junc_obj[sj_key].keys())):
-                if key == 'SJ_read_count_total': continue
+                if key == 'SJ_read_count_total':
+                    continue
                 splicing_type = key
-
-                (created_motif, sj_strand) = splicing_type.split(",")
-
                 start_ls = sorted(list(set(junc_obj[sj_key][splicing_type]["Start_ori"]+[sj_key_start])))
                 end_ls = sorted(list(set(junc_obj[sj_key][splicing_type]["End_ori"]+[sj_key_end])))
 
                 depth = 0
                 # strand=+ 5'SS end-side or strand=- 3'SS end-side
-                if splicing_type == "Donor,+" or splicing_type == "Acceptor,-":
+                if splicing_type == "Donor+" or splicing_type == "Acceptor-":
                     for pos in end_ls:
                         depth += original_sj_ends.get("%s_%s" % (sj_key_chr, pos), 0)
                 # strand=- 5'SS start-side or strand=+ 3'SS start-side
@@ -81,8 +79,8 @@ def juncmut_freq(input_file, output_file, original_sj_file, read_num_thres, freq
                 if sj_read_count >= read_num_thres and freq >= freq_thres:
                     out_csvobj = {
                         "SJ_key": sj_key,
-                        "Created_motif": created_motif,
-                        "SJ_strand": sj_strand,
+                        "Created_motif": splicing_type[0:-1],
+                        "SJ_strand": splicing_type[-1],
                         "SJ_read_count": sj_read_count,
                         "SJ_depth": depth,
                         "SJ_freq": freq,

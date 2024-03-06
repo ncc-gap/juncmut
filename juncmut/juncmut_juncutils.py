@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-def juncmut_juncutils(input_file, output_file, cont_list, genome_id, read_num_thres):
+def juncmut_juncutils(input_file, output_file, control_list, genome_id, read_num_thres):
     import subprocess
     import shutil
     import os
@@ -20,14 +20,14 @@ def juncmut_juncutils(input_file, output_file, cont_list, genome_id, read_num_th
     tmpfile_list.append(tmpfile1)
 
     tmpfile2 = output_file + ".tmp2"
-    if not cont_list:
+    if not control_list:
         proc_star_junction(tmpfile1, tmpfile2, None, read_num_thres, 10, False, False)
         tmpfile_list.append(tmpfile2)
     else:
         cur_infile = tmpfile1
-        for n,cont in enumerate(cont_list):
+        for n,control in enumerate(control_list):
             cur_outfile = "%s_%d" % (tmpfile2, n)
-            proc_star_junction(cur_infile, cur_outfile, cont, read_num_thres, 10, False, False)
+            proc_star_junction(cur_infile, cur_outfile, control, read_num_thres, 10, False, False)
             tmpfile_list.append(cur_outfile)
             cur_infile = cur_outfile
 
@@ -44,6 +44,6 @@ if __name__== "__main__":
     import sys
     input_file = sys.argv[1]
     output_file = sys.argv[2]
-    cont_list = sys.argv[3].split(",")
+    control_list = sys.argv[3].split(",")
     
-    juncmut_juncutils(input_file, output_file, cont_list, "hg38", 1)
+    juncmut_juncutils(input_file, output_file, control_list, "hg38", 1)
