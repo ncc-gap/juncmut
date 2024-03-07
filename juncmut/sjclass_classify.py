@@ -5,7 +5,6 @@ Created on Wed Feb 10 09:01:08 2021
 
 @author: Naoko Iida
 """
-import pandas as pd
 import subprocess
 import pysam
 import csv
@@ -94,12 +93,23 @@ def sjclass_classify(input_file, output_file, bam, sj, depth_th):
                 if juncmut_predicted_splicing_type == "NA":
                     # depth
                     region = "%s:%d-%d" % (juncmut_primary_sj_chr, gencode_exon_ends[closed_exon_num] + 1, juncmut_primary_ss - 1)
-                    mpileup_commands = ["samtools", "depth", "-a", "-r", region, bam, "-o", output_file + ".depth.txt"]
-                    subprocess.run(mpileup_commands)
-                    df = pd.read_csv(output_file + ".depth.txt", sep="\t", header=None)
-                    df_a = df[df.iloc[:,2] >= depth_th]
-                    a = set(df_a.iloc[:,1].tolist())
-                    c = set(range(gencode_exon_ends[closed_exon_num] + 1, juncmut_primary_ss, 1))
+                    with open(output_file + ".depth.txt", 'w') as hout_depth:
+                        subprocess.run(["samtools", "depth", "-a", "-r", region, bam], stdout = hout_depth)
+
+                    #df = pd.read_csv(output_file + ".depth.txt", sep="\t", header=None)
+                    #df_a = df[df.iloc[:,2] >= depth_th]
+                    #a = set(df_a.iloc[:,1].tolist())
+                    a = []
+                    with open(output_file + ".depth.txt") as hin_depth:
+                        for row in hin_depth:
+                            F = row.rstrip("\n").split("\t")
+                            if len(F) < 3:
+                                continue
+                            depth_pos = int(F[1])
+                            depth_value = int(F[2])
+                            if depth_value >= depth_th:
+                                a.append(depth_pos)
+                    c = range(gencode_exon_ends[closed_exon_num] + 1, juncmut_primary_ss, 1)
                     # lengthen exon
                     if set(c) <= set(a):
                         juncmut_predicted_splicing_type = "Lengthening_exon"
@@ -147,12 +157,23 @@ def sjclass_classify(input_file, output_file, bam, sj, depth_th):
                 # depth
                 if juncmut_predicted_splicing_type == "NA":
                     region = "%s:%d-%d" % (juncmut_primary_sj_chr, juncmut_primary_ss + 1, gencode_exon_starts[closed_exon_num])
-                    mpileup_commands = ["samtools", "depth", "-a", "-r", region, bam, "-o", output_file + ".depth.txt"]
-                    subprocess.run(mpileup_commands)
-                    df = pd.read_csv(output_file + ".depth.txt", sep="\t", header=None)
-                    df_a = df[df.iloc[:,2] >= depth_th]
-                    a = set(df_a.iloc[:,1].tolist())
-                    c = set(range(juncmut_primary_ss + 1, gencode_exon_starts[closed_exon_num] + 1, 1))
+                    with open(output_file + ".depth.txt", 'w') as hout_depth:
+                        subprocess.run(["samtools", "depth", "-a", "-r", region, bam], stdout = hout_depth)
+
+                    #df = pd.read_csv(output_file + ".depth.txt", sep="\t", header=None)
+                    #df_a = df[df.iloc[:,2] >= depth_th]
+                    #a = set(df_a.iloc[:,1].tolist())
+                    a = []
+                    with open(output_file + ".depth.txt") as hin_depth:
+                        for row in hin_depth:
+                            F = row.rstrip("\n").split("\t")
+                            if len(F) < 3:
+                                continue
+                            depth_pos = int(F[1])
+                            depth_value = int(F[2])
+                            if depth_value >= depth_th:
+                                a.append(depth_pos)
+                    c = range(juncmut_primary_ss + 1, gencode_exon_starts[closed_exon_num] + 1, 1)
                     # lengthen exon
                     if set(c) <= set(a):
                         juncmut_predicted_splicing_type = "Lengthening_exon"

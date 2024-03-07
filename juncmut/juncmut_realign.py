@@ -156,12 +156,10 @@ def juncmut_realign(input_file, output_file, bam_file, reference, genome_id, is_
     # for each mutation in SJ.
     with open(input_file, 'r') as hin, open(output_file, 'w') as hout:
         csvreader = csv.DictReader(hin, delimiter='\t')
-        output_header = [
-            "Mut_key", "SJ_key", "Sample", "Created_motif", "SJ_strand", "SJ_read_count", "SJ_depth", "SJ_freq", "Ref_motif", "Possive_alt_motif", "Possive_alt_key", "Is_GT_AG",
-            "Is_in_exon", "SJ_overlap_count", "Pileup_mut_count", "Pileup_depth", "Support_read_rmdup",
-            "Realign_no_SJ_neg", "Realign_no_SJ_pos", "Realign_target_SJ_neg", "Reaglin_target_SJ_pos", "Realign_normal_SJ_neg", "Realign_normal_SJ_pos"
+        output_header = ["Mut_key"] + csvreader.fieldnames + [
+            "Sample", "Is_in_exon", "Realign_no_SJ_neg", "Realign_no_SJ_pos", "Realign_target_SJ_neg", "Reaglin_target_SJ_pos", "Realign_normal_SJ_neg", "Realign_normal_SJ_pos"
         ]
-        csvwriter = csv.DictWriter(hout, delimiter='\t', lineterminator='\n', fieldnames=output_header)
+        csvwriter = csv.DictWriter(hout, delimiter='\t', lineterminator='\n', fieldnames = output_header)
         csvwriter.writeheader()
 
         for csvobj in csvreader:
