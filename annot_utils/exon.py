@@ -4,14 +4,14 @@ from __future__ import print_function
 import gzip, subprocess 
 from . import chr_name, utils
 
-def make_exon_info(output_file, gene_model, genome_id, is_grc, add_ref_id):
+def make_exon_info(output_file, gene_model, genome_id, is_grc, add_ref_id, ucsc_gene_file):
 
     # create UCSC to GRC chr name corresponding table
     ucsc2grc = {} 
     if is_grc:
         ucsc2grc = chr_name.make_ucsc2grc(genome_id)
 
-    ucsc_gene_file = utils.set_ucsc_gene_file(genome_id, gene_model)
+    #ucsc_gene_file = utils.set_ucsc_gene_file(genome_id, gene_model)
 
     hout = open(output_file + ".unsorted.tmp", 'w')
     with gzip.open(ucsc_gene_file, 'rt') as hin:

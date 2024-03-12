@@ -18,8 +18,10 @@ def get_main(args):
         args.input_file, 
         args.output_file+".fil.juncutils.txt", 
         args.control_file, 
-        genome_id, 
-        1
+        args.genecode_gene_file, 
+        genome_id,
+        is_grc,
+        1, 3, 30
     )
 
     juncmut_assadj(
