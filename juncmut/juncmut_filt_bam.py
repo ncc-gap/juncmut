@@ -6,7 +6,7 @@ import os
 import subprocess
 import gzip
 
-def define_longest_transcript(splice_type, mut_key_chr, normal_pos, ref_file):
+def define_longest_transcript(splice_type, mut_key_chr, normal_pos):
     gene2tx_info = {}
     with gzip.open(ref_file, 'rt') as hin:
         for record in hin:
@@ -20,11 +20,11 @@ def define_longest_transcript(splice_type, mut_key_chr, normal_pos, ref_file):
             ref_gene = R[12]
             if splice_type == "Donor+" or splice_type == "Acceptor-":
                 exonStarts = R[9].split(',')
-                if normal_pos in exonStarts:
+                if str(normal_pos) in exonStarts:
                     gene2tx_info[ref_tx_id] = mut_key_chr, ref_tx_start, ref_tx_end, ref_gene
             elif splice_type == "Donor-" or splice_type == "Acceptor+":
                 exonEnds = R[10].split(',')
-                if normal_pos in exonEnds:
+                if str(normal_pos) in exonEnds:
                     gene2tx_info[ref_tx_id] = mut_key_chr, ref_tx_start, ref_tx_end, ref_gene
 
     gene2chr = {}
@@ -51,41 +51,29 @@ def define_longest_transcript(splice_type, mut_key_chr, normal_pos, ref_file):
             gene2end[gene] = tx_end
     
     region_list = []
-    genes_list = []
-    genes = '---'
     for gene in gene2chr:
         region_list.append("%s:%s-%s" % (gene2chr[gene], gene2start[gene], gene2end[gene]))
-        genes_list.append(gene)
-        genes = ','.join(genes_list)
         
-    return(genes, region_list)
+    return region_list
 
-def juncmut_filt_bam_main(input_file, output_file, input_bam, output_bam, genecode_gene_file):
+def juncmut_filt_bam(input_file, input_bam, output_bam):
 
     ex_region_list =[]
-    # open a file and make a trnscript list for RNA_Mut True.
-    with open(input_file) as hin, open(output_file, 'w') as hout:
+    with open(input_file) as hin:
         csvreader = csv.DictReader(hin, delimiter='\t')
-        csvwriter = csv.DictWriter(hout, delimiter='\t', lineterminator='\n', fieldnames=csvreader.fieldnames + ["Gene"])
-        csvwriter.writeheader()
         for csvobj in csvreader:
-            mut_key_chr = csvobj["Mut_key"].split(',')[0]
-            sj_pos = csvobj["SJ_key"].split(':')[1].split('-')
-            sj_start = int(sj_pos[0])
-            sj_end = int(sj_pos[1])
+            mutkey_chr = csvobj["Mut_key"].split(',')[0]
+            sjkey_pos = csvobj["SJ_key"].split(':')[1].split('-')
+            sjkey_start = int(sj_pos[0])
+            sjkey_end = int(sj_pos[1])
 
             splice_type = csvobj["Created_motif"] + csvobj["SJ_strand"]
             if splice_type == "Donor+" or splice_type == "Acceptor-": 
-                normal_pos = sj_end
+                normal_pos = sjkey_end
             elif splice_type == "Donor-" or splice_type == "Acceptor+":
-                normal_pos = sj_start - 1
+                normal_pos = sjkey_start - 1
 
-            genes, region_list = define_longest_transcript(splice_type, mut_key_chr, str(normal_pos), genecode_gene_file)
-
-            csvobj["Gene"] = genes
-            csvwriter.writerow(csvobj)
-
-            ex_region_list.extend(region_list)
+            ex_region_list.extend(define_longest_transcript(splice_type, mutkey_chr, normal_pos))
 
     if ex_region_list: 
         # initialize the file
@@ -128,10 +116,7 @@ def juncmut_filt_bam_main(input_file, output_file, input_bam, output_bam, geneco
 if __name__ == "__main__":
     import sys
     input_file = sys.argv[1]
-    output_file = sys.argv[2]
-    input_bam = sys.argv[3]
-    output_bam = sys.argv[4]
-    gencode_gene_file = sys.argv[5]
+    input_bam = sys.argv[2]
+    output_bam = sys.argv[3]
 
-    juncmut_filt_bam_main(input_file, output_file, input_bam, output_bam, gencode_gene_file)
-    
+    juncmut_filt_bam(input_file, input_bam, output_bam)
