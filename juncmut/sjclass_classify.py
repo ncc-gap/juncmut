@@ -22,7 +22,17 @@ SJ_HEADER = [
   'maximum_spliced_alignment',
 ]
 
-def sjclass_classify(input_file, output_file, bam, sj, depth_th):
+def sjclass_classify(input_file, output_file, bam_file, sj_file, depth_th):
+
+    with open(output_file + ".SJ.out.bed", 'w') as hout_bed:
+        subprocess.check_call(["sort", "-k1,1", "-k2,2n", "-k3,3n", sj_file], stdout = hout_bed)
+    with open(output_file + ".SJ.out.bed.gz", 'wb') as hout_bedgz:
+        subprocess.check_call(["bgzip", "-f", "-c", output_file + ".SJ.out.bed"], stdout = hout_bedgz)
+
+    subprocess.check_call(["tabix", "-p", "bed", output_file + ".SJ.out.bed.gz"])
+    subprocess.check_call(["rm", "-rf", output_file + ".SJ.out.bed"])
+
+    sj_tb = pysam.TabixFile(output_file + ".SJ.out.bed.gz")
     with open(input_file, 'r') as hin, open(output_file, 'w') as hout:
         csvreader = csv.DictReader(hin, delimiter='\t')
 
@@ -39,10 +49,10 @@ def sjclass_classify(input_file, output_file, bam, sj, depth_th):
             juncmut_secondary_sj = "NA"
             num_skipped_exon = "NA"
             closed_exon_num = "NA"
-
+            print(csvobj["SJ_key"])
             (juncmut_primary_sj_chr, juncmut_primary_sj_pos) = csvobj["SJ_key"].split(":")
             (juncmut_primary_sj_start, juncmut_primary_sj_end) = list(map(int, juncmut_primary_sj_pos.split('-')))
-            splice_type = csvobj["SJ_type"] + csvobj["SJ_strand"]
+            splice_type = csvobj["Created_motif"] + csvobj["SJ_strand"]
             Juncmut_hijacked_ss = int(csvobj["Juncmut_hijacked_SS"])
             juncmut_primary_ss = int(csvobj["Juncmut_primary_SS"])
             juncmut_matching_ss = int(csvobj["Juncmut_matching_SS"])
@@ -51,7 +61,6 @@ def sjclass_classify(input_file, output_file, bam, sj, depth_th):
             gencode_exon_ends = list(map(int, csvobj["Gencode_exon_ends"].rstrip(',').split(',')))
             (hijacked_exon_num, gencode_exon_count) = list(map(int, csvobj["Juncmut_hijacked_exon_num"].replace(',','').split('/')))
 
-            sj_tb = pysam.TabixFile(sj)
             # o--->
             if splice_type in ["Donor+", "Acceptor-"]:
                 if juncmut_primary_ss - 1 in gencode_exon_ends:
@@ -94,7 +103,7 @@ def sjclass_classify(input_file, output_file, bam, sj, depth_th):
                     # depth
                     region = "%s:%d-%d" % (juncmut_primary_sj_chr, gencode_exon_ends[closed_exon_num] + 1, juncmut_primary_ss - 1)
                     with open(output_file + ".depth.txt", 'w') as hout_depth:
-                        subprocess.run(["samtools", "depth", "-a", "-r", region, bam], stdout = hout_depth)
+                        subprocess.run(["samtools", "depth", "-a", "-r", region, bam_file], stdout = hout_depth)
 
                     #df = pd.read_csv(output_file + ".depth.txt", sep="\t", header=None)
                     #df_a = df[df.iloc[:,2] >= depth_th]
@@ -158,7 +167,7 @@ def sjclass_classify(input_file, output_file, bam, sj, depth_th):
                 if juncmut_predicted_splicing_type == "NA":
                     region = "%s:%d-%d" % (juncmut_primary_sj_chr, juncmut_primary_ss + 1, gencode_exon_starts[closed_exon_num])
                     with open(output_file + ".depth.txt", 'w') as hout_depth:
-                        subprocess.run(["samtools", "depth", "-a", "-r", region, bam], stdout = hout_depth)
+                        subprocess.run(["samtools", "depth", "-a", "-r", region, bam_file], stdout = hout_depth)
 
                     #df = pd.read_csv(output_file + ".depth.txt", sep="\t", header=None)
                     #df_a = df[df.iloc[:,2] >= depth_th]
@@ -182,7 +191,7 @@ def sjclass_classify(input_file, output_file, bam, sj, depth_th):
 
                     os.remove(output_file +".depth.txt")
             
-            sj_tb.close()
+
 
             # SJ
             if splice_type in ["Donor+", "Acceptor-"]:
@@ -207,11 +216,15 @@ def sjclass_classify(input_file, output_file, bam, sj, depth_th):
 
             csvwriter.writerow(csvobj)
 
+    sj_tb.close()
+    subprocess.check_call(["rm", "-rf", output_file + ".SJ.out.bed.gz"])
+    subprocess.check_call(["rm", "-rf", output_file + ".SJ.out.bed.gz.tbi"])
+
 if __name__ == "__main__":
     import sys
     input_file = sys.argv[1]
     output_file = sys.argv[2]
-    bam = sys.argv[3]
-    sj = sys.argv[4]
+    bam_file = sys.argv[3]
+    sj_file = sys.argv[4]
 
-    sjclass_classify(input_file, output_file, bam, sj, 1)
+    sjclass_classify(input_file, output_file, bam_file, sj_file, 1)

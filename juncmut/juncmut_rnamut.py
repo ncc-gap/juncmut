@@ -1,12 +1,16 @@
 #! /usr/bin/env python
 
-# [TODO] switch this function
-"""
-Q = 0
+import subprocess
+import csv
+import os
+import pysam
+import re
+
+
 def tidy_bases(bases, qualities):
     output_bases = ""
     output_qualities = ""
-
+    Q = 0
     while bases != '':
         if bases[0] in ['>', '<', '*']: 
             bases = bases[1:]
@@ -28,109 +32,44 @@ def tidy_bases(bases, qualities):
                 bases = bases[len(str(indel_size)) + indel_size + 1:]
 
     if len(output_bases) != len(output_qualities):
-        print("Error???")
-        sys.exit(1)
+        raise Exception("juncmut_rnamut.py: Unexpected data format")
 
     return output_bases
-"""
-# -------------------------------------------
-# juncmut_rnamut's function
-# -------------------------------------------
-def tidy_bases(bases, qualities):  #remove indel and edeage
 
-    import re
-
-    proc1 = ""
-    proc2 = ""
-
-    # $ means the last position of read.  ^ is the start position of read.
-    while len(bases) > 0:
-        match = re.search(r'[$\^]', bases)
-        
-        if match is None:
-            proc1 = proc1 + bases
-            bases = ""
-            proc2 = proc2 + qualities
-            qualities = ""
-        elif match.group() == "^":
-            pos = match.start()
-            proc1 = proc1 + bases[0:pos]
-            bases = bases[(pos + 2):len(bases)]
-            proc2 = proc2 + qualities[0:pos]
-            qualities = qualities[(pos + 1): len(qualities)] 
-        #match == "$"
-        else:
-            pos = match.start()
-            proc1 = proc1 + bases[0:pos]
-            bases = bases[(pos + 1):len(bases)]
-            proc2 = proc2 + qualities[0:pos]
-            qualities = qualities[(pos + 1): len(qualities)] 
-            
-    #remove indel. +/- +[0-9]+[atgcnATGCN*#]
-    bases = proc1
-    proc1 = ""
-    qualities = proc2
-    proc2 = ""
-    while len(bases)>0:
-        match = re.search(r'[\+\-\*]', bases)
-        if match is None:
-            proc1 = proc1 + bases
-            bases = ""
-            proc2 = proc2 + qualities
-            qualities = ""
-        elif match.group() == "*":
-            pos = match.start()
-            proc1 = proc1 + bases[0:pos]
-            bases = bases[pos+1: len(bases)]
-            proc2 = proc2 + qualities[0:pos]
-            qualities = qualities[(pos + 1): len(qualities)]
-        else:
-            pos = match.start()
-            if match.group() == "+":
-                indel_length = re.search(r'\+\d+', bases).group().replace('+','')
-            if match.group() == "-":
-                indel_length = re.search(r'\-\d+', bases).group().replace('-','')     
-            skip_num = len(str(indel_length))+int(indel_length)+1
-            
-            proc1 = proc1 + bases[0:pos]
-            bases = bases[pos+int(skip_num): len(bases)]
-            proc2 = proc2 + qualities[0:pos]
-            qualities = qualities[(pos + 1): len(qualities)]
-    #remove skip-base position in a read.
-    bases = proc1
-    proc1 = ""
-    qualities = proc2
-    proc2 = ""
-    while len(bases) > 0:
-        match = re.search(r'[<>]', bases)
-        if match is None:
-            proc1 = proc1 + bases
-            bases = ""
-            proc2 = proc2 + qualities
-            qualities = ""
-        else:
-            pos = match.start()
-            proc1 = proc1 + bases[0:pos]
-            bases = bases[(pos + 1):len(bases)]
-            proc2 = proc2 + qualities[0:pos]
-            qualities = qualities[(pos + 1): len(qualities)]
-    #del low quality base
-    bases = proc1
-    proc1 = ""
-    qualities = proc2
-    proc2 = ""
+def tidy_read_ids(bases, qualities, read_ids, mut):
+    output_bases = ""
+    output_qualities = ""
+    read_id_list = read_ids.split(',')
+    output_read_id_list = []
     Q = 15
-    for i in range(0, len(qualities)):
-        #print(str(qualities[i])+"\t"+str(ord(qualities[i])-33))
-        if (ord(qualities[i])-33) > Q:
-            proc1 = proc1 + bases[i]
-            proc2 = proc2 + qualities[i]
+    while bases != '':
+        if bases[0] in ['>', '<', '*']: 
+            bases = bases[1:]
+            qualities = qualities[1:]
+        elif bases[0] in '^':
+            bases = bases[2:]
+        elif bases[0] in '$':
+            bases = bases[1:]
+        elif bases[0] in ['.', ',', 'A', 'C', 'G', 'T', 'N', 'a', 'c', 'g', 't', 'n']:
+            if (ord(qualities[0])-33) > Q and bases[0].upper() == mut:
+                output_bases += bases[0]
+                output_qualities += qualities[0]
+                output_read_id_list.append(read_id_list[0])
 
-    return proc1
+            bases = bases[1:]
+            qualities = qualities[1:]
+            read_id_list = read_id_list[1:]
+            if len(bases) > 0 and bases[0] in ['+', '-']:
+                match = re.search(r'^[\+\-](\d+)', bases)
+                indel_size = int(match.group(1))
+                bases = bases[len(str(indel_size)) + indel_size + 1:]
 
-# -------------------------------------------
-# juncmut_supportread_count's function
-# -------------------------------------------
+    if len(output_bases) != len(output_qualities):
+        raise Exception("juncmut_rnamut.py: Unexpected data format1")
+    if len(output_qualities) != len(output_read_id_list):
+        raise Exception("juncmut_rnamut.py: Unexpected data format2")
+    return output_read_id_list
+
 def check_read(read):
     check_flag = True 
 
@@ -151,51 +90,7 @@ def check_read(read):
 
     return check_flag
 
-# [TODO] use common module
-def tidy_reads(seq, qualities, read_ids, mut):
-    import re
-    read_id_list = read_ids.split(',')
-    proc = ""
-    Q = 15
-    pos_read_id_list = []
-    seq_length = len(seq)
-    baseIndex = 0
-    # modify seq to 1 base presented by a char.
-    while baseIndex < seq_length:
-        #A ’>’ or ’<’ for a reference skip.
-        # The deleted bases will be presented as ‘*’ in the following lines. 
-        if seq[baseIndex] == '>' or seq[baseIndex] == '<' or seq[baseIndex] == '*' :
-           proc = proc + seq[baseIndex]
-           baseIndex += 1  
-        #A '^' the end or start of read, following the quality and the base.
-        elif seq[baseIndex] == '^':
-            proc = proc + seq[baseIndex+2]
-            baseIndex += 3
-        #A '$' is the last position of read. 
-        elif seq[baseIndex] == '$':
-            baseIndex += 1
-        #\+[0-9]+[bases] or -[0-9]+[bases] means the deletion and the insertion. For example, +2AG means insertion of AG in the forward strand
-        elif seq[baseIndex] == '+' or seq[baseIndex] == '-':
-            indel_length = re.search(r'\d+', seq[baseIndex:]).group()
-            baseIndex += len(str(indel_length))+int(indel_length)+1 
-        else:
-            proc = proc + seq[baseIndex]
-            baseIndex += 1
-            
-    # quality and base check. extract id.
-    for i in range(0, len(proc),1):
-        if proc[i].upper() == mut:
-            if (ord(qualities[i])-33) > Q:
-                pos_read_id_list.append(read_id_list[i])
-                
-    return pos_read_id_list
-
 def juncmut_rnamut(input_file, output_file, input_bam_file, reference, mut_num_thres, mut_freq_thres):
-    import subprocess
-    import csv
-    import os
-    import pysam
-
     # separate records for each variant and create position list. If no candidates, create zero size file.
     input_header = []
     mut_key_list = []
@@ -242,8 +137,9 @@ def juncmut_rnamut(input_file, output_file, input_bam_file, reference, mut_num_t
                 if not mut_key in mut_key_list:
                     continue
 
-                # ↓juncmut_supportread_count
-                reads_with_mut_list = tidy_reads(mpileup_bases, mpileup_quality, mpileup_read_ids, mut_alt)
+                # juncmut_supportread_count
+                reads_with_mut_list = tidy_read_ids(mpileup_bases, mpileup_quality, mpileup_read_ids, mut_alt)
+
                 pos_read_list = []
                 for read in bam_file.fetch(region = "%s:%s-%s" % (mpileup_chr, mpileup_pos, mpileup_pos)):
                     if not check_read(read):
@@ -256,7 +152,7 @@ def juncmut_rnamut(input_file, output_file, input_bam_file, reference, mut_num_t
 
     with open(input_file) as hin, open(output_file, 'w') as hout:
         csvreader = csv.DictReader(hin, delimiter='\t')
-        csvwriter = csv.DictWriter(hout, delimiter='\t', lineterminator='\n', fieldnames=csvreader.fieldnames + ["Mut_key", "Pileup_mut_count", "Pileup_depth", "Support_read_rmdup"])
+        csvwriter = csv.DictWriter(hout, delimiter='\t', lineterminator='\n', fieldnames=["Mut_key"] + csvreader.fieldnames + ["Pileup_mut_count", "Pileup_depth", "Support_read_rmdup"])
         csvwriter.writeheader()
 
         for csvobj in csvreader:
@@ -270,10 +166,9 @@ def juncmut_rnamut(input_file, output_file, input_bam_file, reference, mut_num_t
                     if not mut_key in data_mpileup:
                         continue
 
-                    # [TODO] remove this code, fix to 0
                     base = data_mpileup[mut_key]["base"]
                     if base == "":
-                        base = "-"
+                        continue
 
                     pileup_depth = len(base)
                     pileup_mut_count = data_mpileup[mut_key]["reads"]

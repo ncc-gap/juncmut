@@ -6,7 +6,7 @@ import os
 import subprocess
 import gzip
 
-def define_longest_transcript(splice_type, mut_key_chr, normal_pos):
+def define_longest_transcript(splice_type, mut_key_chr, normal_pos, ref_file):
     gene2tx_info = {}
     with gzip.open(ref_file, 'rt') as hin:
         for record in hin:
@@ -49,14 +49,14 @@ def define_longest_transcript(splice_type, mut_key_chr, normal_pos):
                 gene2end[gene] = tx_end
         else:
             gene2end[gene] = tx_end
-    
+
     region_list = []
     for gene in gene2chr:
         region_list.append("%s:%s-%s" % (gene2chr[gene], gene2start[gene], gene2end[gene]))
-        
+
     return region_list
 
-def juncmut_filt_bam(input_file, input_bam, output_bam):
+def juncmut_filt_bam(input_file, input_bam, output_bam, genecode_gene_file):
 
     ex_region_list =[]
     with open(input_file) as hin:
@@ -64,8 +64,8 @@ def juncmut_filt_bam(input_file, input_bam, output_bam):
         for csvobj in csvreader:
             mutkey_chr = csvobj["Mut_key"].split(',')[0]
             sjkey_pos = csvobj["SJ_key"].split(':')[1].split('-')
-            sjkey_start = int(sj_pos[0])
-            sjkey_end = int(sj_pos[1])
+            sjkey_start = int(sjkey_pos[0])
+            sjkey_end = int(sjkey_pos[1])
 
             splice_type = csvobj["Created_motif"] + csvobj["SJ_strand"]
             if splice_type == "Donor+" or splice_type == "Acceptor-": 
@@ -73,7 +73,10 @@ def juncmut_filt_bam(input_file, input_bam, output_bam):
             elif splice_type == "Donor-" or splice_type == "Acceptor+":
                 normal_pos = sjkey_start - 1
 
-            ex_region_list.extend(define_longest_transcript(splice_type, mutkey_chr, normal_pos))
+            ex_region_list.extend(define_longest_transcript(splice_type, mutkey_chr, normal_pos, genecode_gene_file))
+
+    with open(output_bam + ".tmp.ex_region_list.txt", "w") as h_out_tmp:
+        h_out_tmp.write("\n".join(ex_region_list))
 
     if ex_region_list: 
         # initialize the file
@@ -118,5 +121,6 @@ if __name__ == "__main__":
     input_file = sys.argv[1]
     input_bam = sys.argv[2]
     output_bam = sys.argv[3]
+    genecode_gene_file = sys.argv[4]
 
-    juncmut_filt_bam(input_file, input_bam, output_bam)
+    juncmut_filt_bam(input_file, input_bam, output_bam, genecode_gene_file)

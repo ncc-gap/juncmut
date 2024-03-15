@@ -18,7 +18,7 @@ def juncmut_mutpre(input_file, output_file, reference):
         csvreader = csv.DictReader(hin, delimiter='\t')
 
         csvwriter = csv.DictWriter(hout, delimiter='\t', lineterminator='\n', fieldnames=csvreader.fieldnames + [
-            "Ref_motif", "Possive_alt_motif", "Possive_alt_key", "Is_GT_AG"
+            "Ref_motif", "Possive_alt_motif", "Possive_alt_key", "Is_GTAG_creation"
         ])
         csvwriter.writeheader()
 
@@ -176,7 +176,7 @@ def juncmut_mutpre(input_file, output_file, reference):
             csvobj["Ref_motif"] = bases
             csvobj["Possive_alt_motif"] = ''.join(mlist)
             csvobj["Possive_alt_key"] = mposi_rec
-            csvobj["Is_GT_AG"] = allele
+            csvobj["Is_GTAG_creation"] = allele
             csvwriter.writerow(csvobj)
 
 if __name__== "__main__":

@@ -15,51 +15,53 @@ def get_main(args):
     genome_id, is_grc = check_reference(args.reference)
 
     juncmut_juncutils(
-        args.input_file, 
-        args.output_file+".fil.juncutils.txt", 
+        args.sj_file, 
+        args.output_file+".juncutils.txt", 
         args.control_file, 
         args.genecode_gene_file, 
         genome_id,
         is_grc,
-        1, 3, 30
+        1, 3, 30, args.debug
     )
 
     juncmut_assadj(
-        args.output_file+".fil.juncutils.txt",
-        args.output_file+".fil.juncutils.assadj.txt"
+        args.output_file+".juncutils.txt",
+        args.output_file+".juncutils.assadj.txt"
     )
 
     juncmut_freq(
-        args.output_file+".fil.juncutils.assadj.txt", 
-        args.output_file+".fil.juncutils.assadj.freq.txt",
-        args.input_file, args.read_num_thres, args.freq_thres
+        args.output_file+".juncutils.assadj.txt", 
+        args.output_file+".juncutils.assadj.freq.txt",
+        args.sj_file, 
+        args.genecode_gene_file,
+        args.read_num_thres, args.freq_thres
     )
 
     juncmut_mutpre(
-        args.output_file+".fil.juncutils.assadj.freq.txt",
-        args.output_file+".fil.juncutils.assadj.freq.mutpre.txt", 
+        args.output_file+".juncutils.assadj.freq.txt",
+        args.output_file+".juncutils.assadj.freq.mutpre.txt", 
         args.reference
     )
 
     juncmut_intersect(
-        args.output_file+".fil.juncutils.assadj.freq.mutpre.txt", 
-        args.output_file+".fil.juncutils.assadj.freq.mutpre.intersect.txt", 
-        args.input_file
+        args.output_file+".juncutils.assadj.freq.mutpre.txt", 
+        args.output_file+".juncutils.assadj.freq.mutpre.intersect.txt", 
+        args.sj_file
     )
 
     juncmut_rnamut(
-        args.output_file+".fil.juncutils.assadj.freq.mutpre.intersect.txt",
-        args.output_file+".fil.juncutils.assadj.freq.mutpre.intersect.rnamut.txt", 
-        args.rna_bam, 
+        args.output_file+".juncutils.assadj.freq.mutpre.intersect.txt",
+        args.output_file+".juncutils.assadj.freq.mutpre.intersect.rnamut.txt", 
+        args.bam_file, 
         args.reference,
         args.mut_num_thres, 
         args.mut_freq_thres, 
     )
 
     juncmut_realign(
-        args.output_file+".fil.juncutils.assadj.freq.mutpre.intersect.rnamut.txt",
+        args.output_file+".juncutils.assadj.freq.mutpre.intersect.rnamut.txt",
         args.output_file, 
-        args.rna_bam, 
+        args.bam_file, 
         args.reference, 
         genome_id, 
         is_grc, 
@@ -67,20 +69,19 @@ def get_main(args):
     )
 
     if not args.debug:
-        os.remove(args.output_file+".fil.juncutils.txt")
-        os.remove(args.output_file+".fil.juncutils.assadj.txt")
-        os.remove(args.output_file+".fil.juncutils.assadj.freq.txt")
-        os.remove(args.output_file+".fil.juncutils.assadj.freq.mutpre.txt")
-        os.remove(args.output_file+".fil.juncutils.assadj.freq.mutpre.intersect.txt")
-        os.remove(args.output_file+".fil.juncutils.assadj.freq.mutpre.intersect.rnamut.txt")
+        os.remove(args.output_file+".juncutils.txt")
+        os.remove(args.output_file+".juncutils.assadj.txt")
+        os.remove(args.output_file+".juncutils.assadj.freq.txt")
+        os.remove(args.output_file+".juncutils.assadj.freq.mutpre.txt")
+        os.remove(args.output_file+".juncutils.assadj.freq.mutpre.intersect.txt")
+        os.remove(args.output_file+".juncutils.assadj.freq.mutpre.intersect.rnamut.txt")
 
 def filt_bam_main(args):
     from .juncmut_filt_bam import juncmut_filt_bam
 
     juncmut_filt_bam_main(
         args.input_file, 
-        args.output_file, 
-        args.rna_bam, 
+        args.bam_file, 
         args.output_bam, 
     )
 
@@ -154,7 +155,7 @@ def sjclass_main(args):
     from .sjclass_frame import sjclass_frame
 
     sjclass_transcript(args.input_file, args.output_file + ".transcript.txt", args.gencode, args.mane)
-    sjclass_classify(args.output_file + ".transcript.txt", args.output_file + ".classify.txt", args.bam, args.sj, args.depth_th)
+    sjclass_classify(args.output_file + ".transcript.txt", args.output_file + ".classify.txt", args.bam_file, args.sj_file, args.depth_th)
     sjclass_frame(args.output_file + ".classify.txt", args.output_file, args.reference)
     
     if not args.debug:

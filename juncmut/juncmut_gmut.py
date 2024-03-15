@@ -107,7 +107,7 @@ def juncmut_gmut(input_file, output_file, dna_bam, reference, is_grc, mut_num_th
             P = mut_key.split(',')
             mut_pos = P[1]
            
-            if is_grc == 'True':
+            if is_grc:
                 chr = P[0].replace('chr', '')
             else:
                 chr_t = P[0].replace('chr', '')
@@ -234,39 +234,4 @@ def juncmut_gmut(input_file, output_file, dna_bam, reference, is_grc, mut_num_th
 
     
 if __name__== "__main__":
-    import argparse
-
-    parser = argparse.ArgumentParser() #make a parser
-
-    parser.add_argument("--input_file", metavar = "input_file", default = None, type = str,
-                            help = "input file")
-
-    parser.add_argument("--output_file", metavar = "output_file", default = None, type = str,
-                            help = "output file")
-
-    parser.add_argument("--dna_bam", metavar = "dna_bam", default = None, type = str,
-                            help = "genomic bam")
-
-    parser.add_argument("--reference", metavar = "reference", default = None, type = str,
-                            help = "/path/to/reference")
-    
-    parser.add_argument("--is_grc", metavar = "is_grc", default = "True", type = str,
-                            help = "True means no chr prefix in bam. False means chr prefix in bam")
-    
-    parser.add_argument("--mut_num_thres", type = int, default = 2,
-                        help = "A mutation with mutation alleles >= mut_num_thres is a true candidate (default: %(default)s)")
-    
-    parser.add_argument("--mut_freq_thres", type = float, default = 0.05,
-                        help = "A mutation with frequency >= mut_freq_thres is a true candidate (default: %(default)s)")
-
-    args = parser.parse_args()
-
-    input_file = args.input_file
-    output_file = args.output_file
-    dna_bam = args.dna_bam
-    reference = args.reference
-    is_grc = args.is_grc
-    mut_num_thres = args.mut_num_thres 
-    mut_freq_thres = args.mut_freq_thres
-
-    juncmut_gmut(input_file, output_file, dna_bam, reference, is_grc, mut_num_thres, mut_freq_thres)
+    pass

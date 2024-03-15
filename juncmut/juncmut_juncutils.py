@@ -4,7 +4,12 @@
 #! /usr/bin/env python
 
 import pysam 
-import sys, subprocess
+import sys
+import csv
+import subprocess
+import shutil
+import os
+import gzip
 
 # for python2 and 3 compatibility
 try:
@@ -14,7 +19,68 @@ except ImportError:
 
 import annot_utils.gene, annot_utils.exon, annot_utils.coding
 
-def juncutils_annotate(input_file, output_file, ucsc_gene_file, junction_margin, exon_margin, gene_model = "refseq", genome_id = "hg19", is_grc = True):
+def proc_star_junction(input_file, output_file, control_file, read_num_thres, overhang_thres, remove_annotated, convert_map_splice2):
+
+    is_control = True if control_file is not None else False
+    # if is_control: control_db = pysam.TabixFile(control_file)
+    
+    control_db = {}
+    if is_control:
+        with gzip.open(control_file, 'rt') as hin:
+            for line in hin:
+                F = line.rstrip('\n').split('\t')
+                key = F[0] + '\t' + F[1] + '\t' + F[2]
+                control_db[key] = 1
+
+
+    if read_num_thres is None: read_num_thres = 0
+    if overhang_thres is None: overhang_thres = 0
+    if remove_annotated is None: remove_annotated = False
+    
+    hout = open(output_file, 'w')
+    with open(input_file, 'r') as hin:
+        for line in hin:
+            F = line.rstrip('\n').split('\t')
+            key = F[0] + '\t' + F[1] + '\t' + F[2]
+            if remove_annotated == True and F[5] != "0": continue
+            if int(F[6]) < read_num_thres: continue
+            if int(F[8]) < overhang_thres: continue
+
+
+            if key in control_db: continue
+            """
+            ##########
+            # remove control files
+            if is_control:
+                tabixErrorFlag = 0
+                try:
+                    records = control_db.fetch(F[0], int(F[1]) - 5, int(F[1]) + 5)
+                except Exception as inst:
+                    # print >> sys.stderr, "%s: %s" % (type(inst), inst.args)
+                    # tabixErrorMsg = str(inst.args)
+                    tabixErrorFlag = 1
+
+                control_flag = 0;
+                if tabixErrorFlag == 0:
+                    for record_line in records:
+                        record = record_line.split('\t')
+                        if F[0] == record[0] and F[1] == record[1] and F[2] == record[2]:
+                            control_flag = 1
+
+                if control_flag == 1: continue
+            ##########
+            """
+
+            if convert_map_splice2:
+                # convert to map-splice2 coordinate
+                F[1] = str(int(F[1]) - 1)
+                F[2] = str(int(F[2]) + 1)
+
+            print('\t'.join(F), file = hout)
+
+    hout.close()
+
+def juncutils_annotate(input_file, output_file, ucsc_gene_file, junction_margin, exon_margin, gene_model = "gencode", genome_id = "hg38", is_grc = False, debug=False):
     """
         The purpose of this script is to classify splicing changes
         mainly by comparing the two breakpoints with the exon-intorn junction of genes
@@ -47,11 +113,10 @@ def juncutils_annotate(input_file, output_file, ucsc_gene_file, junction_margin,
         5. get the sequence arround the breakpoints.
 
     """
+    annot_utils.gene.make_gene_info(output_file + ".tmp.refGene.bed.gz", gene_model, genome_id, is_grc, True, ucsc_gene_file)
+    annot_utils.exon.make_exon_info(output_file + ".tmp.refExon.bed.gz", gene_model, genome_id, is_grc, True, ucsc_gene_file)
+    annot_utils.coding.make_coding_info(output_file + ".tmp.refCoding.bed.gz", gene_model, genome_id, is_grc, True, ucsc_gene_file)
 
-    annot_utils.gene.make_gene_info(output_file + ".tmp.refGene.bed.gz", ucsc_gene_file, gene_model, genome_id, is_grc, True)
-    annot_utils.exon.make_exon_info(output_file + ".tmp.refExon.bed.gz", ucsc_gene_file, gene_model, genome_id, is_grc, True)
-    annot_utils.coding.make_coding_info(output_file + ".tmp.refCoding.bed.gz", ucsc_gene_file, gene_model, genome_id, is_grc, True)
-  
     with open(output_file + ".tmp1.junc1.gene.bed", 'w') as hout_g1, open(output_file + ".tmp1.junc2.gene.bed", 'w') as hout_g2, \
       open(output_file + ".tmp1.junc1.exon.bed", 'w') as hout_e1, open(output_file + ".tmp1.junc2.exon.bed", 'w') as hout_e2:
         with open(input_file, 'r') as hin:
@@ -59,17 +124,11 @@ def juncutils_annotate(input_file, output_file, ucsc_gene_file, junction_margin,
                 F = line.rstrip('\n').split('\t')
                 chr_name, sj_start, sj_end = F[0], int(F[1]) - 1, int(F[2]) + 1
                 sj_id = ','.join([F[0], F[1], F[2]])
-
+                
                 print(f'{chr_name}\t{max(0, sj_start - 1)}\t{sj_start}\t{sj_id}', file = hout_g1)
                 print(f'{chr_name}\t{max(0, sj_end - 1)}\t{sj_end}\t{sj_id}', file = hout_g2)
                 print(f'{chr_name}\t{max(0, sj_start - exon_margin - 1)}\t{sj_start + exon_margin}\t{sj_id}', file = hout_e1)
                 print(f'{chr_name}\t{max(0, sj_end - exon_margin - 1)}\t{sj_end + exon_margin}\t{sj_id}', file = hout_e2) 
-                """
-                print(chr_name + '\t' + str(sj_start - 1) + '\t' + str(sj_start) + '\t' + sj_id, file = hout_g1)
-                print(chr_name + '\t' + str(sj_end - 1) + '\t' + str(sj_end) + '\t' + sj_id, file = hout_g2)
-                print(chr_name + '\t' + str(sj_start - exon_margin - 1) + '\t' + str(sj_start + exon_margin) + '\t' + sj_id, file = hout_e1)
-                print(chr_name + '\t' + str(sj_end - exon_margin - 1) + '\t' + str(sj_end + exon_margin) + '\t' + sj_id, file = hout_e2)
-                """
 
     with open(output_file + ".tmp2.junc1.gene.bed", 'w') as hout_g1:
         subprocess.check_call(["bedtools", "intersect", "-a", output_file + ".tmp1.junc1.gene.bed", "-b", output_file + ".tmp.refGene.bed.gz", "-loj"], stdout = hout_g1)
@@ -83,14 +142,15 @@ def juncutils_annotate(input_file, output_file, ucsc_gene_file, junction_margin,
     with open(output_file + ".tmp2.junc2.exon.bed", 'w') as hout_e2:
         subprocess.check_call(["bedtools", "intersect", "-a", output_file + ".tmp1.junc2.exon.bed", "-b", output_file + ".tmp.refExon.bed.gz", "-loj"], stdout = hout_e2)
 
-    subprocess.check_call(["rm", "-rf", output_file + ".tmp.refGene.bed.gz"])
-    subprocess.check_call(["rm", "-rf", output_file + ".tmp.refGene.bed.gz.tbi"])
-    subprocess.check_call(["rm", "-rf", output_file + ".tmp.refExon.bed.gz"])
-    subprocess.check_call(["rm", "-rf", output_file + ".tmp.refExon.bed.gz.tbi"])
-    subprocess.check_call(["rm", "-rf", output_file + ".tmp1.junc1.gene.bed"])
-    subprocess.check_call(["rm", "-rf", output_file + ".tmp1.junc2.gene.bed"])
-    subprocess.check_call(["rm", "-rf", output_file + ".tmp1.junc1.exon.bed"])
-    subprocess.check_call(["rm", "-rf", output_file + ".tmp1.junc2.exon.bed"])
+    if not debug:
+        subprocess.check_call(["rm", "-rf", output_file + ".tmp.refGene.bed.gz"])
+        subprocess.check_call(["rm", "-rf", output_file + ".tmp.refGene.bed.gz.tbi"])
+        subprocess.check_call(["rm", "-rf", output_file + ".tmp.refExon.bed.gz"])
+        subprocess.check_call(["rm", "-rf", output_file + ".tmp.refExon.bed.gz.tbi"])
+        subprocess.check_call(["rm", "-rf", output_file + ".tmp1.junc1.gene.bed"])
+        subprocess.check_call(["rm", "-rf", output_file + ".tmp1.junc2.gene.bed"])
+        subprocess.check_call(["rm", "-rf", output_file + ".tmp1.junc1.exon.bed"])
+        subprocess.check_call(["rm", "-rf", output_file + ".tmp1.junc2.exon.bed"])
 
        
     with open(output_file + ".tmp2.junc1.gene.bed", 'r') as hin, open(output_file + ".tmp3.junc1.gene.bed", 'w') as hout:
@@ -187,10 +247,11 @@ def juncutils_annotate(input_file, output_file, ucsc_gene_file, junction_margin,
                 sys.exit(1)
             print('\t'.join([tmp_id, ','.join(tmp_gene), ','.join(tmp_exon_num), ','.join(tmp_edge), ','.join(tmp_offset)]), file = hout)
 
-    subprocess.check_call(["rm", "-rf", output_file + ".tmp2.junc1.gene.bed"])
-    subprocess.check_call(["rm", "-rf", output_file + ".tmp2.junc2.gene.bed"])
-    subprocess.check_call(["rm", "-rf", output_file + ".tmp2.junc1.exon.bed"])
-    subprocess.check_call(["rm", "-rf", output_file + ".tmp2.junc2.exon.bed"])
+    if not debug:
+        subprocess.check_call(["rm", "-rf", output_file + ".tmp2.junc1.gene.bed"])
+        subprocess.check_call(["rm", "-rf", output_file + ".tmp2.junc2.gene.bed"])
+        subprocess.check_call(["rm", "-rf", output_file + ".tmp2.junc1.exon.bed"])
+        subprocess.check_call(["rm", "-rf", output_file + ".tmp2.junc2.exon.bed"])
 
     ##########
     # for creating splicing junction to in-frame information table
@@ -216,10 +277,6 @@ def juncutils_annotate(input_file, output_file, ucsc_gene_file, junction_margin,
             common_gene = ','.join(common_gene_list) if len(common_gene_list) > 0 else "---"
 
             print(f'{chr_name}\t{max(0, sj_start - exon_margin - 1)}\t{sj_end + exon_margin}\t{F_g1[0]}\t{common_gene}', file = hout)
-
-            """
-            print(chr_name + '\t' + str(sj_start - exon_margin - 1) + '\t' + str(sj_end + exon_margin) + '\t' + F_g1[0] + '\t' + common_gene, file = hout)
-            """
 
     with open(output_file + ".tmp3.junc12.gene.coding.bed", 'w') as hout:
         subprocess.check_call(["bedtools", "intersect", "-a", output_file + ".tmp3.junc12.gene.bed", "-b", output_file + ".tmp.refCoding.bed.gz", "-loj"], stdout = hout)
@@ -263,11 +320,12 @@ def juncutils_annotate(input_file, output_file, ucsc_gene_file, junction_margin,
             if len(tmp_gene2coding_size) == 0: tmp_gene2coding_size["---"] = "---"
             print(tmp_id + '\t' + ','.join(tmp_gene2coding_size.keys()) + '\t' + \
                   ','.join([str(x) for x in tmp_gene2coding_size.values()]), file = hout)
- 
-    subprocess.check_call(["rm", "-rf", output_file + ".tmp.refCoding.bed.gz"])
-    subprocess.check_call(["rm", "-rf", output_file + ".tmp.refCoding.bed.gz.tbi"])
-    subprocess.check_call(["rm", "-rf", output_file + ".tmp3.junc12.gene.bed"])
-    subprocess.check_call(["rm", "-rf", output_file + ".tmp3.junc12.gene.coding.bed"])
+
+    if not debug:
+        subprocess.check_call(["rm", "-rf", output_file + ".tmp.refCoding.bed.gz"])
+        subprocess.check_call(["rm", "-rf", output_file + ".tmp.refCoding.bed.gz.tbi"])
+        subprocess.check_call(["rm", "-rf", output_file + ".tmp3.junc12.gene.bed"])
+        subprocess.check_call(["rm", "-rf", output_file + ".tmp3.junc12.gene.coding.bed"])
     ##########
 
 
@@ -559,18 +617,15 @@ def juncutils_annotate(input_file, output_file, ucsc_gene_file, junction_margin,
          
 
             print('\t'.join(F) + '\t' + spliceClass + '\t' + in_frame + '\t' + '\t'.join([';'.join(geneInfo1), ';'.join(exonInfo1), ';'.join(junctionInfo1), ';'.join(offsetInfo1), ';'.join(geneInfo2), ';'.join(exonInfo2), ';'.join(junctionInfo2), ';'.join(offsetInfo2)]), file = hout)
-     
-    subprocess.check_call(["rm", "-rf", output_file + ".tmp3.junc1.gene.bed"])
-    subprocess.check_call(["rm", "-rf", output_file + ".tmp3.junc2.gene.bed"])
-    subprocess.check_call(["rm", "-rf", output_file + ".tmp3.junc1.exon.bed"])
-    subprocess.check_call(["rm", "-rf", output_file + ".tmp3.junc2.exon.bed"])
-    subprocess.check_call(["rm", "-rf", output_file + ".tmp3.junc12.coding_size.bed"])
 
-def juncmut_juncutils(input_file, output_file, control_list, genecode_gene_file, genome_id, is_grc, read_num_thres, junction_margin, exon_margin):
-    import subprocess
-    import shutil
-    import os
-    from junc_utils.utils import proc_star_junction
+    if not debug:
+        subprocess.check_call(["rm", "-rf", output_file + ".tmp3.junc1.gene.bed"])
+        subprocess.check_call(["rm", "-rf", output_file + ".tmp3.junc2.gene.bed"])
+        subprocess.check_call(["rm", "-rf", output_file + ".tmp3.junc1.exon.bed"])
+        subprocess.check_call(["rm", "-rf", output_file + ".tmp3.junc2.exon.bed"])
+        subprocess.check_call(["rm", "-rf", output_file + ".tmp3.junc12.coding_size.bed"])
+
+def juncmut_juncutils(input_file, output_file, control_list, genecode_gene_file, genome_id, is_grc, read_num_thres, junction_margin, exon_margin, debug):
 
     target_rnames = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "X", "Y"]
 
@@ -599,7 +654,7 @@ def juncmut_juncutils(input_file, output_file, control_list, genecode_gene_file,
         shutil.copy(cur_infile, tmpfile2)
         tmpfile_list.append(tmpfile2)
 
-    juncutils_annotate(tmpfile2, output_file, genecode_gene_file, junction_margin, exon_margin, "gencode", genome_id, is_grc)
+    juncutils_annotate(tmpfile2, output_file, genecode_gene_file, junction_margin, exon_margin, "gencode", genome_id, is_grc, debug)
 
     for tfile in tmpfile_list:
         os.remove(tfile)
@@ -611,4 +666,4 @@ if __name__== "__main__":
     control_list = sys.argv[3].split(",")
     genecode_gene_file = sys.argv[4]
 
-    juncmut_juncutils(input_file, output_file, control_list, genecode_gene_file, "hg38", "False", 1, 3, 30)
+    juncmut_juncutils(input_file, output_file, control_list, genecode_gene_file, "hg38", False, 1, 3, 30, True)

@@ -17,8 +17,7 @@ cdsEnd
 
 import pysam
 import csv
-from .protein import out_of_frame_description
-from .protein import in_frame_description
+import juncmut.protein
 
 DICT_CODON = {"TTT":"F", "TTC":"F", "TCT":"S", "TCC":"S", "TAT":"Y", "TAC":"Y", "TGT":"C", "TGC":"C",
           "TTA":"L", "TCA":"S", "TAA":"*", "TGA":"*", "TTG":"L", "TCG":"S", "TAG":"*", "TGG":"W", 
@@ -176,7 +175,7 @@ def sjclass_frame(input_file, output_file, reference):
             juncmut_predicted_splicing_type = csvobj["Juncmut_predicted_splicing_type"]
             juncmut_primary_ss = int(csvobj["Juncmut_primary_SS"])
             
-            splice_type = csvobj["SJ_type"] + csvobj["SJ_strand"]
+            splice_type = csvobj["Created_motif"] + csvobj["SJ_strand"]
             sj_strand = csvobj["SJ_strand"]
 
             gencode_exon_starts = list(map(int, csvobj["Gencode_exon_starts"].rstrip(',').split(',')))
@@ -435,9 +434,9 @@ def sjclass_frame(input_file, output_file, reference):
                 ref_cds_exon_translate = translate(ref_cds_exon, None, None, True, 0, 0, 0)
                 #result1 = protein_description(ref_cds_len, ref_cds_exon_translate, q_target_seq_translate)
                 if is_inframe == "In-frame": 
-                    result1 = in_frame_description(ref_cds_exon_translate, q_target_seq_translate)
+                    result1 = juncmut.protein.in_frame_description(ref_cds_exon_translate, q_target_seq_translate)
                 else:
-                    result1 = out_of_frame_description(ref_cds_exon_translate, q_target_seq_translate)
+                    result1 = juncmut.protein.out_of_frame_description(ref_cds_exon_translate, q_target_seq_translate)
 
                 (protein_description_change, protein_description_first_pos, protein_description_last_pos_ref, protein_description_last_pos_target) = result1
                 protein_description_change_short = convert_aa(protein_description_change, is_inframe, is_ptc)

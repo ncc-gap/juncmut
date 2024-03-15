@@ -145,10 +145,7 @@ def juncmut_realign(input_file, output_file, bam_file, reference, genome_id, is_
 
     ref_tb = pysam.FastaFile(reference)
 
-    if str(is_grc) == 'False':
-        annot_utils.junction.make_junc_info(output_file + ".gencode.junc.bed.gz", "gencode", genome_id, False, False)
-    else:
-        annot_utils.junction.make_junc_info(output_file + ".gencode.junc.bed.gz", "gencode", genome_id, True, False)
+    annot_utils.junction.make_junc_info(output_file + ".gencode.junc.bed.gz", "gencode", genome_id, is_grc, False)
 
     junc_tb = pysam.TabixFile(output_file + ".gencode.junc.bed.gz")
     sample_name = input_file.split("/")[-1].split('.')[0]
@@ -156,8 +153,8 @@ def juncmut_realign(input_file, output_file, bam_file, reference, genome_id, is_
     # for each mutation in SJ.
     with open(input_file, 'r') as hin, open(output_file, 'w') as hout:
         csvreader = csv.DictReader(hin, delimiter='\t')
-        output_header = ["Mut_key"] + csvreader.fieldnames + [
-            "Sample", "Is_in_exon", "Realign_no_SJ_neg", "Realign_no_SJ_pos", "Realign_target_SJ_neg", "Reaglin_target_SJ_pos", "Realign_normal_SJ_neg", "Realign_normal_SJ_pos"
+        output_header = csvreader.fieldnames + [
+            "Is_in_new_exon", "Realign_no_SJ_neg", "Realign_no_SJ_pos", "Realign_target_SJ_neg", "Reaglin_target_SJ_pos", "Realign_normal_SJ_neg", "Realign_normal_SJ_pos"
         ]
         csvwriter = csv.DictWriter(hout, delimiter='\t', lineterminator='\n', fieldnames = output_header)
         csvwriter.writeheader()
@@ -177,11 +174,6 @@ def juncmut_realign(input_file, output_file, bam_file, reference, genome_id, is_
             mut_key_pos = int(mut_key_pos)
 
             splice_type = csvobj["Created_motif"] + csvobj["SJ_strand"]
-
-            # [TODO] fix this item
-            #output_obj["Mut_key"] = "%s,%s,%s,%s" % (csvobj["Chr"], csvobj["Mut_pos"], csvobj["Mut_ref"], csvobj["Mut_alt"])
-            #output_obj["SJ_key"] = "%s:%s-%s" % (csvobj["Chr"], csvobj["Start"], csvobj["End"])
-            output_obj["Sample"] = sample_name
 
             # key_readid_dict to remove read duplicates
             # Is a position of mutation in Exon or Intron
@@ -215,12 +207,6 @@ def juncmut_realign(input_file, output_file, bam_file, reference, genome_id, is_
                 elif dis_mut_SJend < 1 and dis_mut_SJend > -6:
                     is_exon = 'intron'
             
-            output_obj["Is_in_exon"] = is_exon
-
-            #if RNA_mutation reads>=2 and Freq>=0.05, do realign.
-            #if float(csvobj["Pileup_mut_count"])/float(csvobj["Pileup_depth"]) < mut_freq_thres or int(csvobj["Mut_count"]) < mut_num_thres:
-            #    continue
-            
             junc_annotated = sj_key_start
             if splice_type == "Donor+" or splice_type == "Acceptor-":
                 junc_annotated = sj_key_end
@@ -241,56 +227,64 @@ def juncmut_realign(input_file, output_file, bam_file, reference, genome_id, is_
             # alignment
             d_realign = {'No_SJ_Neg': 0, 'No_SJ_Pos': 0, 'Target_SJ_Neg': 0, 'Target_SJ_Pos': 0, 'Normal_SJ_Neg': 0, 'Normal_SJ_Pos': 0}
             d_order = {'Normal_SJ_Neg': 0, 'No_SJ_Neg': 1, 'Target_SJ_Neg': 2, 'Normal_SJ_Pos': 3, 'No_SJ_Pos': 4, 'Target_SJ_Pos': 5}
-            realign_result = "False"
+            realign_result = False
             with open(output_file + ".tmp.read_seq.fa", 'r') as hin_read_seq:
                 for row in hin_read_seq:
                     if row.startswith('>'):
-                        # [TODO] Modify this section later
-                        R = hin_read_seq.readline().rstrip('\n')
-                        d_ed = {}
-                        d_mut_count = {}
-                        for key in d_query:
-                            res = edlib.align(d_query[key], R, mode="HW", task="path")
-                            res_cigar = res.get('cigar')
-                            res_ed = res.get('editDistance')
-                            # mut_count and edit distance
-                            if res_ed <= 2:
-                                # [TODO] rename mut_count
-                                mut_count = process_cigar(res_cigar)
-                                # [TODO] fix priority of if statement
-                                # There may be multiple Normal SJ templates.  Choose template with smaller editDistance than 2.
-                                if key.startswith('Normal_SJ_Neg_'):
-                                    if 'Normal_SJ_Neg' in d_ed and d_ed['Normal_SJ_Neg'] <= res_ed: continue
-                                    d_ed['Normal_SJ_Neg'] = res_ed
-                                    
-                                    if 'Normal_SJ_Neg' in d_mut_count and d_mut_count['Normal_SJ_Neg'] >= mut_count: continue
-                                    d_mut_count['Normal_SJ_Neg'] = mut_count
-                                
-                                elif key.startswith('Normal_SJ_Pos_'):
-                                    if 'Normal_SJ_Pos' in d_ed and d_ed['Normal_SJ_Pos'] <= res_ed: continue
-                                    d_ed['Normal_SJ_Pos'] = res_ed 
+                        continue
+                    R = row.rstrip('\n')
+                    d_ed = {}
+                    d_mut_count = {}
+                    for key in d_query:
+                        res = edlib.align(d_query[key], R, mode="HW", task="path")
+                        res_cigar = res.get('cigar')
+                        res_ed = res.get('editDistance')
+                        if res_ed > 2:
+                            continue
 
-                                    if 'Normal_SJ_Pos' in d_mut_count and d_mut_count['Normal_SJ_Pos'] >= mut_count: continue
-                                    d_mut_count['Normal_SJ_Pos'] = mut_count
-                                else:
-                                    d_ed[key] = res_ed
-                                    d_mut_count[key] = mut_count
+                        # mut_count and edit distance
+                        mut_count = process_cigar(res_cigar)
+                        # There may be multiple Normal SJ templates.  Choose template with smaller editDistance than 2.
+                        if key.startswith('Normal_SJ_Neg_'):
+                            if 'Normal_SJ_Neg' in d_ed and d_ed['Normal_SJ_Neg'] <= res_ed:
+                                pass
+                            else:
+                                d_ed['Normal_SJ_Neg'] = res_ed
+                            
+                            if 'Normal_SJ_Neg' in d_mut_count and d_mut_count['Normal_SJ_Neg'] >= mut_count:
+                                pass
+                            else:
+                                d_mut_count['Normal_SJ_Neg'] = mut_count
                         
-                        # choose minmum ed_distance and the key and count up.
-                        # [TODO] add case, d_ed == {}: continue
-                        min_k = [kv[0] for kv in d_ed.items() if kv[1] == min(d_ed.values())]
-                        # [TODO] remove this case
-                        if len(min_k) == 0: continue
+                        elif key.startswith('Normal_SJ_Pos_'):
+                            if 'Normal_SJ_Pos' in d_ed and d_ed['Normal_SJ_Pos'] <= res_ed:
+                                pass
+                            else:
+                                d_ed['Normal_SJ_Pos'] = res_ed 
 
-                        min_k_sort = sorted(min_k, key=lambda x: d_order[x])
-                        # if multiple mutation for the selected key is exist, no count-up.
-                        if d_mut_count[min_k_sort[0]] == 0:
-                            d_realign[min_k_sort[0]] += 1
+                            if 'Normal_SJ_Pos' in d_mut_count and d_mut_count['Normal_SJ_Pos'] >= mut_count:
+                                pass
+                            else:
+                                d_mut_count['Normal_SJ_Pos'] = mut_count
+                        else:
+                            d_ed[key] = res_ed
+                            d_mut_count[key] = mut_count
+                    
+                    # choose minmum ed_distance and the key and count up.
+                    if d_ed == {}:
+                        continue
+                    min_k = [kv[0] for kv in d_ed.items() if kv[1] == min(d_ed.values())]
+                    min_k_sort = sorted(min_k, key=lambda x: d_order[x])
+
+                    # if multiple mutation for the selected key is exist, no count-up.
+                    if d_mut_count[min_k_sort[0]] == 0:
+                        d_realign[min_k_sort[0]] += 1
                 
                 if d_realign['Target_SJ_Pos'] + d_realign['No_SJ_Pos']+ d_realign['Normal_SJ_Pos'] >=1:
-                    realign_result = 'True'
+                    realign_result = True
             
-            if realign_result == 'True':
+            if realign_result == True:
+                output_obj["Is_in_new_exon"] = is_exon
                 output_obj["Realign_no_SJ_neg"] = d_realign["No_SJ_Neg"]
                 output_obj["Realign_no_SJ_pos"] = d_realign["No_SJ_Pos"]
                 output_obj["Realign_target_SJ_neg"] = d_realign["Target_SJ_Neg"]
@@ -315,4 +309,4 @@ if __name__ == "__main__":
     bam_file = sys.argv[3]
     reference = sys.argv[4]
 
-    juncmut_realign(input_file, output_file, bam_file, reference, "hg38", "False", 10)
+    juncmut_realign(input_file, output_file, bam_file, reference, "hg38", False, 10)
