@@ -9,13 +9,13 @@ setup(
     description='Python programs for the identification of the genomic mutation from RNA-seq data',
     url = 'https://github.com/ncc-gap/juncmut.git',
     author = 'Naoko Iida, Ai Okada and Yuichi Shiraishi',
-    author_email = 'genomon.devel@gmail.com',
+    author_email = 'yuishira@ncc.go.jp, aokada@ncc.go.jp',
     license = 'GPLv3',
 
     classifiers = [
         'Development Status :: 5 - Alpha',
         'Intended Audience :: Science/Research',
-        'License :: OSI Approved :: ',
+        'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
         'Operating System :: Unix',
         'Programming Language :: Python :: 3.7',
         'Topic :: Scientific/Engineering :: Bio-Informatics'
