@@ -5,7 +5,7 @@ def juncmut_assadj(input_file, output_file):
     import csv
     with open(input_file) as hin, open(output_file, 'w') as hout:
         csvwriter = csv.DictWriter(hout, delimiter='\t', lineterminator='\n', fieldnames=[
-            "SJ_key", "Start_ori", "End_ori", "Created_motif", "SJ_strand", "SJ_read_count", "Transcript"
+            "SJ_key", "Start_ori", "End_ori", "Created_motif", "SJ_strand", "Transcript", "Gene", "MANE", "SJ_read_count"
         ])
         csvwriter.writeheader()
         
@@ -22,34 +22,63 @@ def juncmut_assadj(input_file, output_file):
             else:
                 continue
             
-            offset = None
-            strand = None
-            transcript = None
-            if "s" in csvobj["Is_Boundary_1"] or "e" in csvobj["Is_Boundary_1"]:
-                for i,val in enumerate(csvobj["Is_Boundary_1"].split(';')):
-                    if not val in ["s", "e"]:
-                        continue
-                    offset = csvobj["Offset_1"].split(';')[i]
-                    if val == "s":
-                        strand = "-"
-                    else:
-                        strand = "+"
-                    transcript = csvobj["Gene_1"].split(';')[i]
-                    break
+            # intron pos1
+            index_1 = None
+            mane_select_list_1 = csvobj["MANE_1"].split(';')
+            is_boundary_list_1 = csvobj["Is_Boundary_1"].split(';')
 
-            if offset is None and ("s" in csvobj["Is_Boundary_2"] or "e" in csvobj["Is_Boundary_2"]):
-                for i,val in enumerate(csvobj["Is_Boundary_2"].split(';')):
-                    if not val in ["s", "e"]:
-                        continue
-                    offset = csvobj["Offset_2"].split(';')[i]
-                    if val == "s":
+            if "MANE_Select" in mane_select_list_1:
+                for i,is_boundary in enumerate(is_boundary_list_1):
+                    if mane_select_list_1[i] == "MANE_Select" and is_boundary in ["s", "e"]:
+                        index_1 = i
+                        mane = "MANE_Select"
+                        break
+            else:
+                for i,is_boundary in enumerate(is_boundary_list_1):
+                    if is_boundary in ["s", "e"]:
+                        index_1 = i
+                        mane = "NA"
+                        break
+
+            if not index_1 is None:
+                transcript = csvobj["Gene_1"].split(';')[index_1]
+                symbol = csvobj["Symbol_1"].split(';')[index_1]
+                offset = csvobj["Offset_1"].split(';')[index_1]
+                if is_boundary_list_1[index_1] == "s":
+                    strand = "-"
+                else:
+                    strand = "+"
+
+            # intron pos2
+            index_2 = None
+            if index_1 is None:
+                mane_select_list_2 = csvobj["MANE_2"].split(';')
+                is_boundary_list_2 = csvobj["Is_Boundary_2"].split(';')
+
+                if "MANE_Select" in mane_select_list_2:
+                    for i,is_boundary in enumerate(is_boundary_list_2):
+                        if mane_select_list_2[i] == "MANE_Select" and is_boundary in ["s", "e"]:
+                            index_2 = i
+                            mane = "MANE_Select"
+                            break
+                else:
+                    for i,is_boundary in enumerate(is_boundary_list_2):
+                        if is_boundary in ["s", "e"]:
+                            index_2 = i
+                            mane = "NA"
+                            break
+
+                if not index_2 is None:
+                    transcript = csvobj["Gene_2"].split(';')[index_2]
+                    symbol = csvobj["Symbol_2"].split(';')[index_2]
+                    offset = csvobj["Offset_2"].split(';')[index_2]
+                    if csvobj["Is_Boundary_2"].split(';')[index_2] == "s":
                         strand = "+"
                     else:
                         strand = "-"
-                    transcript = csvobj["Gene_2"].split(';')[i]
-                    break
 
-            if offset is None:
+            if index_1 is None and index_2 is None:
+                print(csvobj)
                 raise Exception("juncmut_assadj.py: Unexpected data format")
 
             out_csvobj = {
@@ -59,7 +88,9 @@ def juncmut_assadj(input_file, output_file):
                 "Created_motif": created_motif,
                 "SJ_read_count": csvobj["SJ_7"],
                 "SJ_strand": strand,
-                "Transcript": transcript, 
+                "Transcript": transcript,
+                "Gene": symbol,
+                "MANE": mane,
             }
             csvwriter.writerow(out_csvobj)
 

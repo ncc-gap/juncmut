@@ -90,7 +90,7 @@ def check_read(read):
 
     return check_flag
 
-def juncmut_rnamut(input_file, output_file, input_bam_file, reference, mut_num_thres, mut_freq_thres):
+def juncmut_rnamut(input_file, output_file, input_bam_file, reference, mut_num_thres, mut_freq_thres, support_read_rmdup_thres):
     # separate records for each variant and create position list. If no candidates, create zero size file.
     input_header = []
     mut_key_list = []
@@ -158,8 +158,9 @@ def juncmut_rnamut(input_file, output_file, input_bam_file, reference, mut_num_t
         for csvobj in csvreader:
             if csvobj["Possive_alt_key"] == '-':
                 continue
+
             (sj_key_chr, sj_key_start, sj_key_end) = csvobj["SJ_key"].split(",")
-            for alt_key in csvobj["Possive_alt_key"].split(','):
+            for i,alt_key in enumerate(csvobj["Possive_alt_key"].split(',')):
                 (alt_key_pos, alt_key_ref, alt_key_alt) = alt_key.split(":")
                 for var in alt_key_alt:
                     mut_key = "%s,%s,%s,%s" % (sj_key_chr, alt_key_pos, alt_key_ref, var)
@@ -175,7 +176,7 @@ def juncmut_rnamut(input_file, output_file, input_bam_file, reference, mut_num_t
                     support_read_rmdup = data_mpileup[mut_key]["support_read_rmdup"]
 
                     #if RNA_mutation reads>=2 and Freq>=0.05, do realign.
-                    if float(pileup_mut_count/pileup_depth) < mut_freq_thres or pileup_mut_count < mut_num_thres or support_read_rmdup < 2:
+                    if float(pileup_mut_count/pileup_depth) < mut_freq_thres or pileup_mut_count < mut_num_thres or support_read_rmdup < support_read_rmdup_thres:
                         continue
 
                     csvobj["Mut_key"] = mut_key
@@ -194,7 +195,10 @@ if __name__== "__main__":
     output_file = sys.argv[2]
     bam_file = sys.argv[3]
     reference = sys.argv[4]
+
     mut_num_thres = 2
-    mut_freq_thres = 0.05 
-    juncmut_rnamut(input_file, output_file, bam_file, reference, mut_num_thres, mut_freq_thres)
+    mut_freq_thres = 0.05
+    support_read_rmdup_thres = int(sys.argv[5])
+
+    juncmut_rnamut(input_file, output_file, bam_file, reference, mut_num_thres, mut_freq_thres, support_read_rmdup_thres)
 

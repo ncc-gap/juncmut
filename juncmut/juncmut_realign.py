@@ -5,8 +5,70 @@ import csv
 import os
 import random
 import pysam
-import annot_utils
 import edlib
+import gzip
+import subprocess
+
+def make_junc_info(output_file, gencode_gene_file):
+    if gencode_gene_file.endswith("gtf.gz"):
+        key_value_split = " "
+    elif gencode_gene_file.endswith("gff3.gz"):
+        key_value_split = "="
+    else:
+        raise Exception("unexcepted gencode gene file")
+
+    with gzip.open(gencode_gene_file, 'rt') as hin, \
+        open(output_file + ".unsorted.tmp", 'w') as hout:
+
+        csvwriter_exon = csv.DictWriter(hout, delimiter='\t', lineterminator='\n', fieldnames=[
+            "Chr", "Junction_start", "Junction_end", "Transcript_id", "Score", "Strand"
+        ])
+
+        prev_end = None
+        for line in hin:
+            if line.startswith("#"):
+                continue
+
+            F = line.rstrip('\n').split('\t')
+            feature_type = F[2]
+            if feature_type != "exon":
+                continue
+
+            if prev_end is None:
+                prev_end = F[4]
+                continue
+
+            chr = F[0]
+            start = int(F[3]) - 1
+            strand = F[6]
+
+            transcript_id = ""
+            for item in F[8].rstrip(";").split(";"):
+                (key, value) = item.strip(" ").replace('"', '').split(key_value_split)
+                if key == "transcript_id":
+                    transcript_id = value
+                    break
+
+            csvwriter_exon.writerow({
+                "Chr": chr,
+                "Junction_start": prev_end,
+                "Junction_end": start,
+                "Transcript_id": transcript_id,
+                "Score": 0, 
+                "Strand": strand
+            })
+            prev_end = F[4]
+
+    with open(output_file + ".sorted.tmp", 'w') as hout:
+        subprocess.check_call(["sort", "-k1,1", "-k2,2n", "-k3,3n", output_file + ".unsorted.tmp"], stdout = hout)
+
+    with open(output_file, 'w') as hout:
+        subprocess.check_call(["bgzip", "-f", "-c", output_file + ".sorted.tmp"], stdout = hout)
+    
+    subprocess.check_call(["tabix", "-p", "bed", output_file])
+    subprocess.check_call(["rm", "-rf", output_file + ".unsorted.tmp"])
+    subprocess.check_call(["rm", "-rf", output_file + ".sorted.tmp"])
+
 
 def change_base_check(tseq, tpos, tref, talt):
     # for debugging
@@ -141,11 +203,11 @@ def process_cigar(res_cigar):
     mut_count = len([i for i in proc_cigar_list if i != '='])
     return(mut_count)
 
-def juncmut_realign(input_file, output_file, bam_file, reference, genome_id, is_grc, template_size = 10):
+def juncmut_realign(input_file, output_file, bam_file, reference, gencode_gene_file, template_size = 10):
 
     ref_tb = pysam.FastaFile(reference)
 
-    annot_utils.junction.make_junc_info(output_file + ".gencode.junc.bed.gz", "gencode", genome_id, is_grc, False)
+    make_junc_info(output_file + ".gencode.junc.bed.gz", gencode_gene_file)
 
     junc_tb = pysam.TabixFile(output_file + ".gencode.junc.bed.gz")
     sample_name = input_file.split("/")[-1].split('.')[0]
@@ -308,5 +370,6 @@ if __name__ == "__main__":
     output_file = sys.argv[2]
     bam_file = sys.argv[3]
     reference = sys.argv[4]
+    gencode_gene_file = sys.argv[5]
 
-    juncmut_realign(input_file, output_file, bam_file, reference, "hg38", False, 10)
+    juncmut_realign(input_file, output_file, bam_file, reference, gencode_gene_file, 10)

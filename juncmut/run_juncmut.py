@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import os
-def get_main(args):
-    from .utils import check_reference
+def detect_main(args):
+    #from .utils import check_reference
     from .juncmut_juncutils import juncmut_juncutils
     from .juncmut_assadj import juncmut_assadj
     from .juncmut_freq import juncmut_freq
@@ -12,15 +12,13 @@ def get_main(args):
     from .juncmut_rnamut import juncmut_rnamut
     from .juncmut_realign import juncmut_realign
 
-    genome_id, is_grc = check_reference(args.reference)
+    #genome_id, is_grc = check_reference(args.reference)
 
     juncmut_juncutils(
         args.sj_file, 
         args.output_file+".juncutils.txt", 
         args.control_file, 
         args.genecode_gene_file, 
-        genome_id,
-        is_grc,
         1, 3, 30, args.debug
     )
 
@@ -33,7 +31,6 @@ def get_main(args):
         args.output_file+".juncutils.assadj.txt", 
         args.output_file+".juncutils.assadj.freq.txt",
         args.sj_file, 
-        args.genecode_gene_file,
         args.read_num_thres, args.freq_thres
     )
 
@@ -56,6 +53,7 @@ def get_main(args):
         args.reference,
         args.mut_num_thres, 
         args.mut_freq_thres, 
+        args.support_read_rmdup_thres, 
     )
 
     juncmut_realign(
@@ -63,8 +61,7 @@ def get_main(args):
         args.output_file, 
         args.bam_file, 
         args.reference, 
-        genome_id, 
-        is_grc, 
+        args.genecode_gene_file, 
         template_size = 10
     )
 
@@ -79,10 +76,11 @@ def get_main(args):
 def filt_bam_main(args):
     from .juncmut_filt_bam import juncmut_filt_bam
 
-    juncmut_filt_bam_main(
+    juncmut_filt_bam(
         args.input_file, 
-        args.bam_file, 
+        args.input_bam, 
         args.output_bam, 
+        args.genecode_gene_file
     )
 
 def filt_main(args):
@@ -154,7 +152,7 @@ def sjclass_main(args):
     from .sjclass_classify import sjclass_classify
     from .sjclass_frame import sjclass_frame
 
-    sjclass_transcript(args.input_file, args.output_file + ".transcript.txt", args.gencode, args.mane)
+    sjclass_transcript(args.input_file, args.output_file + ".transcript.txt", args.gencode)
     sjclass_classify(args.output_file + ".transcript.txt", args.output_file + ".classify.txt", args.bam_file, args.sj_file, args.depth_th)
     sjclass_frame(args.output_file + ".classify.txt", args.output_file, args.reference)
     
@@ -162,6 +160,7 @@ def sjclass_main(args):
         os.remove(args.output_file +".transcript.txt")
         os.remove(args.output_file +".classify.txt")
 
+"""
 def validate_main(args):
     from .utils import check_reference
     from .juncmut_gmut import juncmut_gmut
@@ -177,3 +176,4 @@ def validate_main(args):
         args.mut_num_thres, 
         args.mut_freq_thres
     )
+"""

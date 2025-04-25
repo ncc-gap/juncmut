@@ -17,13 +17,96 @@ try:
 except ImportError:
     pass
 
-import annot_utils.gene, annot_utils.exon, annot_utils.coding
+import gzip, subprocess 
+
+def gtf_to_bed(output_gene_file, output_exon_file, gencode_gene_file):
+    if gencode_gene_file.endswith("gtf.gz"):
+        key_value_split = " "
+    elif gencode_gene_file.endswith("gff3.gz"):
+        key_value_split = "="
+    else:
+        raise Exception("unexcepted gencode gene file")
+
+    with gzip.open(gencode_gene_file, 'rt') as hin, \
+        open(output_gene_file + ".unsorted.tmp", 'w') as hout_gene, \
+        open(output_exon_file + ".unsorted.tmp", 'w') as hout_exon:
+
+        csvwriter_gene = csv.DictWriter(hout_gene, delimiter='\t', lineterminator='\n', fieldnames=[
+            "Chr", "Gene_start", "Gene_end", "Gene_name", "Score", "Strand", "Symbol", "MANE"
+        ])
+
+        csvwriter_exon = csv.DictWriter(hout_exon, delimiter='\t', lineterminator='\n', fieldnames=[
+            "Chr", "Exon_start", "Exon_end", "Gene_name", "Exon_num", "Strand"
+        ])
+
+        for line in hin:
+            if line.startswith("#"):
+                continue
+            F = line.rstrip('\n').split('\t')
+            feature_type = F[2]
+            if feature_type != "transcript" and feature_type != "exon":
+                continue
+
+            chr = F[0]
+            start = int(F[3]) - 1
+            end = F[4]
+            strand = F[6]
+
+            add_info = {"MANE": "---", }
+            for item in F[8].rstrip(";").split(";"):
+                (key, value) = item.strip(" ").replace('"', '').split(key_value_split)
+                if key in ["transcript_id", "gene_name", "exon_number"]:
+                    add_info[key] = value
+                elif key == "tag" and "MANE" in value:
+                    add_info["MANE"] = value
+
+            if feature_type == "transcript":
+                csvwriter_gene.writerow({
+                    "Chr": chr,
+                    "Gene_start": start,
+                    "Gene_end": end,
+                    "Gene_name": add_info["transcript_id"],
+                    "Score": 0, 
+                    "Strand": strand,
+                    "Symbol": add_info["gene_name"],
+                    "MANE": add_info["MANE"],
+                })
+
+            else:
+                csvwriter_exon.writerow({
+                    "Chr": chr,
+                    "Exon_start": start,
+                    "Exon_end": end,
+                    "Gene_name": add_info["transcript_id"],
+                    "Exon_num": add_info["exon_number"], 
+                    "Strand": strand
+                })
+
+    with open(output_gene_file + ".sorted.tmp", 'w') as hout_gene:
+        subprocess.check_call(["sort", "-k1,1", "-k2,2n", "-k3,3n", output_gene_file + ".unsorted.tmp"], stdout = hout_gene)
+
+    with open(output_gene_file, 'w') as hout_gene:
+        subprocess.check_call(["bgzip", "-f", "-c", output_gene_file + ".sorted.tmp"], stdout = hout_gene)
+    
+    subprocess.check_call(["tabix", "-p", "bed", output_gene_file])
+    subprocess.check_call(["rm", "-rf", output_gene_file + ".unsorted.tmp"])
+    subprocess.check_call(["rm", "-rf", output_gene_file + ".sorted.tmp"])
+
+    with open(output_exon_file + ".sorted.tmp", 'w') as hout_exon:
+        subprocess.check_call(["sort", "-k1,1", "-k2,2n", "-k3,3n", output_exon_file + ".unsorted.tmp"], stdout = hout_exon)
+
+    with open(output_exon_file, 'w') as hout_exon:
+        subprocess.check_call(["bgzip", "-f", "-c", output_exon_file + ".sorted.tmp"], stdout = hout_exon)
+
+    subprocess.check_call(["tabix", "-p", "bed", output_exon_file])
+    subprocess.check_call(["rm", "-rf", output_exon_file + ".unsorted.tmp"])
+    subprocess.check_call(["rm", "-rf", output_exon_file + ".sorted.tmp"])
+
 
 def proc_star_junction(input_file, output_file, control_file, read_num_thres, overhang_thres, remove_annotated, convert_map_splice2):
 
     is_control = True if control_file is not None else False
-    # if is_control: control_db = pysam.TabixFile(control_file)
-    
+
     control_db = {}
     if is_control:
         with gzip.open(control_file, 'rt') as hin:
@@ -80,7 +163,7 @@ def proc_star_junction(input_file, output_file, control_file, read_num_thres, ov
 
     hout.close()
 
-def juncutils_annotate(input_file, output_file, ucsc_gene_file, junction_margin, exon_margin, gene_model = "gencode", genome_id = "hg38", is_grc = False, debug=False):
+def juncutils_annotate(input_file, output_file, gencode_gene_file, junction_margin, exon_margin, debug=False):
     """
         The purpose of this script is to classify splicing changes
         mainly by comparing the two breakpoints with the exon-intorn junction of genes
@@ -113,9 +196,8 @@ def juncutils_annotate(input_file, output_file, ucsc_gene_file, junction_margin,
         5. get the sequence arround the breakpoints.
 
     """
-    annot_utils.gene.make_gene_info(output_file + ".tmp.refGene.bed.gz", gene_model, genome_id, is_grc, True, ucsc_gene_file)
-    annot_utils.exon.make_exon_info(output_file + ".tmp.refExon.bed.gz", gene_model, genome_id, is_grc, True, ucsc_gene_file)
-    annot_utils.coding.make_coding_info(output_file + ".tmp.refCoding.bed.gz", gene_model, genome_id, is_grc, True, ucsc_gene_file)
+    
+    gtf_to_bed(output_file + ".tmp.refGene.bed.gz", output_file + ".tmp.refExon.bed.gz", gencode_gene_file)
 
     with open(output_file + ".tmp1.junc1.gene.bed", 'w') as hout_g1, open(output_file + ".tmp1.junc2.gene.bed", 'w') as hout_g2, \
       open(output_file + ".tmp1.junc1.exon.bed", 'w') as hout_e1, open(output_file + ".tmp1.junc2.exon.bed", 'w') as hout_e2:
@@ -154,32 +236,42 @@ def juncutils_annotate(input_file, output_file, ucsc_gene_file, junction_margin,
 
        
     with open(output_file + ".tmp2.junc1.gene.bed", 'r') as hin, open(output_file + ".tmp3.junc1.gene.bed", 'w') as hout:
-        tmp_id, tmp_gene = "", []
+        tmp_id, tmp_gene, tmp_symbol, tmp_mane = "", [], [], []
         for line in hin:
             F = line.rstrip('\n').split('\t')
             if F[3] != tmp_id:
-                if tmp_id != "": print(tmp_id + '\t' + ','.join(list(set(tmp_gene))), file = hout)
-                tmp_id, tmp_gene = F[3], []
+                if tmp_id != "": print(tmp_id + '\t' + ','.join(tmp_gene) + '\t' + ','.join(tmp_symbol) + '\t' + ','.join(tmp_mane), file = hout)
+                tmp_id, tmp_gene, tmp_symbol, tmp_mane = F[3], [], [], []
             if F[7] != ".":
-                tmp_gene.append(F[7])
+                if not F[7] in tmp_gene:
+                    tmp_gene.append(F[7])
+                    tmp_symbol.append(F[10])
+                    tmp_mane.append(F[11])
             else:
                 tmp_gene.append("---")
+                tmp_symbol.append("---")
+                tmp_mane.append("---")
 
-        if tmp_id != "": print(tmp_id + '\t' + ','.join(list(set(tmp_gene))), file = hout)
+        if tmp_id != "": print(tmp_id + '\t' + ','.join(tmp_gene) + '\t' + ','.join(tmp_symbol) + '\t' + ','.join(tmp_mane), file = hout)
 
     with open(output_file + ".tmp2.junc2.gene.bed", 'r') as hin, open(output_file + ".tmp3.junc2.gene.bed", 'w') as hout:
-        tmp_id, tmp_gene = "", []
+        tmp_id, tmp_gene, tmp_symbol, tmp_mane = "", [], [], []
         for line in hin:
             F = line.rstrip('\n').split('\t')
             if F[3] != tmp_id:
-                if tmp_id != "": print(tmp_id + '\t' + ','.join(list(set(tmp_gene))), file = hout)
-                tmp_id, tmp_gene = F[3], []
+                if tmp_id != "": print(tmp_id + '\t' + ','.join(tmp_gene) + '\t' + ','.join(tmp_symbol) + '\t' + ','.join(tmp_mane), file = hout)
+                tmp_id, tmp_gene, tmp_symbol, tmp_mane = F[3], [], [], []
             if F[7] != ".":
-                tmp_gene.append(F[7])
+                if not F[7] in tmp_gene:
+                    tmp_gene.append(F[7])
+                    tmp_symbol.append(F[10])
+                    tmp_mane.append(F[11])
             else:
                 tmp_gene.append("---")
+                tmp_symbol.append("---")
+                tmp_mane.append("---")
 
-        if tmp_id != "": print(tmp_id + '\t' + ','.join(list(set(tmp_gene))), file = hout)
+        if tmp_id != "": print(tmp_id + '\t' + ','.join(tmp_gene) + '\t' + ','.join(tmp_symbol) + '\t' + ','.join(tmp_mane), file = hout)
 
     with open(output_file + ".tmp2.junc1.exon.bed", 'r') as hin, open(output_file + ".tmp3.junc1.exon.bed", 'w') as hout:
         tmp_id, tmp_gene, tmp_exon_num, tmp_edge, tmp_offset = "", [], [], [], []
@@ -254,111 +346,43 @@ def juncutils_annotate(input_file, output_file, ucsc_gene_file, junction_margin,
         subprocess.check_call(["rm", "-rf", output_file + ".tmp2.junc2.exon.bed"])
 
     ##########
-    # for creating splicing junction to in-frame information table
-    with open(output_file + ".tmp3.junc1.gene.bed") as hin_g1, open(output_file + ".tmp3.junc2.gene.bed") as hin_g2, \
-      open(output_file + ".tmp3.junc12.gene.bed", 'w') as hout:
-        for line_g1, line_g2 in zip(hin_g1, hin_g2):
-            F_g1 = line_g1.rstrip('\n').split('\t')
-            F_g2 = line_g2.rstrip('\n').split('\t')
-
-            # key check
-            if not F_g1[0] == F_g2[0]:
-                print("Inconsistency of splicing junction keys in the information files: " + output_file + ".tmp3.junc12.gene.bed", file = sys.stderr)
-                print(F_g1[0] + ' ' + F_g2[0])
-                sys.exit(1)
-
-            FF = F_g1[0].split(',')
-            chr_name, sj_start, sj_end = FF[0], int(FF[1]) - 1, int(FF[2]) + 1
-
-            gene1 = F_g1[1].split(',') if F_g1[1] != "---" else []
-            gene2 = F_g2[1].split(',') if F_g2[1] != "---" else []
-
-            common_gene_list = list(set(gene1) & set(gene2))
-            common_gene = ','.join(common_gene_list) if len(common_gene_list) > 0 else "---"
-
-            print(f'{chr_name}\t{max(0, sj_start - exon_margin - 1)}\t{sj_end + exon_margin}\t{F_g1[0]}\t{common_gene}', file = hout)
-
-    with open(output_file + ".tmp3.junc12.gene.coding.bed", 'w') as hout:
-        subprocess.check_call(["bedtools", "intersect", "-a", output_file + ".tmp3.junc12.gene.bed", "-b", output_file + ".tmp.refCoding.bed.gz", "-loj"], stdout = hout)
-
-    with open(output_file + ".tmp3.junc12.gene.coding.bed") as hin, open(output_file + ".tmp3.junc12.coding_size.bed", 'w') as hout:
-        tmp_id, tmp_sj_start, tmp_sj_end, tmp_gene2coding_size = "", 0, 0, {}
-        for line in hin:
-            F = line.rstrip('\n').split('\t')
-            if tmp_id != F[3]:
-                if tmp_id != "":
-                    if len(tmp_gene2coding_size) == 0: tmp_gene2coding_size["---"] = "---"
-                    print(tmp_id + '\t' + ','.join(tmp_gene2coding_size.keys()) + '\t' + \
-                      ','.join([str(x) for x in tmp_gene2coding_size.values()]), file = hout)
-
-                tmp_id = F[3]
-                _, tmp_sj_start, tmp_sj_end = tmp_id.split(',')
-                tmp_sj_start, tmp_sj_end = int(tmp_sj_start) - 1, int(tmp_sj_end) + 1 
-                tmp_gene2coding_size = {}
-
-            if F[4] == "---": continue
-            if F[9] != "coding": continue
-            if F[8] not in F[4].split(','): continue
-
-            exon_start, exon_end, exon_gene = int(F[6]), int(F[7]), F[8]
-            if exon_gene not in tmp_gene2coding_size: tmp_gene2coding_size[exon_gene] = 0
-
-            # sj_start overlaps with the current coding region
-            if exon_start <= tmp_sj_start + exon_margin and tmp_sj_start - exon_margin <= exon_end:
-                # sj_end also overlaps with the current coding region
-                if exon_start <= tmp_sj_end + exon_margin and tmp_sj_end - exon_margin <= exon_end:
-                    tmp_gene2coding_size[exon_gene] = tmp_gene2coding_size[exon_gene] + tmp_sj_end - tmp_sj_start - 1
-                else:
-                    tmp_gene2coding_size[exon_gene] = tmp_gene2coding_size[exon_gene] + exon_end - tmp_sj_start
-            # sj_end overlaps with the current coding region
-            elif exon_start <= tmp_sj_end + exon_margin and tmp_sj_end - exon_margin <= exon_end:
-                tmp_gene2coding_size[exon_gene] = tmp_gene2coding_size[exon_gene] + tmp_sj_end - 1 - exon_start 
-            else:                
-                tmp_gene2coding_size[exon_gene] = tmp_gene2coding_size[exon_gene] + exon_end - exon_start
-
-        if tmp_id != "":
-            if len(tmp_gene2coding_size) == 0: tmp_gene2coding_size["---"] = "---"
-            print(tmp_id + '\t' + ','.join(tmp_gene2coding_size.keys()) + '\t' + \
-                  ','.join([str(x) for x in tmp_gene2coding_size.values()]), file = hout)
-
-    if not debug:
-        subprocess.check_call(["rm", "-rf", output_file + ".tmp.refCoding.bed.gz"])
-        subprocess.check_call(["rm", "-rf", output_file + ".tmp.refCoding.bed.gz.tbi"])
-        subprocess.check_call(["rm", "-rf", output_file + ".tmp3.junc12.gene.bed"])
-        subprocess.check_call(["rm", "-rf", output_file + ".tmp3.junc12.gene.coding.bed"])
-    ##########
 
 
-    with open(input_file, 'r') as hin, open(output_file, 'w') as hout:
-        line = hin.readline()
-        F = line.rstrip('\n').split('\t')
-        print('\t'.join(["SJ_" + str(i) for i in range(1, len(F) + 1)]) + '\t' + \
-              "Splicing_Class" + '\t' + "Is_Inframe" + '\t' + "Gene_1" + '\t' + "Exon_Num_1" + '\t' + \
-              "Is_Boundary_1" + '\t' + "Offset_1" + '\t' + "Gene_2" + '\t' + "Exon_Num_2" + '\t' + \
-              "Is_Boundary_2" + '\t' + "Offset_2", file = hout)
+    with open(input_file, 'r') as hin:
+        input_header = hin.readline().rstrip('\n').split('\t')
 
     with open(input_file, 'r') as hin, open(output_file + ".tmp3.junc1.gene.bed", 'r') as hin_g1, open(output_file + ".tmp3.junc2.gene.bed", 'r') as hin_g2, \
       open(output_file + ".tmp3.junc1.exon.bed", 'r') as hin_e1, open(output_file + ".tmp3.junc2.exon.bed", 'r') as hin_e2, \
-      open(output_file + ".tmp3.junc12.coding_size.bed") as hin_c, open(output_file, 'a') as hout:
+      open(output_file, 'w') as hout:
 
-        for line, line_g1, line_g2, line_e1, line_e2, line_c in zip(hin, hin_g1, hin_g2, hin_e1, hin_e2, hin_c):
+        csvwriter = csv.DictWriter(hout, delimiter='\t', lineterminator='\n', fieldnames=["SJ_" + str(i) for i in range(1, len(input_header) + 1)] + [
+#            "Splicing_Class", "Is_Inframe", "Gene_1", "Symbol_1", "Exon_Num_1", "Is_Boundary_1", "Offset_1", "Gene_2", "Symbol_2", "Exon_Num_2", "Is_Boundary_2", "Offset_2"
+            "Splicing_Class", "Gene_1", "Symbol_1", "MANE_1", "Is_Boundary_1", "Offset_1", "Gene_2", "Symbol_2", "MANE_2", "Is_Boundary_2", "Offset_2"
+        ])
+        csvwriter.writeheader()
+
+        for line, line_g1, line_g2, line_e1, line_e2 in zip(hin, hin_g1, hin_g2, hin_e1, hin_e2):
 
             F = line.rstrip('\n').split('\t')
-            F_g1, F_g2, F_e1, F_e2, F_c = line_g1.rstrip('\n').split('\t'), line_g2.rstrip('\n').split('\t'), \
-                                            line_e1.rstrip('\n').split('\t'), line_e2.rstrip('\n').split('\t'), line_c.rstrip('\n').split('\t')
+            F_g1, F_g2, F_e1, F_e2 = line_g1.rstrip('\n').split('\t'), line_g2.rstrip('\n').split('\t'), \
+                                     line_e1.rstrip('\n').split('\t'), line_e2.rstrip('\n').split('\t')
 
             chr_name, sj_start, sj_end = F[0], int(F[1]) - 1, int(F[1]) + 1
             sj_id = ','.join([F[0], F[1], F[2]])
             ##########
 
             # key check
-            if not sj_id == F_g1[0] == F_g2[0] == F_e1[0] == F_e2[0] == F_c[0]:
+            if not sj_id == F_g1[0] == F_g2[0] == F_e1[0] == F_e2[0]:
                 print("Inconsistency of splicing junction keys in the information files", file = sys.stderr)
-                print(sj_id, F_g1[0], F_g2[0], F_e1[0], F_e2[0], F_c[0])
+                print(sj_id, F_g1[0], F_g2[0], F_e1[0], F_e2[0])
                 sys.exit(1)
 
             gene1 = F_g1[1].split(',') if F_g1[1] != "---" else []
-            gene2 = F_g2[1].split(',') if F_g2[1] != "---" else [] 
+            gene2 = F_g2[1].split(',') if F_g2[1] != "---" else []
+            symbol1 = F_g1[2].split(',') if F_g1[2] != "---" else []
+            symbol2 = F_g2[2].split(',') if F_g2[2] != "---" else []
+            mane1 = F_g1[3].split(',') if F_g1[2] != "---" else []
+            mane2 = F_g2[3].split(',') if F_g2[2] != "---" else []
 
             exon1, junction1, offset1 = {}, {}, {}
             for tmp_gene, tmp_exon_num, tmp_edge, tmp_offset in zip(F_e1[1].split(','), F_e1[2].split(','), F_e1[3].split(','), F_e1[4].split(',')):
@@ -374,200 +398,91 @@ def juncutils_annotate(input_file, output_file, ucsc_gene_file, junction_margin,
                 if tmp_edge != "---": junction2[tmp_gene] = tmp_edge
                 if tmp_offset != "---": offset2[tmp_gene] = tmp_offset
 
-
-            gene2coding_size = {}
-            for tmp_gene, tmp_coding_size in zip(F_c[1].split(','), F_c[2].split(',')):
-                if tmp_gene == "---": continue
-                gene2coding_size[tmp_gene] = int(tmp_coding_size)
- 
-
             spliceClass = ""
-            in_frame = "---"
-            checkGenes = list(set(gene1 + gene2))
+            checkGenes = gene1 + gene2
+
             ##########
-            # check for know junction
-            passGene = []
-            for gene in checkGenes:
+            # check for know junction or exon skip
+            spliceClass = ""
+            for gene_index, gene in enumerate(checkGenes):
                 if gene in gene1 and gene in gene2 and gene in junction1 and gene in junction2:
-                    if junction1[gene] == "e" and junction2[gene] == "s" and exon2[gene] - exon1[gene] == 1: passGene.append(gene)
-                    if junction2[gene] == "e" and junction1[gene] == "s" and exon1[gene] - exon2[gene] == 1: passGene.append(gene)
+                    if (junction1[gene] == "e" and junction2[gene] == "s" and exon2[gene] - exon1[gene] > 0) or \
+                       (junction2[gene] == "e" and junction1[gene] == "s" and exon1[gene] - exon2[gene] > 0):
+                        spliceClass = "Known or Exon skipping"
+                        break
 
-            if len(passGene) > 0: spliceClass = "Known"
-
-            ##########
-            # check for exon skip
-            if spliceClass == "":
-                passGene = []
-                inframe_gene = []
-                for gene in checkGenes:
-                    if gene in gene1 and gene in gene2 and gene in junction1 and gene in junction2:
-                        if (junction1[gene] == "e" and junction2[gene] == "s" and exon2[gene] - exon1[gene] > 1) or \
-                           (junction2[gene] == "e" and junction1[gene] == "s" and exon1[gene] - exon2[gene] > 1): 
-                            passGene.append(gene)
-
-                            sc_size = gene2coding_size[gene] if gene in gene2coding_size else 0
-                            # sc_size = spliced_coding_size(gene, None, chr_name, sj_start, sj_end, coding_tb, exon_margin)
-                            if sc_size != 0 and sc_size % 3 == 0:
-                                inframe_gene.append(gene)
-
-                if len(passGene) > 0: spliceClass = "Exon skipping"
-                if len(inframe_gene) > 0: in_frame = "In-frame"
+            if spliceClass != "":
+                #out_csvobj = {
+                #    "Splicing_Class": "Known or Exon skipping", 
+                #    "Gene_1": '---', 
+                #    "Symbol_1": '---', 
+                #    "Is_Boundary_1": '---', 
+                #    "Offset_1": '---', 
+                #    "Gene_2": '---', 
+                #    "Symbol_2": '---', 
+                #    "Is_Boundary_2": '---', 
+                #    "Offset_2": '---'
+                #}
+                #for i in range(0, len(F)):
+                #    out_csvobj["SJ_" + str(i+1)] = F[i]
+                #csvwriter.writerow(out_csvobj)
+                continue
 
             ##########
-            # check for alternative-3'-splice-site
-            if spliceClass == "":
-                passGene = []
-                inframe_gene = []
-                for gene in checkGenes:
-                    if gene in gene1 and gene in gene2:
-                        if (gene in junction1 and junction1[gene] == "e" and gene not in junction2 and gene in exon2) or \
-                           (gene in junction2 and junction2[gene] == "e" and gene not in junction1 and gene in exon1):
-                            passGene.append(gene)
+            # check for alternative-3'-splice-site or alternative-5'-splice-site
+            passGene_acceptor = []
+            passGene_donor = []
+            for gene_index, gene in enumerate(checkGenes):
+                if gene in gene1 and gene in gene2:
+                    if (gene in junction1 and junction1[gene] == "e" and gene not in junction2) or \
+                       (gene in junction2 and junction2[gene] == "e" and gene not in junction1):
+                        passGene_acceptor.append(gene_index)
 
-                            sc_size = gene2coding_size[gene] if gene in gene2coding_size else 0
-                            # sc_size = spliced_coding_size(gene, None, chr_name, sj_start, sj_end, coding_tb, exon_margin)
-                            if sc_size != 0 and sc_size % 3 == 0:
-                                inframe_gene.append(gene)
+                    if (gene in junction1 and junction1[gene] == "s" and gene not in junction2) or \
+                       (gene in junction2 and junction2[gene] == "s" and gene not in junction1):
+                        passGene_donor.append(gene_index)
 
-                if len(passGene) > 0: spliceClass = "Alternative 3'SS"
-                if len(inframe_gene) > 0: in_frame = "In-frame"
-
-
-            # check for alternative-5'-splice-site
-            if spliceClass == "":
-                passGene = []
-                inframe_gene = []
-                for gene in checkGenes:
-                    if gene in gene1 and gene in gene2:
-                        if (gene in junction1 and junction1[gene] == "s" and gene not in junction2 and gene in exon2) or \
-                           (gene in junction2 and junction2[gene] == "s" and gene not in junction1 and gene in exon1):
-                            passGene.append(gene)
-
-                            sc_size = gene2coding_size[gene] if gene in gene2coding_size else 0
-                            # sc_size = spliced_coding_size(gene, None, chr_name, sj_start, sj_end, coding_tb, exon_margin)
-                            if sc_size != 0 and sc_size % 3 == 0:
-                                inframe_gene.append(gene)
-
-                if len(passGene) > 0: spliceClass = "Alternative 5'SS"
-                if len(inframe_gene) > 0: in_frame = "In-frame"
-
-            ##########
-            # check for intronic-alternative-3'-splice-site
-            if spliceClass == "":
-                passGene = []
-                inframe_gene = []
-                for gene in checkGenes:
-                    if gene in gene1 and gene in gene2:
-                        if (gene in junction1 and junction1[gene] == "e" and gene not in junction2 and gene not in exon2) or \
-                           (gene in junction2 and junction2[gene] == "e" and gene not in junction1 and gene not in exon1):
-                            passGene.append(gene)
-            
-                if len(passGene) > 0: spliceClass = "Intronic alternative 3'SS"
-
-            # check for intronic-alternative-5'-splice-site
-            if spliceClass == "":
-                passGene = []
-                inframe_gene = []
-                for gene in checkGenes:
-                    if gene in gene1 and gene in gene2:
-                        if (gene in junction1 and junction1[gene] == "s" and gene not in junction2 and gene not in exon2) or \
-                           (gene in junction2 and junction2[gene] == "s" and gene not in junction1 and gene not in exon1):
-                            passGene.append(gene)
-                
-                if len(passGene) > 0: spliceClass = "Intronic alternative 5'SS"
-
-            ##########
-            # within-exon
-            if spliceClass == "":
-                passGene = []
-                inframe_gene = []
-                for gene in checkGenes:
-                    if gene in gene1 and gene in gene2 and gene in exon1 and gene in exon2:
-                        if exon1[gene] == exon2[gene]:
-                            passGene.append(gene)
-
-                            sc_size = gene2coding_size[gene] if gene in gene2coding_size else 0
-                            # sc_size = spliced_coding_size(gene, None, chr_name, sj_start, sj_end, coding_tb, exon_margin)
-                            if sc_size != 0 and sc_size % 3 == 0:
-                                inframe_gene.append(gene)
-
-                if len(passGene) > 0: spliceClass = "Within exon"
-                if len(inframe_gene) > 0: in_frame = "In-frame"
-
-            ##########
-            # check for exon-exon-junction
-            if spliceClass == "":
-                passGene = []
-                inframe_gene = []
-                for gene in checkGenes:
-                    if gene in gene1 and gene in gene2:
-                        if gene in exon1 and gene in exon2:
-                            passGene.append(gene)
-
-                            sc_size = gene2coding_size[gene] if gene in gene2coding_size else 0
-                            # sc_size = spliced_coding_size(gene, None, chr_name, sj_start, sj_end, coding_tb, exon_margin)
-                            if sc_size != 0 and sc_size % 3 == 0:
-                                inframe_gene.append(gene)
-
-                if len(passGene) > 0: spliceClass = "Exon exon junction"
-                if len(inframe_gene) > 0: in_frame = "In-frame"
-
-            ##########
-            # check for within-gene 
-            if spliceClass == "":
-                passGene = []
-                for gene in checkGenes:
-                    if gene in gene1 and gene in gene2 and gene: passGene.append(gene)   
-            
-                if len(passGene) > 0: spliceClass = "Within gene"
-
-
-            ##########
-            # check for spliced-chimera 
-            if spliceClass == "":
-                passGene = []
-                for g1 in gene1:
-                    for g2 in gene2:
-                        if (g1 in junction1 and junction1[g1] == "s" and g2 in junction2 and junction2[g2] == "e") or \
-                           (g1 in junction1 and junction1[g1] == "e" and g2 in junction2 and junction2[g2] == "s"): 
-                            passGene.append(g1 + ',' + g2)
-
-                            # sc_size = gene2coding_size[gene] if gene in gene2coding_size else 0
-                            # sc_size = spliced_coding_size(gene, None, chr_name, sj_start, sj_end, coding_tb, exon_margin)
-                            # if sc_size != 0 and sc_size % 3 == 0:
-                            #     inframe_gene.append(gene)
-
-
-                if len(passGene) > 0: spliceClass = "Spliced chimera"
-                # if len(inframe_gene) > 0: in_frame = "in-frame"
-
-            ##########
-            # check for unspliced-chimera 
-            if spliceClass == "":
-                passGene = []
-                for g1 in gene1:
-                    for g2 in gene2:
-                        passGene.append(g1 + ',' + g2)
-
-                if len(passGene) > 0: spliceClass = "Unspliced chimera"
-
-
-            if spliceClass == "": spliceClass = "Other"
+            passGene = []
+            if len(passGene_acceptor) > 0:
+                spliceClass = "Alternative 3'SS"
+                passGene.extend(passGene_acceptor)
+            elif len(passGene_donor) > 0:
+                spliceClass = "Alternative 5'SS"
+                passGene.extend(passGene_donor)
+            else:
+                #out_csvobj = {
+                #    "Splicing_Class": "Other", 
+                #    "Gene_1": '---', 
+                #    "Symbol_1": '---', 
+                #    "Is_Boundary_1": '---', 
+                #    "Offset_1": '---', 
+                #    "Gene_2": '---', 
+                #    "Symbol_2": '---', 
+                #    "Is_Boundary_2": '---', 
+                #    "Offset_2": '---'
+                #}
+                #for i in range(0, len(F)):
+                #    out_csvobj["SJ_" + str(i+1)] = F[i]
+                #csvwriter.writerow(out_csvobj)
+                continue
             
 
             # summarize the exon and junction information for display
+            symbols = symbol1 + symbol2
+            manes = mane1 + mane2
+
             geneInfo1 = []
-            exonInfo1 = []
+            symbolInfo1 = []
+            maneInfo1 = []
             junctionInfo1 = []
             offsetInfo1 = []
             if len(gene1) > 0:
                 for g1 in sorted(gene1):
-                    if g1 not in passGene: continue 
+                    g1_index = checkGenes.index(g1)
+                    if g1_index not in passGene: continue 
                     geneInfo1.append(g1)
-                    if g1 in exon1: 
-                        exonInfo1.append(str(exon1[g1]))
-                    else:
-                        exonInfo1.append("*")
+                    symbolInfo1.append(symbols[g1_index])
+                    maneInfo1.append(manes[g1_index])
 
                     if g1 in junction1:
                         junctionInfo1.append(junction1[g1])
@@ -581,23 +496,24 @@ def juncutils_annotate(input_file, output_file, ucsc_gene_file, junction_margin,
 
             if len(geneInfo1) == 0: 
                 geneInfo1.append("---")
-                exonInfo1.append("---")
+                symbolInfo1.append("---")
+                maneInfo1.append("---")
                 junctionInfo1.append("---")
                 offsetInfo1.append("---")
 
             geneInfo2 = []
-            exonInfo2 = []
+            symbolInfo2 = []
+            maneInfo2 = []
             junctionInfo2 = []
             offsetInfo2 = []
             if len(gene2) > 0:
                 for g2 in sorted(gene2):
-                    if g2 not in passGene: continue
+                    g2_index = checkGenes.index(g2)
+                    if g2_index not in passGene: continue
                     geneInfo2.append(g2)
-                    if g2 in exon2:
-                        exonInfo2.append(str(exon2[g2]))
-                    else:
-                        exonInfo2.append("*")
-                    
+                    symbolInfo2.append(symbols[g2_index])
+                    maneInfo2.append(manes[g2_index])
+
                     if g2 in junction2:
                         junctionInfo2.append(junction2[g2])
                     else:
@@ -610,22 +526,39 @@ def juncutils_annotate(input_file, output_file, ucsc_gene_file, junction_margin,
 
             if len(geneInfo2) == 0:
                 geneInfo2.append("---")
-                exonInfo2.append("---")
+                symbolInfo2.append("---")
+                maneInfo2.append("---")
                 junctionInfo2.append("---")
                 offsetInfo2.append("---")
 
          
-
-            print('\t'.join(F) + '\t' + spliceClass + '\t' + in_frame + '\t' + '\t'.join([';'.join(geneInfo1), ';'.join(exonInfo1), ';'.join(junctionInfo1), ';'.join(offsetInfo1), ';'.join(geneInfo2), ';'.join(exonInfo2), ';'.join(junctionInfo2), ';'.join(offsetInfo2)]), file = hout)
+            out_csvobj = {
+                "Splicing_Class": spliceClass, 
+                #"Is_Inframe": in_frame, 
+                "Gene_1": ';'.join(geneInfo1), 
+                "Symbol_1": ';'.join(symbolInfo1), 
+                "MANE_1": ';'.join(maneInfo1), 
+                #"Exon_Num_1": ';'.join(exonInfo1), 
+                "Is_Boundary_1": ';'.join(junctionInfo1), 
+                "Offset_1": ';'.join(offsetInfo1), 
+                "Gene_2": ';'.join(geneInfo2), 
+                "Symbol_2": ';'.join(symbolInfo2), 
+                "MANE_2": ';'.join(maneInfo2), 
+                #"Exon_Num_2": ';'.join(exonInfo2), 
+                "Is_Boundary_2": ';'.join(junctionInfo2), 
+                "Offset_2": ';'.join(offsetInfo2)
+            }
+            for i in range(0, len(F)):
+                out_csvobj["SJ_" + str(i+1)] = F[i]
+            csvwriter.writerow(out_csvobj)
 
     if not debug:
         subprocess.check_call(["rm", "-rf", output_file + ".tmp3.junc1.gene.bed"])
         subprocess.check_call(["rm", "-rf", output_file + ".tmp3.junc2.gene.bed"])
         subprocess.check_call(["rm", "-rf", output_file + ".tmp3.junc1.exon.bed"])
         subprocess.check_call(["rm", "-rf", output_file + ".tmp3.junc2.exon.bed"])
-        subprocess.check_call(["rm", "-rf", output_file + ".tmp3.junc12.coding_size.bed"])
 
-def juncmut_juncutils(input_file, output_file, control_list, genecode_gene_file, genome_id, is_grc, read_num_thres, junction_margin, exon_margin, debug):
+def juncmut_juncutils(input_file, output_file, control_list, genecode_gene_file, read_num_thres, junction_margin, exon_margin, debug):
 
     target_rnames = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "X", "Y"]
 
@@ -654,10 +587,11 @@ def juncmut_juncutils(input_file, output_file, control_list, genecode_gene_file,
         shutil.copy(cur_infile, tmpfile2)
         tmpfile_list.append(tmpfile2)
 
-    juncutils_annotate(tmpfile2, output_file, genecode_gene_file, junction_margin, exon_margin, "gencode", genome_id, is_grc, debug)
+    juncutils_annotate(tmpfile2, output_file, genecode_gene_file, junction_margin, exon_margin, debug)
 
-    for tfile in tmpfile_list:
-        os.remove(tfile)
+    if not debug:
+        for tfile in tmpfile_list:
+            os.remove(tfile)
 
 if __name__== "__main__":
     import sys
@@ -666,4 +600,4 @@ if __name__== "__main__":
     control_list = sys.argv[3].split(",")
     genecode_gene_file = sys.argv[4]
 
-    juncmut_juncutils(input_file, output_file, control_list, genecode_gene_file, "hg38", False, 1, 3, 30, True)
+    juncmut_juncutils(input_file, output_file, control_list, genecode_gene_file, 1, 3, 30, True)

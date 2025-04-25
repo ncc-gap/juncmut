@@ -49,7 +49,18 @@ def sjclass_classify(input_file, output_file, bam_file, sj_file, depth_th):
             juncmut_secondary_sj = "NA"
             num_skipped_exon = "NA"
             closed_exon_num = "NA"
-            print(csvobj["SJ_key"])
+
+            csvobj["Juncmut_primary_SJ"] = "NA"
+            csvobj["Juncmut_hijacked_SJ"] = "NA"
+            csvobj["Juncmut_secondary_SS"] = juncmut_secondary_ss
+            csvobj["Juncmut_secondary_SJ"] = juncmut_secondary_sj
+            csvobj["Closed_exon_num"] = closed_exon_num
+            csvobj["Juncmut_predicted_splicing_type"] = juncmut_predicted_splicing_type
+            csvobj["Num_skipped_exon"] = num_skipped_exon
+            if csvobj["Gencode_exon_starts"] == "NA":
+                csvwriter.writerow(csvobj)
+                continue
+
             (juncmut_primary_sj_chr, juncmut_primary_sj_pos) = csvobj["SJ_key"].split(":")
             (juncmut_primary_sj_start, juncmut_primary_sj_end) = list(map(int, juncmut_primary_sj_pos.split('-')))
             splice_type = csvobj["Created_motif"] + csvobj["SJ_strand"]
@@ -64,6 +75,7 @@ def sjclass_classify(input_file, output_file, bam_file, sj_file, depth_th):
             # o--->
             if splice_type in ["Donor+", "Acceptor-"]:
                 if juncmut_primary_ss - 1 in gencode_exon_ends:
+                    csvwriter.writerow(csvobj)
                     continue
 
                 for e_count in range(hijacked_exon_num, -1, -1):
@@ -130,6 +142,7 @@ def sjclass_classify(input_file, output_file, bam_file, sj_file, depth_th):
             # <---o
             elif splice_type in ["Donor-", "Acceptor+"]:
                 if juncmut_primary_ss in gencode_exon_starts:
+                    csvwriter.writerow(csvobj)
                     continue
 
                 for e_count in range(hijacked_exon_num, gencode_exon_count):

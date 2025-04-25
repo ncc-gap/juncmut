@@ -167,6 +167,24 @@ def sjclass_frame(input_file, output_file, reference):
             start_codon_disruption_num = 0
             stop_codon_disruption_num = 0
 
+            csvobj["Mut_pos_in_motif"] = "NA"
+            csvobj["Is_coding_SJ"] = "NA"
+            csvobj["Start_codon_disruption_num"] = "NA"
+            csvobj["Stop_codon_disruption_num"] = "NA"
+            csvobj["Is_inframe"] = is_inframe
+            csvobj["Is_PTC"] = is_ptc
+            csvobj["Is_NMD"] = is_nmd
+            csvobj["Protein_description_change"] = protein_description_change
+            csvobj["Protein_description_change_short"] = protein_description_change_short
+            csvobj["Protein_description_first_pos"] = protein_description_first_pos
+            csvobj["Protein_description_last_pos_ref"] = protein_description_last_pos_ref
+            csvobj["Protein_description_last_pos_target"] = protein_description_last_pos_target
+            csvobj["Protein_description_change_mut"] = protein_description_change_mut
+            csvobj["Protein_description_change_mut_short"] = protein_description_change_mut_short
+            if csvobj["Gencode_exon_starts"] == "NA":
+                csvwriter.writerow(csvobj)
+                continue
+
             mut_key_pos = int(csvobj["Mut_key"].split(',')[1])
             mut_key_allele = csvobj["Mut_key"].split(',')[3]
             (sj_key_chr, sj_key_pos) = csvobj["SJ_key"].split(":")
@@ -190,7 +208,7 @@ def sjclass_frame(input_file, output_file, reference):
                 mut_pos_in_motif = juncmut_primary_ss - mut_key_pos
             else:
                 mut_pos_in_motif = "NA"
-            
+
             ## the gene region of sj
 
             if gencode_cds_start == gencode_cds_end:
@@ -444,7 +462,7 @@ def sjclass_frame(input_file, output_file, reference):
                 if is_inside_exon:
                     ref_cds_exon_mut_translate = translate(ref_cds_exon_mut, is_inframe, is_ptc, False, ref_cds_exon_len, ref_cds_len, last_exon_len)
                     #result2 = protein_description(ref_cds_len, ref_cds_exon_translate, ref_cds_exon_mut_translate)
-                    result2 = in_frame_description(ref_cds_exon_translate, ref_cds_exon_mut_translate)
+                    result2 = juncmut.protein.in_frame_description(ref_cds_exon_translate, ref_cds_exon_mut_translate)
                     
                     protein_description_change_mut = result2[0]
                     protein_description_change_mut_short = convert_aa(protein_description_change_mut, is_inframe, is_ptc)

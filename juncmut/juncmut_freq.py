@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-def juncmut_freq(input_file, output_file, original_sj_file, genecode_gene_file, read_num_thres, freq_thres):
+def juncmut_freq(input_file, output_file, original_sj_file, read_num_thres, freq_thres):
     import csv
     import gzip
 
@@ -18,6 +18,8 @@ def juncmut_freq(input_file, output_file, original_sj_file, genecode_gene_file, 
                     "Created_motif": csvobj["Created_motif"],
                     "SJ_strand": csvobj["SJ_strand"],
                     "Transcript": csvobj["Transcript"],
+                    "Gene": csvobj["Gene"],
+                    "MANE": csvobj["MANE"],
                 }
             junc_obj[sj_key]["Start_ori"].extend(csvobj["Start_ori"].split(";"))
             junc_obj[sj_key]["End_ori"].extend(csvobj["End_ori"].split(";"))
@@ -46,7 +48,7 @@ def juncmut_freq(input_file, output_file, original_sj_file, genecode_gene_file, 
 
     with open(output_file, 'w') as hout:
         csvwriter = csv.DictWriter(hout, delimiter='\t', lineterminator='\n', fieldnames=[
-            "SJ_key", "Created_motif", "SJ_strand", "SJ_read_count", "Transcript", "Gene", "SJ_depth", "SJ_freq", 
+            "SJ_key", "Created_motif", "SJ_strand", "Transcript", "Gene", "MANE", "SJ_read_count", "SJ_depth", "SJ_freq"
         ])
         csvwriter.writeheader()
 
@@ -54,9 +56,9 @@ def juncmut_freq(input_file, output_file, original_sj_file, genecode_gene_file, 
             (sj_key_chr, sj_key_start, sj_key_end) = sj_key.split(",")
 
             depth = 0
-            splicing_type = junc_obj[sj_key]["Created_motif"] + junc_obj[sj_key]["SJ_strand"]
+            splice_type = junc_obj[sj_key]["Created_motif"] + junc_obj[sj_key]["SJ_strand"]
             # strand=+ 5'SS end-side or strand=- 3'SS end-side
-            if splicing_type == "Donor+" or splicing_type == "Acceptor-":
+            if splice_type == "Donor+" or splice_type == "Acceptor-":
                 end_list = sorted(list(set(junc_obj[sj_key]["End_ori"]+[sj_key_end])))
                 for pos in end_list:
                     depth += original_sj_ends.get("%s_%s" % (sj_key_chr, pos), 0)
@@ -69,23 +71,16 @@ def juncmut_freq(input_file, output_file, original_sj_file, genecode_gene_file, 
             freq = junc_obj[sj_key]["SJ_read_count_total"]/depth
 
             if junc_obj[sj_key]["SJ_read_count_total"] >= read_num_thres and freq >= freq_thres:
-                gene = ""
-                with gzip.open(genecode_gene_file, "rt") as hin_gencode:
-                    for record in hin_gencode:
-                        R = record.rstrip('\n').split('\t')
-                        if R[1] == junc_obj[sj_key]["Transcript"]:
-                            gene = R[12]
-                            break
-
                 out_csvobj = {
                     "SJ_key": sj_key,
                     "Created_motif": junc_obj[sj_key]["Created_motif"],
                     "SJ_strand": junc_obj[sj_key]["SJ_strand"],
                     "SJ_read_count": junc_obj[sj_key]["SJ_read_count_total"],
-                    "Transcript": junc_obj[sj_key]["Transcript"],
-                    "Gene": gene,
                     "SJ_depth": depth,
                     "SJ_freq": freq,
+                    "Transcript": junc_obj[sj_key]["Transcript"],
+                    "Gene": junc_obj[sj_key]["Gene"],
+                    "MANE": junc_obj[sj_key]["MANE"],
                 }
                 csvwriter.writerow(out_csvobj)
 
@@ -94,6 +89,5 @@ if __name__== "__main__":
     input_file = sys.argv[1]
     output_file = sys.argv[2]
     original_sj_file = sys.argv[3]
-    genecode_gene_file = sys.argv[4]
 
-    juncmut_freq(input_file, output_file, original_sj_file, genecode_gene_file, 3, 0.05)
+    juncmut_freq(input_file, output_file, original_sj_file, 3, 0.05)
