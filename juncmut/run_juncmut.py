@@ -24,31 +24,31 @@ def detect_main(args):
 
     juncmut_assadj(
         args.output_file+".juncutils.txt",
-        args.output_file+".juncutils.assadj.txt"
+        args.output_file+".assadj.txt"
     )
 
     juncmut_freq(
-        args.output_file+".juncutils.assadj.txt", 
-        args.output_file+".juncutils.assadj.freq.txt",
+        args.output_file+".assadj.txt", 
+        args.output_file+".freq.txt",
         args.sj_file, 
         args.read_num_thres, args.freq_thres
     )
 
     juncmut_mutpre(
-        args.output_file+".juncutils.assadj.freq.txt",
-        args.output_file+".juncutils.assadj.freq.mutpre.txt", 
+        args.output_file+".freq.txt",
+        args.output_file+".mutpre.txt", 
         args.reference
     )
 
     juncmut_intersect(
-        args.output_file+".juncutils.assadj.freq.mutpre.txt", 
-        args.output_file+".juncutils.assadj.freq.mutpre.intersect.txt", 
+        args.output_file+".mutpre.txt", 
+        args.output_file+".intersect.txt", 
         args.sj_file
     )
 
     juncmut_rnamut(
-        args.output_file+".juncutils.assadj.freq.mutpre.intersect.txt",
-        args.output_file+".juncutils.assadj.freq.mutpre.intersect.rnamut.txt", 
+        args.output_file+".intersect.txt",
+        args.output_file+".rnamut.txt", 
         args.bam_file, 
         args.reference,
         args.mut_num_thres, 
@@ -57,7 +57,7 @@ def detect_main(args):
     )
 
     juncmut_realign(
-        args.output_file+".juncutils.assadj.freq.mutpre.intersect.rnamut.txt",
+        args.output_file+".rnamut.txt",
         args.output_file, 
         args.bam_file, 
         args.reference, 
@@ -67,11 +67,11 @@ def detect_main(args):
 
     if not args.debug:
         os.remove(args.output_file+".juncutils.txt")
-        os.remove(args.output_file+".juncutils.assadj.txt")
-        os.remove(args.output_file+".juncutils.assadj.freq.txt")
-        os.remove(args.output_file+".juncutils.assadj.freq.mutpre.txt")
-        os.remove(args.output_file+".juncutils.assadj.freq.mutpre.intersect.txt")
-        os.remove(args.output_file+".juncutils.assadj.freq.mutpre.intersect.rnamut.txt")
+        os.remove(args.output_file+".assadj.txt")
+        os.remove(args.output_file+".freq.txt")
+        os.remove(args.output_file+".mutpre.txt")
+        os.remove(args.output_file+".intersect.txt")
+        os.remove(args.output_file+".rnamut.txt")
 
 def filt_bam_main(args):
     from .juncmut_filt_bam import juncmut_filt_bam

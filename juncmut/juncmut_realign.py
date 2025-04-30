@@ -9,6 +9,29 @@ import edlib
 import gzip
 import subprocess
 
+def write_junc_info(csvwriter, exon_info):
+    if exon_info["strand"] == "-":
+        exon_list = list(reversed(exon_info["exon"]))
+    else:
+        exon_list = exon_info["exon"]
+
+    for i in range(len(exon_list)):
+        if i == 0:
+            continue
+
+        if exon_list[i-1][1] >= exon_list[i][0]:
+            raise Exception(exon_info)
+
+        csvwriter.writerow({
+            "Chr": exon_info["chr"],
+            "Junction_start": exon_list[i-1][1],
+            "Junction_end": exon_list[i][0],
+            "Transcript_id": exon_info["transcript_id"],
+            "Score": 0, 
+            "Strand": exon_info["strand"]
+        })
+
+
 def make_junc_info(output_file, gencode_gene_file):
     if gencode_gene_file.endswith("gtf.gz"):
         key_value_split = " "
@@ -24,7 +47,12 @@ def make_junc_info(output_file, gencode_gene_file):
             "Chr", "Junction_start", "Junction_end", "Transcript_id", "Score", "Strand"
         ])
 
-        prev_end = None
+        exon_info = {
+            "transcript_id": "",
+            "exon": [],
+            "chr": "",
+            "strand": "",
+        }
         for line in hin:
             if line.startswith("#"):
                 continue
@@ -34,14 +62,6 @@ def make_junc_info(output_file, gencode_gene_file):
             if feature_type != "exon":
                 continue
 
-            if prev_end is None:
-                prev_end = F[4]
-                continue
-
-            chr = F[0]
-            start = int(F[3]) - 1
-            strand = F[6]
-
             transcript_id = ""
             for item in F[8].rstrip(";").split(";"):
                 (key, value) = item.strip(" ").replace('"', '').split(key_value_split)
@@ -49,15 +69,20 @@ def make_junc_info(output_file, gencode_gene_file):
                     transcript_id = value
                     break
 
-            csvwriter_exon.writerow({
-                "Chr": chr,
-                "Junction_start": prev_end,
-                "Junction_end": start,
-                "Transcript_id": transcript_id,
-                "Score": 0, 
-                "Strand": strand
-            })
-            prev_end = F[4]
+            if exon_info["transcript_id"] != transcript_id:
+                if exon_info["transcript_id"] != "":
+                    write_junc_info(csvwriter_exon, exon_info)
+
+                exon_info = {
+                    "transcript_id": transcript_id,
+                    "exon": [],
+                    "chr":  F[0],
+                    "strand": F[6],
+                }
+            exon_info["exon"].append([int(F[3]) - 1, int(F[4])])
+
+        if exon_info["transcript_id"] != "":
+            write_junc_info(csvwriter_exon, exon_info)
 
     with open(output_file + ".sorted.tmp", 'w') as hout:
         subprocess.check_call(["sort", "-k1,1", "-k2,2n", "-k3,3n", output_file + ".unsorted.tmp"], stdout = hout)
