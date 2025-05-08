@@ -40,7 +40,7 @@ def annot_cgc(input_file, output_file, cgc_file):
             #csvobj["Is_CGC"] = "TRUE" if csvobj["Gencode_name2"] in cgc2role else "FALSE"
             #csvobj["CGC_role"] = cgc2role[csvobj["Gencode_name2"]] if csvobj["Gencode_name2"] in cgc2role else "-"
             csvobj["Is_CGC"] = "TRUE" if csvobj["Gene"] in cgc2role else "FALSE"
-            csvobj["CGC_role"] = cgc2role[csvobj["Gene"]] if csvobj["Gene"] in cgc2role else "-"
+            csvobj["CGC_role"] = cgc2role[csvobj["Gene"]] if csvobj["Gene"] in cgc2role else "---"
             csvwriter.writerow(csvobj)
  
 if __name__== "__main__":

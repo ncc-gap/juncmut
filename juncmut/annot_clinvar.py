@@ -41,13 +41,13 @@ def annot_clinvar(input_file, output_file, clinvar_file):
 
     #clinvar_file = f'{path_to_db}/clinvar.vcf.gz'
 
-   
+    NO_DATA = "---"
     gene_pathogenic_list=[]
     with gzip.open(clinvar_file, 'rb') as tin:
         for row in tin:
             if row.decode().startswith('#'): continue
             else:
-                rec, gene = "-","-"
+                rec, gene = NO_DATA, NO_DATA
                 R = row.decode().rstrip("\n").split('\t')
                 # select pathogenic
                 infos = R[7].split(';')
@@ -59,7 +59,7 @@ def annot_clinvar(input_file, output_file, clinvar_file):
                     elif info.startswith("CLNSIG="):
                         rec = info.replace("CLNSIG=", '')
                     
-                if gene != "-" and "pathogenic" in rec.lower():
+                if gene != NO_DATA and "pathogenic" in rec.lower():
                     gene_pathogenic_list.append(gene)
 
     gene_pathogenic_set = set(gene_pathogenic_list)
@@ -80,9 +80,9 @@ def annot_clinvar(input_file, output_file, clinvar_file):
             (mut_chr, mut_pos, mut_ref, mut_alt) = csvobj["Mut_key"].split(',')
             mut_pos = int(mut_pos)
 
-            rec_allele, rec_allele_id, rec_cln_dn, rec_cln_disdb, rec_cln_sig, rec_mc = '-', '-', '-', '-', '-', '-'
-            m5_rec_pos, m5_rec_allele, m5_rec_allele_id, m5_rec_cln_dn, m5_rec_cln_disdb, m5_rec_cln_sig, m5_rec_mc = '-', '-', '-', '-', '-', '-', '-'
-            norm_rec_pos, norm_rec_allele, norm_rec_allele_id, norm_rec_cln_dn, norm_rec_cln_disdb, norm_rec_cln_sig, norm_rec_mc = '-', '-', '-', '-', '-', '-', '-'
+            rec_allele, rec_allele_id, rec_cln_dn, rec_cln_disdb, rec_cln_sig, rec_mc = NO_DATA, NO_DATA, NO_DATA, NO_DATA, NO_DATA, NO_DATA
+            m5_rec_pos, m5_rec_allele, m5_rec_allele_id, m5_rec_cln_dn, m5_rec_cln_disdb, m5_rec_cln_sig, m5_rec_mc = NO_DATA, NO_DATA, NO_DATA, NO_DATA, NO_DATA, NO_DATA, NO_DATA
+            norm_rec_pos, norm_rec_allele, norm_rec_allele_id, norm_rec_cln_dn, norm_rec_cln_disdb, norm_rec_cln_sig, norm_rec_mc = NO_DATA, NO_DATA, NO_DATA, NO_DATA, NO_DATA, NO_DATA, NO_DATA
 
             # around alt_pos
             tabix_records =tb.fetch(mut_chr.replace('chr',''), mut_pos - 5, mut_pos + 5)
@@ -155,16 +155,16 @@ def annot_clinvar(input_file, output_file, clinvar_file):
             
             ## within gene 
             # when multiple genes are persent or no gene, skip
-            gene_rec_cln_sig = '-'
-            if "," in gene or gene == "-":
-                gene_rec_cln_sig = '-'
+            gene_rec_cln_sig = NO_DATA
+            if "," in gene or gene == NO_DATA:
+                gene_rec_cln_sig = NO_DATA
             elif gene in gene_pathogenic_set:
                 gene_rec_cln_sig = "Pathogenic"
 
             rec_cln_sig_mod = rec_cln_sig.replace('Conflicting_interpretations_of_pathogenicity', '')
             m5_rec_cln_sig_mod = m5_rec_cln_sig.replace('Conflicting_interpretations_of_pathogenicity', '')
 
-            tier = "-"
+            tier = NO_DATA
             if "pathogenic" in rec_cln_sig_mod.lower():
                 tier = "Tier1"
             elif "pathogenic" in m5_rec_cln_sig_mod.lower():

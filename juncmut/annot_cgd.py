@@ -35,9 +35,9 @@ def annot_cgd(input_file, output_file, cgd_file):
                     age_list.append(cgd_dict[gene]["AGE GROUP"])
 
             if len(condition_list) == 0:
-                condition_list.append("-")
-                inheritance_list.append("-")
-                age_list.append("-")
+                condition_list.append("---")
+                inheritance_list.append("---")
+                age_list.append("---")
 
             csvobj["CGD_condition"] = ','.join(list(set(condition_list)))
             csvobj["CGD_inheritance"] = ','.join(list(set(inheritance_list)))

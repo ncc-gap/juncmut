@@ -21,7 +21,7 @@ def annot_gnomad(input_file, output_file, gnomad, genome_id):
 
             remove_chr = mut_chr.replace('chr', '')
             if remove_chr == "Y":
-                csvobj["gnomAD"] = "na"
+                csvobj["gnomAD"] = "NA"
                 csvobj["gnomAD_AF"] = 0
                 csvwriter.writerow(csvobj)
                 continue
@@ -35,7 +35,7 @@ def annot_gnomad(input_file, output_file, gnomad, genome_id):
             rows = tb.fetch(chr, mut_pos - 1, mut_pos)
 
             cur_AF = 0.0
-            cur_allele = "-"
+            cur_allele = "---"
             if rows is None:
                 rows = []
 

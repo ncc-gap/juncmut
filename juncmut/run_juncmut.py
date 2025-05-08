@@ -160,6 +160,16 @@ def sjclass_main(args):
         os.remove(args.output_file +".transcript.txt")
         os.remove(args.output_file +".classify.txt")
 
+def alu_main(args):
+    from .alu_overlap import alu_overlap
+    from .alu_get_ref_pos import alu_get_ref_pos
+
+    alu_overlap(args.input_file, args.output_file + ".overlap.txt", args.alu_bed)
+    alu_get_ref_pos(args.output_file + ".overlap.txt", args.output_file, args.reference, args.alu)
+    
+    if not args.debug:
+        os.remove(args.output_file +".overlap.txt")
+
 """
 def validate_main(args):
     from .utils import check_reference
