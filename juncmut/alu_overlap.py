@@ -5,7 +5,7 @@ import subprocess
 import os
 import csv
 
-def juncmut_intersect(input_file, output_file, alu_bed):
+def alu_overlap(input_file, output_file, alu_bed):
 
     # collect bed
     mut_dict = {}
@@ -100,5 +100,5 @@ if __name__== "__main__":
     output_file = sys.argv[2]
     alu_bed = sys.argv[3]
     
-    juncmut_intersect(input_file, output_file, alu_bed)
+    alu_overlap(input_file, output_file, alu_bed)
 

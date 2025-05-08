@@ -22,7 +22,7 @@ def reverse_complement(seq):
 
     return("".join(complement.get(base, base) for base in reversed(seq)))
 
-def alu_ref_alu_pos(input_file, output_file, ref, alu):
+def alu_get_ref_pos(input_file, output_file, ref, alu):
     
     if alu == "AluJ0":
         # 283
@@ -139,4 +139,4 @@ if __name__== "__main__":
     ref = sys.argv[3]
     alu = sys.argv[4]
     
-    alu_ref_alu_pos(input_file, output_file, ref, alu)
+    alu_get_ref_pos(input_file, output_file, ref, alu)
