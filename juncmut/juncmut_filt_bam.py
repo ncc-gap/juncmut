@@ -112,7 +112,7 @@ def juncmut_filt_bam(input_file, input_bam, output_bam, genecode_gene_file):
     with open(input_file) as hin:
         csvreader = csv.DictReader(hin, delimiter='\t')
         for csvobj in csvreader:
-            mutkey_chr = csvobj["Mut_key"].split(',')[0]
+            mutkey_chr = csvobj["Mut_key"].split('-')[0]
             sjkey_pos = csvobj["SJ_key"].split(':')[1].split('-')
             sjkey_start = int(sjkey_pos[0])
             sjkey_end = int(sjkey_pos[1])

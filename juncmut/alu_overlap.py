@@ -16,7 +16,7 @@ def alu_overlap(input_file, output_file, alu_bed):
                 continue
 
             mut_key = csvobj["Mut_key"]
-            mut_key_chr, mut_key_pos, _, _ = mut_key.split(',')
+            mut_key_chr, mut_key_pos, _, _ = mut_key.split('-')
             mut_key_pos = int(mut_key_pos)
             mut_dict[mut_key] = "%s\t%d\t%d\t%s\t%s\n" % (mut_key_chr, mut_key_pos - 1, mut_key_pos, mut_key, csvobj["SJ_strand"])
 

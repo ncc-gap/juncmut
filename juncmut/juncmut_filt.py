@@ -26,7 +26,7 @@ def juncmut_filt(input_file, output_file):
         for line in hin:
             F = line.rstrip('\n').split('\t')
             
-            mut_key = F[col.index('Mut_key')].split(',')
+            mut_key = F[col.index('Mut_key')].split('-')
             mut_key_chr = mut_key[0]
             mut_key_start = int(mut_key[1])
 

@@ -257,7 +257,7 @@ def juncmut_realign(input_file, output_file, bam_file, reference, gencode_gene_f
             sj_key_end = int(sj_key_end)
             output_obj["SJ_key"] = "%s:%d-%d" % (sj_key_chr, sj_key_start, sj_key_end)
 
-            (mut_key_chr, mut_key_pos, mut_key_ref, mut_key_alt) = csvobj["Mut_key"].split(",")
+            (mut_key_chr, mut_key_pos, mut_key_ref, mut_key_alt) = csvobj["Mut_key"].split("-")
             mut_key_pos = int(mut_key_pos)
 
             splice_type = csvobj["Created_motif"] + csvobj["SJ_strand"]

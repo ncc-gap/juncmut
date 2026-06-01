@@ -104,7 +104,7 @@ def juncmut_gmut(input_file, output_file, dna_bam, reference, is_grc, mut_num_th
         for line in hin:
             F = line.rstrip('\n').split('\t')
             mut_key = F[0]
-            P = mut_key.split(',')
+            P = mut_key.split('-')
             mut_pos = P[1]
            
             if is_grc:
@@ -113,7 +113,7 @@ def juncmut_gmut(input_file, output_file, dna_bam, reference, is_grc, mut_num_th
                 chr_t = P[0].replace('chr', '')
                 chr = 'chr'+chr_t
                 
-            new_mut_key = chr+","+str(mut_pos)+","+P[2]+","+P[3]
+            new_mut_key = chr+"-"+str(mut_pos)+"-"+P[2]+"-"+P[3]
             
             hout1.write(new_mut_key+'\t'+'\t'.join(F[1:int(ncol)])+'\n')
             
@@ -178,10 +178,10 @@ def juncmut_gmut(input_file, output_file, dna_bam, reference, is_grc, mut_num_th
                 #rec3 = col[0] +"\t"+ col[1] +"\t"+ col[2] + "\tG\t" + base + "\t" + str(G_reads) + "\t" + str(G_rate) + "\n"
                 #rec4 = col[0] +"\t"+ col[1] +"\t"+ col[2] + "\tC\t" + base + "\t" + str(C_reads) + "\t" + str(C_rate) + "\n"
                 
-                rec1 = col[0] +","+ col[1] +","+ col[2] + ",A\t" + str(len(base)) + "\t" + str(A_reads) + "\t" + str(A_rate) + "\n"
-                rec2 = col[0] +","+ col[1] +","+ col[2] + ",T\t" + str(len(base)) + "\t" + str(T_reads) + "\t" + str(T_rate) + "\n"
-                rec3 = col[0] +","+ col[1] +","+ col[2] + ",G\t" + str(len(base)) + "\t" + str(G_reads) + "\t" + str(G_rate) + "\n"
-                rec4 = col[0] +","+ col[1] +","+ col[2] + ",C\t" + str(len(base)) + "\t" + str(C_reads) + "\t" + str(C_rate) + "\n"
+                rec1 = col[0] +"-"+ col[1] +"-"+ col[2] + "-A\t" + str(len(base)) + "\t" + str(A_reads) + "\t" + str(A_rate) + "\n"
+                rec2 = col[0] +"-"+ col[1] +"-"+ col[2] + "-T\t" + str(len(base)) + "\t" + str(T_reads) + "\t" + str(T_rate) + "\n"
+                rec3 = col[0] +"-"+ col[1] +"-"+ col[2] + "-G\t" + str(len(base)) + "\t" + str(G_reads) + "\t" + str(G_rate) + "\n"
+                rec4 = col[0] +"-"+ col[1] +"-"+ col[2] + "-C\t" + str(len(base)) + "\t" + str(C_reads) + "\t" + str(C_rate) + "\n"
 
             m2out.write(rec1)
             m2out.write(rec2)

@@ -161,7 +161,7 @@ def sjclass_transcript(input_file, output_file, gencode_gene_file):
         csvreader = csv.DictReader(hin, delimiter='\t')
         csvwriter = csv.DictWriter(hout, delimiter='\t', lineterminator='\n', fieldnames=csvreader.fieldnames + [
             "Gencode_CDS_start", "Gencode_CDS_end", "Gencode_exon_starts", "Gencode_exon_ends", "Gene_type",
-            "Juncmut_hijacked_exon_num","Juncmut_hijacked_SS", "Juncmut_primary_SS", "Juncmut_matching_SS", "SS_shift1", "SS_shift2",
+            "Juncmut_hijacked_exon_num", "Juncmut_hijacked_exon_index","Juncmut_hijacked_SS", "Juncmut_primary_SS", "Juncmut_matching_SS", "SS_shift1", "SS_shift2",
         ])
         csvwriter.writeheader()
 
@@ -184,6 +184,7 @@ def sjclass_transcript(input_file, output_file, gencode_gene_file):
                 csvobj["Gencode_exon_ends"] = "NA"
                 csvobj["Gene_type"] = "NA"
                 csvobj["Juncmut_hijacked_exon_num"] = "NA"
+                csvobj["Juncmut_hijacked_exon_index"] = "NA"
                 csvobj["Juncmut_hijacked_SS"] = "NA"
                 csvobj["Juncmut_primary_SS"] = "NA"
                 csvobj["Juncmut_matching_SS"] = "NA"
@@ -194,9 +195,11 @@ def sjclass_transcript(input_file, output_file, gencode_gene_file):
 
             gencode_exon_starts = list(map(int, transcripts[csvobj["Transcript"]]["Gencode_exon_starts"].rstrip(',').split(',')))
             gencode_exon_ends = list(map(int, transcripts[csvobj["Transcript"]]["Gencode_exon_ends"].rstrip(',').split(',')))
+            gencode_exon_count = transcripts[csvobj["Transcript"]]["Gencode_exon_count"]
 
             juncmut_hijacked_ss = -1
             juncmut_hijacked_exon_num = -1
+            juncmut_hijacked_exon_index = -1
             if splice_type == "Donor+":
                 index_start = gencode_exon_starts.index(juncmut_matching_ss)
                 if index_start == 0:
@@ -204,7 +207,8 @@ def sjclass_transcript(input_file, output_file, gencode_gene_file):
                 else:
                     juncmut_hijacked_ss = gencode_exon_ends[index_start - 1] + 1
                     # be careful, the index_start is a 0-start count. juncmut_hijacked_exon_num is a 1-start count
-                    juncmut_hijacked_exon_num = index_start - 1
+                    juncmut_hijacked_exon_index = index_start - 1
+                    juncmut_hijacked_exon_num = juncmut_hijacked_exon_index + 1
             
             elif splice_type == "Donor-":
                 index_end = gencode_exon_ends.index(juncmut_matching_ss - 1)
@@ -212,7 +216,8 @@ def sjclass_transcript(input_file, output_file, gencode_gene_file):
                     continue
                 else:
                     juncmut_hijacked_ss = gencode_exon_starts[index_end + 1]
-                    juncmut_hijacked_exon_num = index_end + 1
+                    juncmut_hijacked_exon_index = index_end + 1
+                    juncmut_hijacked_exon_num = gencode_exon_count - juncmut_hijacked_exon_index
             
             elif splice_type == "Acceptor+":
                 index_end = gencode_exon_ends.index(juncmut_matching_ss - 1)
@@ -220,7 +225,8 @@ def sjclass_transcript(input_file, output_file, gencode_gene_file):
                     continue
                 else:
                     juncmut_hijacked_ss = gencode_exon_starts[index_end + 1]
-                    juncmut_hijacked_exon_num = index_end + 1
+                    juncmut_hijacked_exon_index = index_end + 1
+                    juncmut_hijacked_exon_num = juncmut_hijacked_exon_index + 1
             
             elif splice_type == "Acceptor-":
                 index_start = gencode_exon_starts.index(juncmut_matching_ss)
@@ -228,7 +234,9 @@ def sjclass_transcript(input_file, output_file, gencode_gene_file):
                     continue
                 else:
                     juncmut_hijacked_ss = gencode_exon_ends[index_start - 1] + 1
-                    juncmut_hijacked_exon_num = index_start - 1
+                    juncmut_hijacked_exon_index = index_start - 1
+                    juncmut_hijacked_exon_num = gencode_exon_count - juncmut_hijacked_exon_index
+        
             
             if juncmut_hijacked_ss == -1:
                 continue
@@ -251,6 +259,7 @@ def sjclass_transcript(input_file, output_file, gencode_gene_file):
             csvobj["Gencode_exon_ends"] = transcripts[csvobj["Transcript"]]["Gencode_exon_ends"]
             csvobj["Gene_type"] = gene_type
             csvobj["Juncmut_hijacked_exon_num"] = "%d/%s," % (juncmut_hijacked_exon_num, transcripts[csvobj["Transcript"]]["Gencode_exon_count"])
+            csvobj["Juncmut_hijacked_exon_index"] = juncmut_hijacked_exon_index
             csvobj["Juncmut_hijacked_SS"] = juncmut_hijacked_ss
             csvobj["Juncmut_primary_SS"] = juncmut_primary_ss
             csvobj["Juncmut_matching_SS"] = juncmut_matching_ss

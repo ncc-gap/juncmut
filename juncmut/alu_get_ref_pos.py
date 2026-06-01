@@ -78,8 +78,8 @@ def alu_get_ref_pos(input_file, output_file, ref, alu):
                 continue
 
             secondary_ss = csvobj["Juncmut_secondary_SS"]
-            mut_pos = int(csvobj["Mut_key"].split(',')[1])
-            mut_ref = csvobj["Mut_key"].split(',')[2]
+            mut_pos = int(csvobj["Mut_key"].split('-')[1])
+            mut_ref = csvobj["Mut_key"].split('-')[2]
             primary_ss = int(csvobj["Juncmut_primary_SS"])
             
             alu_chr = csvobj["Alu_Chr"]

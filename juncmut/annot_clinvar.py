@@ -77,7 +77,7 @@ def annot_clinvar(input_file, output_file, clinvar_file):
 
         for csvobj in csvreader:
             gene = csvobj["Gene"]
-            (mut_chr, mut_pos, mut_ref, mut_alt) = csvobj["Mut_key"].split(',')
+            (mut_chr, mut_pos, mut_ref, mut_alt) = csvobj["Mut_key"].split('-')
             mut_pos = int(mut_pos)
 
             rec_allele, rec_allele_id, rec_cln_dn, rec_cln_disdb, rec_cln_sig, rec_mc = NO_DATA, NO_DATA, NO_DATA, NO_DATA, NO_DATA, NO_DATA

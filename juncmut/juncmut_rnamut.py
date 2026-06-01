@@ -105,7 +105,7 @@ def juncmut_rnamut(input_file, output_file, input_bam_file, reference, mut_num_t
                 (alt_key_pos, alt_key_ref, alt_key_alt) = alt_key.split(":")
                 for var in alt_key_alt:
                     hout_tmp1.write("%s\t%d\t%s\t%s\n" % (sj_key_chr, int(alt_key_pos) - 1, alt_key_pos, var))
-                    mut_key_list.append("%s,%s,%s,%s" % (sj_key_chr, alt_key_pos, alt_key_ref, var))
+                    mut_key_list.append("%s-%s-%s-%s" % (sj_key_chr, alt_key_pos, alt_key_ref, var))
 
     # mpileup
     if len(mut_key_list) > 0:
@@ -133,7 +133,7 @@ def juncmut_rnamut(input_file, output_file, input_bam_file, reference, mut_num_t
                     base2num[base[i].upper()] += 1
 
             for mut_alt in ['A', 'C', 'G', 'T']:
-                mut_key = "%s,%s,%s,%s" % (mpileup_chr, mpileup_pos, mpileup_ref, mut_alt)
+                mut_key = "%s-%s-%s-%s" % (mpileup_chr, mpileup_pos, mpileup_ref, mut_alt)
                 if not mut_key in mut_key_list:
                     continue
 
@@ -163,7 +163,7 @@ def juncmut_rnamut(input_file, output_file, input_bam_file, reference, mut_num_t
             for i,alt_key in enumerate(csvobj["Possive_alt_key"].split(',')):
                 (alt_key_pos, alt_key_ref, alt_key_alt) = alt_key.split(":")
                 for var in alt_key_alt:
-                    mut_key = "%s,%s,%s,%s" % (sj_key_chr, alt_key_pos, alt_key_ref, var)
+                    mut_key = "%s-%s-%s-%s" % (sj_key_chr, alt_key_pos, alt_key_ref, var)
                     if not mut_key in data_mpileup:
                         continue
 

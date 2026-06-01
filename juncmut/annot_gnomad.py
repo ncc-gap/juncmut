@@ -16,7 +16,7 @@ def annot_gnomad(input_file, output_file, gnomad, genome_id):
         ])
         csvwriter.writeheader()
         for csvobj in csvreader: # one SJ
-            (mut_chr, mut_pos, mut_ref, mut_alt) = csvobj["Mut_key"].split(',')
+            (mut_chr, mut_pos, mut_ref, mut_alt) = csvobj["Mut_key"].split('-')
             mut_pos = int(mut_pos)
 
             remove_chr = mut_chr.replace('chr', '')

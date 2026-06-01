@@ -93,8 +93,58 @@ def frame_shift(length):
     
     return(frame)
 
+def convert_aa1 (seq, is_inframe, is_ptc):
+    if seq == "NA":
+        return seq
 
-def convert_aa (seq, is_inframe, is_ptc):
+    import re
+    seq_dst = re.sub("^p\\.\\(", "", seq)
+    seq_dst = re.sub("\\)$", "", seq_dst)
+    
+    #if is_ptc != "Survived":
+    #    seq_dst = re.sub("_(.*)", "*", seq_dst)
+    
+    seq_dst = re.sub("Ala", "A", seq_dst)
+    seq_dst = re.sub("Arg", "R", seq_dst)
+    seq_dst = re.sub("Asn", "N", seq_dst)
+    seq_dst = re.sub("Asp", "D", seq_dst)
+    seq_dst = re.sub("Cys", "C", seq_dst)
+    seq_dst = re.sub("Gln", "Q", seq_dst)
+    seq_dst = re.sub("Glu", "E", seq_dst)
+    seq_dst = re.sub("Gly", "G", seq_dst)
+    seq_dst = re.sub("His", "H", seq_dst)
+    seq_dst = re.sub("Ile", "I", seq_dst)
+    seq_dst = re.sub("Leu", "L", seq_dst)
+    seq_dst = re.sub("Lys", "K", seq_dst)
+    seq_dst = re.sub("Met", "M", seq_dst)
+    seq_dst = re.sub("Phe", "F", seq_dst)
+    seq_dst = re.sub("Pro", "P", seq_dst)
+    seq_dst = re.sub("Ser", "S", seq_dst)
+    seq_dst = re.sub("Thr", "T", seq_dst)
+    seq_dst = re.sub("Trp", "W", seq_dst)
+    seq_dst = re.sub("Tyr", "Y", seq_dst)
+    seq_dst = re.sub("Val", "V", seq_dst)
+    seq_dst = re.sub("Ter", "*", seq_dst)
+
+    #result_seq = ""
+    #p = re.compile(r"ins[A|R|N|D|C|Q|E|G|H|I|L|K|M|F|P|S|T|W|Y|V]{3,}")
+    #for item in seq_dst.replace("ins", ";ins").split(";"):
+    #    if re.search(p, item):
+    #        match = re.search(p, item).group()
+    #        length_of_insertion = len(match) - 3
+    #        replacement = f"insX[{length_of_insertion}]"
+    #        result_seq += re.sub(p, replacement, item)
+    #    else:
+    #        result_seq += item
+    
+    if is_inframe == "In-frame" and is_ptc == "PTC":
+        result_seq = seq_dst.split("*")[0] + "*"
+    else:
+        result_seq = seq_dst
+
+    return result_seq
+
+def convert_aa2 (seq, is_inframe, is_ptc):
     import re
     seq_dst = re.sub("^p\\.\\(", "", seq)
     seq_dst = re.sub("\\)$", "", seq_dst)
@@ -147,7 +197,9 @@ def sjclass_frame(input_file, output_file, reference):
 
         csvwriter = csv.DictWriter(hout, delimiter='\t', lineterminator='\n', fieldnames=csvreader.fieldnames + [
             "Mut_pos_in_motif", "Is_coding_SJ", "Start_codon_disruption_num", "Stop_codon_disruption_num", "Is_inframe", "Is_PTC", "Is_NMD",
-            "Protein_description_change", "Protein_description_change_short", "Protein_description_first_pos", "Protein_description_last_pos_ref", "Protein_description_last_pos_target", "Protein_description_change_mut", "Protein_description_change_mut_short"
+            "Protein_description_change", "Protein_description_change_short1", "Protein_description_change_short2", 
+            "Protein_description_first_pos", "Protein_description_last_pos_ref", "Protein_description_last_pos_target", 
+            "Protein_description_change_mut", "Protein_description_change_mut_short1", "Protein_description_change_mut_short2"
         ])
         csvwriter.writeheader()
         for csvobj in csvreader:
@@ -158,12 +210,14 @@ def sjclass_frame(input_file, output_file, reference):
             is_ptc = "NA"
             is_nmd = "NA"
             protein_description_change = "NA"
-            protein_description_change_short = "NA"
+            protein_description_change_short1 = "NA"
+            protein_description_change_short2 = "NA"
             protein_description_first_pos = "NA"
             protein_description_last_pos_ref = "NA"
             protein_description_last_pos_target = "NA"
             protein_description_change_mut = "NA"
-            protein_description_change_mut_short = "NA"
+            protein_description_change_mut_short1 = "NA"
+            protein_description_change_mut_short2 = "NA"
             start_codon_disruption_num = 0
             stop_codon_disruption_num = 0
 
@@ -175,18 +229,21 @@ def sjclass_frame(input_file, output_file, reference):
             csvobj["Is_PTC"] = is_ptc
             csvobj["Is_NMD"] = is_nmd
             csvobj["Protein_description_change"] = protein_description_change
-            csvobj["Protein_description_change_short"] = protein_description_change_short
+            csvobj["Protein_description_change_short1"] = protein_description_change_short1
+            csvobj["Protein_description_change_short2"] = protein_description_change_short2
             csvobj["Protein_description_first_pos"] = protein_description_first_pos
             csvobj["Protein_description_last_pos_ref"] = protein_description_last_pos_ref
             csvobj["Protein_description_last_pos_target"] = protein_description_last_pos_target
             csvobj["Protein_description_change_mut"] = protein_description_change_mut
-            csvobj["Protein_description_change_mut_short"] = protein_description_change_mut_short
+            csvobj["Protein_description_change_mut_short1"] = protein_description_change_mut_short1
+            csvobj["Protein_description_change_mut_short2"] = protein_description_change_mut_short2
+
             if csvobj["Gencode_exon_starts"] == "NA":
                 csvwriter.writerow(csvobj)
                 continue
 
-            mut_key_pos = int(csvobj["Mut_key"].split(',')[1])
-            mut_key_allele = csvobj["Mut_key"].split(',')[3]
+            mut_key_pos = int(csvobj["Mut_key"].split('-')[1])
+            mut_key_allele = csvobj["Mut_key"].split('-')[3]
             (sj_key_chr, sj_key_pos) = csvobj["SJ_key"].split(":")
             (sj_key_pos_start, sj_key_pos_end) = list(map(int, sj_key_pos.split('-')))
 
@@ -250,8 +307,10 @@ def sjclass_frame(input_file, output_file, reference):
             if is_coding_sj == "Coding" \
             and juncmut_predicted_splicing_type not in ["-", "Ambiguous_outgene", "Ambiguous_termination"]:
 
-                (hijacked_exon_num, gencode_exon_count) = list(map(int, csvobj["Juncmut_hijacked_exon_num"].rstrip(',').split('/')))
-                (closed_exon_num, gencode_exon_count) = list(map(int, csvobj["Closed_exon_num"].rstrip(',').split('/')))
+                (_, gencode_exon_count) = list(map(int, csvobj["Closed_exon_num"].rstrip(',').split('/')))
+                hijacked_exon_index = int(csvobj["Juncmut_hijacked_exon_index"])
+                closed_exon_index = int(csvobj["Closed_exon_index"])
+
                 num_skipped_exon = int(csvobj["Num_skipped_exon"])
                 juncmut_secondary_ss = csvobj["Juncmut_secondary_SS"]
                 is_secondary_ss = False
@@ -310,7 +369,7 @@ def sjclass_frame(input_file, output_file, reference):
                         tmp_ref_cds_exon_mut += read[:index_mut_key_pos] + mut_key_allele + read[index_mut_key_pos + 1:]
                         is_inside_exon = True
 
-                        mut_key_ref = csvobj["Mut_key"].split(',')[2]
+                        mut_key_ref = csvobj["Mut_key"].split('-')[2]
                         if read[index_mut_key_pos] != mut_key_ref:
                             raise Exception("%s is not match mut_key_ref: %d" % (read[index_mut_key_pos], mut_key_ref))
 
@@ -349,12 +408,12 @@ def sjclass_frame(input_file, output_file, reference):
 
                     for exon_num in range(0, len(new_exon_starts)):
 
-                        if num_skipped_exon > 0 and closed_exon_num < exon_num + new_exon_shift_exon_num <= hijacked_exon_num:
+                        if num_skipped_exon > 0 and closed_exon_index < exon_num + new_exon_shift_exon_num <= hijacked_exon_index:
                             continue
 
                         get_seq = ""
-                        if exon_num + new_exon_shift_exon_num == closed_exon_num:
-                            if juncmut_predicted_splicing_type == "Cryptic_exon":
+                        if exon_num + new_exon_shift_exon_num == closed_exon_index:
+                            if juncmut_predicted_splicing_type == "Cryptic exon inclusion":
                                 if juncmut_secondary_ss < mut_key_pos < juncmut_primary_ss:
                                     intron_seq = ref.fetch(sj_key_chr, juncmut_secondary_ss, mut_key_pos-1) \
                                         + mut_key_allele \
@@ -367,7 +426,7 @@ def sjclass_frame(input_file, output_file, reference):
                                 if exon_num == 0:
                                     first_exon_seq = exon_seq
 
-                            elif juncmut_predicted_splicing_type == "Lengthening_exon" or juncmut_predicted_splicing_type == "Shortening_exon":
+                            elif juncmut_predicted_splicing_type == "Exon extension" or juncmut_predicted_splicing_type == "Partial exon loss":
                                 if mut_key_pos < juncmut_primary_ss:
                                     if new_exon_starts[exon_num] < mut_key_pos-1:
                                         get_seq = ref.fetch(sj_key_chr, new_exon_starts[exon_num], mut_key_pos-1)
@@ -389,11 +448,11 @@ def sjclass_frame(input_file, output_file, reference):
 
                     for exon_num in range(0, len(new_exon_starts)):
 
-                        if num_skipped_exon > 0 and hijacked_exon_num <= exon_num + new_exon_shift_exon_num < closed_exon_num:
+                        if num_skipped_exon > 0 and hijacked_exon_num <= exon_num + new_exon_shift_exon_num < closed_exon_index:
                             continue
 
-                        if exon_num + new_exon_shift_exon_num == closed_exon_num:
-                            if juncmut_predicted_splicing_type == "Cryptic_exon":
+                        if exon_num + new_exon_shift_exon_num == closed_exon_index:
+                            if juncmut_predicted_splicing_type == "Cryptic exon inclusion":
                                 if juncmut_primary_ss < mut_key_pos < juncmut_secondary_ss:
                                     intron_seq = ref.fetch(sj_key_chr, juncmut_primary_ss, mut_key_pos-1) \
                                         + mut_key_allele \
@@ -406,7 +465,7 @@ def sjclass_frame(input_file, output_file, reference):
                                 if exon_num == len(new_exon_starts) - 1:
                                     last_exon_seq = exon_seq
 
-                            elif juncmut_predicted_splicing_type == "Lengthening_exon" or juncmut_predicted_splicing_type == "Shortening_exon":
+                            elif juncmut_predicted_splicing_type == "Exon extension" or juncmut_predicted_splicing_type == "Partial exon loss":
                                 if juncmut_primary_ss < mut_key_pos:
                                     get_seq = ref.fetch(sj_key_chr, juncmut_primary_ss, mut_key_pos-1) + mut_key_allele
                                     if mut_key_pos < new_exon_ends[exon_num]:
@@ -457,7 +516,8 @@ def sjclass_frame(input_file, output_file, reference):
                     result1 = juncmut.protein.out_of_frame_description(ref_cds_exon_translate, q_target_seq_translate)
 
                 (protein_description_change, protein_description_first_pos, protein_description_last_pos_ref, protein_description_last_pos_target) = result1
-                protein_description_change_short = convert_aa(protein_description_change, is_inframe, is_ptc)
+                protein_description_change_short1 = convert_aa1(protein_description_change, is_inframe, is_ptc)
+                protein_description_change_short2 = convert_aa2(protein_description_change, is_inframe, is_ptc)
 
                 if is_inside_exon:
                     ref_cds_exon_mut_translate = translate(ref_cds_exon_mut, is_inframe, is_ptc, False, ref_cds_exon_len, ref_cds_len, last_exon_len)
@@ -465,7 +525,8 @@ def sjclass_frame(input_file, output_file, reference):
                     result2 = juncmut.protein.in_frame_description(ref_cds_exon_translate, ref_cds_exon_mut_translate)
                     
                     protein_description_change_mut = result2[0]
-                    protein_description_change_mut_short = convert_aa(protein_description_change_mut, is_inframe, is_ptc)
+                    protein_description_change_mut_short1 = convert_aa1(protein_description_change_mut, is_inframe, is_ptc)
+                    protein_description_change_mut_short2 = convert_aa2(protein_description_change_mut, is_inframe, is_ptc)
 
             csvobj["Mut_pos_in_motif"] = mut_pos_in_motif
             csvobj["Is_coding_SJ"] = is_coding_sj
@@ -475,12 +536,14 @@ def sjclass_frame(input_file, output_file, reference):
             csvobj["Is_PTC"] = is_ptc
             csvobj["Is_NMD"] = is_nmd
             csvobj["Protein_description_change"] = protein_description_change
-            csvobj["Protein_description_change_short"] = protein_description_change_short
+            csvobj["Protein_description_change_short1"] = protein_description_change_short1
+            csvobj["Protein_description_change_short2"] = protein_description_change_short2
             csvobj["Protein_description_first_pos"] = protein_description_first_pos
             csvobj["Protein_description_last_pos_ref"] = protein_description_last_pos_ref
             csvobj["Protein_description_last_pos_target"] = protein_description_last_pos_target
             csvobj["Protein_description_change_mut"] = protein_description_change_mut
-            csvobj["Protein_description_change_mut_short"] = protein_description_change_mut_short
+            csvobj["Protein_description_change_mut_short1"] = protein_description_change_mut_short1
+            csvobj["Protein_description_change_mut_short2"] = protein_description_change_mut_short2
 
             csvwriter.writerow(csvobj)
 

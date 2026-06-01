@@ -38,7 +38,7 @@ def sjclass_classify(input_file, output_file, bam_file, sj_file, depth_th):
 
         csvwriter = csv.DictWriter(hout, delimiter='\t', lineterminator='\n', fieldnames=csvreader.fieldnames + [
             "Juncmut_primary_SJ", "Juncmut_hijacked_SJ", "Juncmut_secondary_SS", "Juncmut_secondary_SJ", 
-            "Closed_exon_num", "Juncmut_predicted_splicing_type", "Num_skipped_exon",
+            "Closed_exon_num", "Closed_exon_index", "Juncmut_predicted_splicing_type", "Num_skipped_exon",
         ])
         csvwriter.writeheader()
 
@@ -49,12 +49,14 @@ def sjclass_classify(input_file, output_file, bam_file, sj_file, depth_th):
             juncmut_secondary_sj = "NA"
             num_skipped_exon = "NA"
             closed_exon_num = "NA"
-
+            closed_exon_index = "NA"
+            
             csvobj["Juncmut_primary_SJ"] = "NA"
             csvobj["Juncmut_hijacked_SJ"] = "NA"
             csvobj["Juncmut_secondary_SS"] = juncmut_secondary_ss
             csvobj["Juncmut_secondary_SJ"] = juncmut_secondary_sj
             csvobj["Closed_exon_num"] = closed_exon_num
+            csvobj["Closed_exon_index"] = closed_exon_index
             csvobj["Juncmut_predicted_splicing_type"] = juncmut_predicted_splicing_type
             csvobj["Num_skipped_exon"] = num_skipped_exon
             if csvobj["Gencode_exon_starts"] == "NA":
@@ -70,7 +72,8 @@ def sjclass_classify(input_file, output_file, bam_file, sj_file, depth_th):
 
             gencode_exon_starts = list(map(int, csvobj["Gencode_exon_starts"].rstrip(',').split(',')))
             gencode_exon_ends = list(map(int, csvobj["Gencode_exon_ends"].rstrip(',').split(',')))
-            (hijacked_exon_num, gencode_exon_count) = list(map(int, csvobj["Juncmut_hijacked_exon_num"].replace(',','').split('/')))
+            (_, gencode_exon_count) = list(map(int, csvobj["Juncmut_hijacked_exon_num"].replace(',','').split('/')))
+            hijacked_exon_index = int(csvobj["Juncmut_hijacked_exon_index"])
 
             # o--->
             if splice_type in ["Donor+", "Acceptor-"]:
@@ -78,21 +81,27 @@ def sjclass_classify(input_file, output_file, bam_file, sj_file, depth_th):
                     csvwriter.writerow(csvobj)
                     continue
 
-                for e_count in range(hijacked_exon_num, -1, -1):
+                for e_count in range(hijacked_exon_index, -1, -1):
                     if gencode_exon_starts[e_count] + 1 <= juncmut_primary_ss:
-                        closed_exon_num = e_count
-                        num_skipped_exon = hijacked_exon_num - closed_exon_num
+                        closed_exon_index = e_count
+                        num_skipped_exon = hijacked_exon_index - closed_exon_index
                         break
+
+                if closed_exon_index != "NA":
+                    if splice_type == "Donor+":
+                        closed_exon_num = closed_exon_index + 1
+                    else:
+                        closed_exon_num = gencode_exon_count - closed_exon_index
 
                 if closed_exon_num == "NA":
                     juncmut_predicted_splicing_type = "Ambiguous_outgene"
 
-                elif gencode_exon_starts[closed_exon_num] < juncmut_primary_ss <= gencode_exon_ends[closed_exon_num]:
-                    juncmut_predicted_splicing_type = "Shortening_exon"
+                elif gencode_exon_starts[closed_exon_index] < juncmut_primary_ss <= gencode_exon_ends[closed_exon_index]:
+                    juncmut_predicted_splicing_type = "Partial exon loss"
 
                 else:
                     # cryptic exon
-                    sj_records = sj_tb.fetch(region = "%s:%d-%d" % (juncmut_primary_sj_chr, gencode_exon_ends[closed_exon_num], juncmut_primary_ss))
+                    sj_records = sj_tb.fetch(region = "%s:%d-%d" % (juncmut_primary_sj_chr, gencode_exon_ends[closed_exon_index], juncmut_primary_ss))
                     if sj_records == None:
                         sj_records = []
                     for record in sj_records:
@@ -103,17 +112,17 @@ def sjclass_classify(input_file, output_file, bam_file, sj_file, depth_th):
                         dist2sj = juncmut_primary_ss - sj_end
                         # sj_SS is within norm_SS and alt_SS,considering the shift of alignment(2 bp). The size of exon is likely <=300 bp.
                         # exon_e is the last base of the exon
-                        if gencode_exon_ends[closed_exon_num] < sj_end < juncmut_primary_ss and dist2sj <= 300 and sj_read_n > 0 \
-                        and gencode_exon_ends[closed_exon_num] - 2 <= sj_start <= gencode_exon_ends[closed_exon_num] + 2:
-                            juncmut_predicted_splicing_type = "Cryptic_exon"
-                            mis_dis = sj_start - (gencode_exon_ends[closed_exon_num] + 1)
+                        if gencode_exon_ends[closed_exon_index] < sj_end < juncmut_primary_ss and dist2sj <= 300 and sj_read_n > 0 \
+                        and gencode_exon_ends[closed_exon_index] - 2 <= sj_start <= gencode_exon_ends[closed_exon_index] + 2:
+                            juncmut_predicted_splicing_type = "Cryptic exon inclusion"
+                            mis_dis = sj_start - (gencode_exon_ends[closed_exon_index] + 1)
                             juncmut_secondary_ss = sj_end + mis_dis
-                            juncmut_secondary_sj = "%s:%d-%d" % (juncmut_primary_sj_chr, gencode_exon_ends[closed_exon_num] + 1, juncmut_secondary_ss)
+                            juncmut_secondary_sj = "%s:%d-%d" % (juncmut_primary_sj_chr, gencode_exon_ends[closed_exon_index] + 1, juncmut_secondary_ss)
                             break
 
                 if juncmut_predicted_splicing_type == "NA":
                     # depth
-                    region = "%s:%d-%d" % (juncmut_primary_sj_chr, gencode_exon_ends[closed_exon_num] + 1, juncmut_primary_ss - 1)
+                    region = "%s:%d-%d" % (juncmut_primary_sj_chr, gencode_exon_ends[closed_exon_index] + 1, juncmut_primary_ss - 1)
                     with open(output_file + ".depth.txt", 'w') as hout_depth:
                         subprocess.run(["samtools", "depth", "-a", "-r", region, bam_file], stdout = hout_depth)
 
@@ -130,10 +139,10 @@ def sjclass_classify(input_file, output_file, bam_file, sj_file, depth_th):
                             depth_value = int(F[2])
                             if depth_value >= depth_th:
                                 a.append(depth_pos)
-                    c = range(gencode_exon_ends[closed_exon_num] + 1, juncmut_primary_ss, 1)
+                    c = range(gencode_exon_ends[closed_exon_index] + 1, juncmut_primary_ss, 1)
                     # lengthen exon
                     if set(c) <= set(a):
-                        juncmut_predicted_splicing_type = "Lengthening_exon"
+                        juncmut_predicted_splicing_type = "Exon extension"
                     else:
                         juncmut_predicted_splicing_type = "Ambiguous_termination"
 
@@ -145,21 +154,27 @@ def sjclass_classify(input_file, output_file, bam_file, sj_file, depth_th):
                     csvwriter.writerow(csvobj)
                     continue
 
-                for e_count in range(hijacked_exon_num, gencode_exon_count):
+                for e_count in range(hijacked_exon_index, gencode_exon_count):
                     if gencode_exon_ends[e_count] > juncmut_primary_ss:
-                        closed_exon_num = e_count
-                        num_skipped_exon = closed_exon_num - hijacked_exon_num
+                        closed_exon_index = e_count
+                        num_skipped_exon = closed_exon_index - hijacked_exon_index
                         break
+
+                if closed_exon_index != "NA":
+                    if splice_type == "Acceptor+":
+                        closed_exon_num = gencode_exon_count - closed_exon_index
+                    else:
+                        closed_exon_num = closed_exon_index + 1
 
                 if closed_exon_num == "NA":
                     juncmut_predicted_splicing_type = "Ambiguous_outgene"
                     #print("Ambiguous_outgene")
-                elif gencode_exon_starts[closed_exon_num] < juncmut_primary_ss < gencode_exon_ends[closed_exon_num]:
-                    juncmut_predicted_splicing_type = "Shortening_exon"
-                    #print("Shortening_exon")
+                elif gencode_exon_starts[closed_exon_index] < juncmut_primary_ss < gencode_exon_ends[closed_exon_index]:
+                    juncmut_predicted_splicing_type = "Partial exon loss"
+                    #print("Partial exon loss")
                 else:
                     #cryptic exon
-                    sj_records = sj_tb.fetch(region = "%s:%d-%d" % (juncmut_primary_sj_chr, juncmut_primary_ss, gencode_exon_starts[closed_exon_num]))
+                    sj_records = sj_tb.fetch(region = "%s:%d-%d" % (juncmut_primary_sj_chr, juncmut_primary_ss, gencode_exon_starts[closed_exon_index]))
                     if sj_records == None:
                         sj_records == []
                     for record in sj_records:
@@ -169,16 +184,16 @@ def sjclass_classify(input_file, output_file, bam_file, sj_file, depth_th):
                         sj_read_n = int(R[SJ_HEADER.index("number_of_uniquely_mapping_reads")])
                         dist2sj = sj_start - juncmut_primary_ss
                         # sj_SS is within norm_SS and alt_SS,considering the shift of alignment(2 bp). The size of exon is likely <=300 bp.
-                        if juncmut_primary_ss+1 < sj_start < gencode_exon_starts[closed_exon_num] and dist2sj <= 300 and sj_read_n > 0 \
-                        and gencode_exon_starts[closed_exon_num] - 2 <= sj_end <= gencode_exon_starts[closed_exon_num] + 2:
-                            juncmut_predicted_splicing_type = "Cryptic_exon"
-                            mis_dis = sj_end - gencode_exon_starts[closed_exon_num]
+                        if juncmut_primary_ss+1 < sj_start < gencode_exon_starts[closed_exon_index] and dist2sj <= 300 and sj_read_n > 0 \
+                        and gencode_exon_starts[closed_exon_index] - 2 <= sj_end <= gencode_exon_starts[closed_exon_index] + 2:
+                            juncmut_predicted_splicing_type = "Cryptic exon inclusion"
+                            mis_dis = sj_end - gencode_exon_starts[closed_exon_index]
                             juncmut_secondary_ss = sj_start + mis_dis
-                            juncmut_secondary_sj = "%s:%d-%d" % (juncmut_primary_sj_chr, juncmut_secondary_ss, gencode_exon_starts[closed_exon_num])
+                            juncmut_secondary_sj = "%s:%d-%d" % (juncmut_primary_sj_chr, juncmut_secondary_ss, gencode_exon_starts[closed_exon_index])
                             break
                 # depth
                 if juncmut_predicted_splicing_type == "NA":
-                    region = "%s:%d-%d" % (juncmut_primary_sj_chr, juncmut_primary_ss + 1, gencode_exon_starts[closed_exon_num])
+                    region = "%s:%d-%d" % (juncmut_primary_sj_chr, juncmut_primary_ss + 1, gencode_exon_starts[closed_exon_index])
                     with open(output_file + ".depth.txt", 'w') as hout_depth:
                         subprocess.run(["samtools", "depth", "-a", "-r", region, bam_file], stdout = hout_depth)
 
@@ -195,10 +210,10 @@ def sjclass_classify(input_file, output_file, bam_file, sj_file, depth_th):
                             depth_value = int(F[2])
                             if depth_value >= depth_th:
                                 a.append(depth_pos)
-                    c = range(juncmut_primary_ss + 1, gencode_exon_starts[closed_exon_num] + 1, 1)
+                    c = range(juncmut_primary_ss + 1, gencode_exon_starts[closed_exon_index] + 1, 1)
                     # lengthen exon
                     if set(c) <= set(a):
-                        juncmut_predicted_splicing_type = "Lengthening_exon"
+                        juncmut_predicted_splicing_type = "Exon extension"
                     else:
                         juncmut_predicted_splicing_type = "Ambiguous_termination"
 
@@ -224,6 +239,7 @@ def sjclass_classify(input_file, output_file, bam_file, sj_file, depth_th):
             else:
                 csvobj["Closed_exon_num"] = "%d/%d," % (closed_exon_num, gencode_exon_count)
 
+            csvobj["Closed_exon_index"] = closed_exon_index
             csvobj["Juncmut_predicted_splicing_type"] = juncmut_predicted_splicing_type
             csvobj["Num_skipped_exon"] = num_skipped_exon
 
