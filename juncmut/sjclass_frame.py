@@ -448,7 +448,7 @@ def sjclass_frame(input_file, output_file, reference):
 
                     for exon_num in range(0, len(new_exon_starts)):
 
-                        if num_skipped_exon > 0 and hijacked_exon_num <= exon_num + new_exon_shift_exon_num < closed_exon_index:
+                        if num_skipped_exon > 0 and hijacked_exon_index <= exon_num + new_exon_shift_exon_num < closed_exon_index:
                             continue
 
                         if exon_num + new_exon_shift_exon_num == closed_exon_index:
