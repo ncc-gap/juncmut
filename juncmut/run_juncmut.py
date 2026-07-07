@@ -24,7 +24,8 @@ def detect_main(args):
 
     juncmut_assadj(
         args.output_file+".juncutils.txt",
-        args.output_file+".assadj.txt"
+        args.output_file+".assadj.txt",
+        args.genecode_gene_file
     )
 
     juncmut_freq(
